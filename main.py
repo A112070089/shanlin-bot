@@ -33,10 +33,14 @@ FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")      # 例如 https://
 
 # Firebase 初始化
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
-if firebase_cred_json and not firebase_admin._apps:
-    cred_dict = json.loads(firebase_cred_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_URL})
+try:
+    if firebase_cred_json and firebase_cred_json != "{}" and not firebase_admin._apps:
+        cred_dict = json.loads(firebase_cred_json)
+        if cred_dict.get("type") == "service_account":
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_URL})
+except Exception as e:
+    print(f"Firebase init skipped: {e}")
 
 LINE_API = "https://api.line.me/v2/bot/message"
 
