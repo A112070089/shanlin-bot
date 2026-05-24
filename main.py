@@ -172,9 +172,10 @@ def make_liff_button(label: str, url: str) -> dict:
         "altText": label,
         "template": {
             "type": "buttons",
+            "text": label,
             "actions": [{
                 "type": "uri",
-                "label": label,
+                "label": label[:20],
                 "uri": url
             }]
         }
