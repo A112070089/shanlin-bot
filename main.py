@@ -234,7 +234,6 @@ async def liff_verify(req: VerifyRequest):
             stored_phone = "0" + stored_phone
         if stored_phone != phone:
             raise HTTPException(status_code=401, detail="手機號碼不符")
-        raise HTTPException(status_code=401, detail="手機號碼不符")
 
     # 綁定 LINE User ID
     ref.update({"lineUserId": req.line_user_id, "boundAt": datetime.now().isoformat()})
