@@ -230,9 +230,10 @@ async def liff_verify(req: VerifyRequest):
         raise HTTPException(status_code=404, detail="查無此身分證資料")
 
     stored_phone = str(data.get("phone", ""))
-if not stored_phone.startswith("0"):
-    stored_phone = "0" + stored_phone
-if stored_phone != phone:
+        if not stored_phone.startswith("0"):
+            stored_phone = "0" + stored_phone
+        if stored_phone != phone:
+            raise HTTPException(status_code=401, detail="手機號碼不符")
         raise HTTPException(status_code=401, detail="手機號碼不符")
 
     # 綁定 LINE User ID
