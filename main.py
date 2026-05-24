@@ -47,20 +47,22 @@ def verify_signature(body: bytes, signature: str) -> bool:
 
 async def push_message(user_id: str, messages: list):
     async with httpx.AsyncClient() as client:
-        await client.post(
+        res = await client.post(
             f"{LINE_API}/push",
             headers={"Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"},
             json={"to": user_id, "messages": messages}
         )
+        print(f"Push status: {res.status_code}, body: {res.text}")
 
 
 async def reply_message(reply_token: str, messages: list):
     async with httpx.AsyncClient() as client:
-        await client.post(
+        res = await client.post(
             f"{LINE_API}/reply",
             headers={"Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"},
             json={"replyToken": reply_token, "messages": messages}
         )
+        print(f"Reply status: {res.status_code}, body: {res.text}")
 
 
 def get_liff_url():
