@@ -14,9 +14,6 @@ import httpx
 import firebase_admin
 from firebase_admin import credentials, db
 
-# ══════════════════════════════════════
-#  初始化
-# ══════════════════════════════════════
 app = FastAPI(title="山林診所 LINE Bot API")
 
 app.add_middleware(
@@ -26,12 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 環境變數（在 Render 上設定）
 CHANNEL_SECRET       = os.environ.get("CHANNEL_SECRET", "")
 CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
-FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")      # 例如 https://your-project.firebaseio.com
+FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
+LINE_API = "https://api.line.me/v2/bot/message"
 
-# Firebase 初始化
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
 try:
     if firebase_cred_json and firebase_cred_json != "{}" and not firebase_admin._apps:
@@ -42,19 +38,14 @@ try:
 except Exception as e:
     print(f"Firebase init skipped: {e}")
 
-LINE_API = "https://api.line.me/v2/bot/message"
 
-# ══════════════════════════════════════
-#  工具函式
-# ══════════════════════════════════════
 def verify_signature(body: bytes, signature: str) -> bool:
-    """驗證 LINE Webhook 簽名"""
     hash_ = hmac.new(CHANNEL_SECRET.encode(), body, hashlib.sha256).digest()
     expected = base64.b64encode(hash_).decode()
     return hmac.compare_digest(expected, signature)
 
+
 async def push_message(user_id: str, messages: list):
-    """主動推送訊息給使用者"""
     async with httpx.AsyncClient() as client:
         await client.post(
             f"{LINE_API}/push",
@@ -62,8 +53,8 @@ async def push_message(user_id: str, messages: list):
             json={"to": user_id, "messages": messages}
         )
 
+
 async def reply_message(reply_token: str, messages: list):
-    """回覆訊息"""
     async with httpx.AsyncClient() as client:
         await client.post(
             f"{LINE_API}/reply",
@@ -71,12 +62,11 @@ async def reply_message(reply_token: str, messages: list):
             json={"replyToken": reply_token, "messages": messages}
         )
 
+
 def get_liff_url():
     return os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 
-# ══════════════════════════════════════
-#  Webhook（接收 LINE 訊息）
-# ══════════════════════════════════════
+
 @app.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -88,29 +78,22 @@ async def webhook(request: Request):
     data = json.loads(body)
 
     for event in data.get("events", []):
-        event_type = event.get("type")
-        user_id    = event.get("source", {}).get("userId", "")
+        event_type  = event.get("type")
+        user_id     = event.get("source", {}).get("userId", "")
         reply_token = event.get("replyToken", "")
 
-        # ── 加好友事件 ──
         if event_type == "follow":
             await handle_follow(user_id, reply_token)
-
-        # ── 文字訊息 ──
         elif event_type == "message" and event["message"]["type"] == "text":
             text = event["message"]["text"].strip()
             await handle_text(user_id, reply_token, text)
-
-        # ── Postback（按鈕觸發）──
         elif event_type == "postback":
-            data_str = event["postback"]["data"]
-            await handle_postback(user_id, reply_token, data_str)
+            await handle_postback(user_id, reply_token, event["postback"]["data"])
 
     return JSONResponse({"status": "ok"})
 
 
 async def handle_follow(user_id: str, reply_token: str):
-    """新好友加入"""
     await reply_message(reply_token, [
         {
             "type": "text",
@@ -129,7 +112,6 @@ async def handle_follow(user_id: str, reply_token: str):
 
 
 async def handle_text(user_id: str, reply_token: str, text: str):
-    """處理文字訊息"""
     keywords_booking = ["預約", "體檢", "健檢", "掛號"]
     keywords_report  = ["報告", "檢查結果"]
     keywords_hours   = ["時間", "門診", "幾點"]
@@ -143,7 +125,6 @@ async def handle_text(user_id: str, reply_token: str, text: str):
             },
             make_liff_button("🔐 進行身分驗證綁定", get_liff_url())
         ])
-
     elif any(k in text for k in keywords_report):
         await reply_message(reply_token, [
             {
@@ -152,7 +133,6 @@ async def handle_text(user_id: str, reply_token: str, text: str):
             },
             make_liff_button("📄 查看我的報告", get_liff_url())
         ])
-
     elif any(k in text for k in keywords_hours):
         await reply_message(reply_token, [{
             "type": "text",
@@ -164,13 +144,11 @@ async def handle_text(user_id: str, reply_token: str, text: str):
                 "國定假日門診半天"
             )
         }])
-
     elif any(k in text for k in keywords_address):
         await reply_message(reply_token, [{
             "type": "text",
             "text": "📍 台北市文山區羅斯福路六段 407 號 2 樓\n（由車前路門口上樓）\n\n📞 02-2933-2010"
         }])
-
     else:
         await reply_message(reply_token, [{
             "type": "text",
@@ -179,7 +157,6 @@ async def handle_text(user_id: str, reply_token: str, text: str):
 
 
 async def handle_postback(user_id: str, reply_token: str, data_str: str):
-    """處理 Postback 按鈕"""
     if data_str == "action=checkup":
         await reply_message(reply_token, [
             {"type": "text", "text": "請點下方按鈕進行身分驗證，驗證後即可預約健檢 🏥"},
@@ -188,7 +165,6 @@ async def handle_postback(user_id: str, reply_token: str, data_str: str):
 
 
 def make_liff_button(label: str, url: str) -> dict:
-    """產生開啟 LIFF 的按鈕訊息"""
     return {
         "type": "template",
         "altText": label,
@@ -202,43 +178,35 @@ def make_liff_button(label: str, url: str) -> dict:
         }
     }
 
-# ══════════════════════════════════════
-#  LIFF 身分驗證 API
-# ══════════════════════════════════════
+
 class VerifyRequest(BaseModel):
     id_number:    str
     phone:        str
     line_user_id: str
 
+
 @app.post("/api/liff/verify")
 async def liff_verify(req: VerifyRequest):
-    """
-    LIFF 身分驗證：比對 Firebase 預約資料
-    比對成功後將 LINE User ID 寫入資料庫完成綁定
-    """
     id_num = req.id_number.upper().strip()
     phone  = req.phone.strip()
 
     try:
-        ref = db.reference(f"appointments/{id_num}")
+        ref  = db.reference(f"appointments/{id_num}")
         data = ref.get()
     except Exception:
-        # Firebase 未設定時回傳 404
         raise HTTPException(status_code=404, detail="查無資料")
 
     if not data:
         raise HTTPException(status_code=404, detail="查無此身分證資料")
 
     stored_phone = str(data.get("phone", ""))
-        if not stored_phone.startswith("0"):
-            stored_phone = "0" + stored_phone
-        if stored_phone != phone:
-            raise HTTPException(status_code=401, detail="手機號碼不符")
+    if not stored_phone.startswith("0"):
+        stored_phone = "0" + stored_phone
+    if stored_phone != phone:
+        raise HTTPException(status_code=401, detail="手機號碼不符")
 
-    # 綁定 LINE User ID
     ref.update({"lineUserId": req.line_user_id, "boundAt": datetime.now().isoformat()})
 
-    # 推送綁定成功訊息
     await push_message(req.line_user_id, [
         {
             "type": "text",
@@ -262,18 +230,15 @@ async def liff_verify(req: VerifyRequest):
     }
 
 
-# ══════════════════════════════════════
-#  語音預約 API
-# ══════════════════════════════════════
 class AppointmentRequest(BaseModel):
     id_number: str
-    plan:      str   # A / B / C
-    date:      str   # 2025-06-08
-    time_slot: str   # 09:00
+    plan:      str
+    date:      str
+    time_slot: str
+
 
 @app.post("/api/appointment/book")
 async def book_appointment(req: AppointmentRequest):
-    """寫入預約資料並發送 LINE 確認通知"""
     id_num = req.id_number.upper().strip()
 
     try:
@@ -292,10 +257,10 @@ async def book_appointment(req: AppointmentRequest):
     }
 
     ref.update({
-        "plan":      req.plan,
-        "date":      req.date,
-        "time":      req.time_slot,
-        "bookedAt":  datetime.now().isoformat()
+        "plan":     req.plan,
+        "date":     req.date,
+        "time":     req.time_slot,
+        "bookedAt": datetime.now().isoformat()
     })
 
     line_user_id = data.get("lineUserId")
@@ -314,16 +279,10 @@ async def book_appointment(req: AppointmentRequest):
     return {"status": "success", "message": "預約成功"}
 
 
-# ══════════════════════════════════════
-#  診前提醒推播 API（可由排程呼叫）
-# ══════════════════════════════════════
 @app.post("/api/reminder/send")
 async def send_reminders():
-    """
-    找出明天有預約的人，發送禁食提醒
-    建議用 Render Cron Job 每天晚上 8 點呼叫
-    """
-    tomorrow = (datetime.now().date().__add__(__import__("datetime").timedelta(days=1))).isoformat()
+    import datetime as dt
+    tomorrow = (dt.date.today() + dt.timedelta(days=1)).isoformat()
 
     try:
         all_appts = db.reference("appointments").get() or {}
@@ -339,7 +298,7 @@ async def send_reminders():
                     f"⏰ 健檢提醒\n\n"
                     f"{data.get('name', '您好')}，明天 {tomorrow} 您有健檢預約！\n\n"
                     f"📌 注意事項：\n"
-                    f"• 今晚 10 點後請禁食禁水（可喝少量白開水）\n"
+                    f"• 今晚 10 點後請禁食禁水\n"
                     f"• 請攜帶健保卡與身分證\n"
                     f"• 穿著輕便衣物\n\n"
                     f"健檢時間：{data.get('time', '')}，請準時到達 🏥"
@@ -350,9 +309,6 @@ async def send_reminders():
     return {"status": "success", "sent": sent}
 
 
-# ══════════════════════════════════════
-#  健康檢查
-# ══════════════════════════════════════
 @app.get("/")
 async def root():
     return {"status": "ok", "service": "山林診所 LINE Bot API"}
