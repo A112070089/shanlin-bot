@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>山林診所 語音預約</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+:root{
+  --green:#2E8B57;--green-d:#1f6b40;--green-l:#e8f5ee;
+  --text:#1a1a1a;--sub:#6b7280;--hint:#9ca3af;
+  --border:#e5e7eb;--bg:#f4f6f8;--white:#fff;
+  --red:#dc2626;--red-l:#fef2f2;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--green);padding:13px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-logo{width:30px;height:30px;background:rgba(255,255,255,.25);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.topbar-logo i{font-size:16px;color:#fff}
+.topbar-name{font-size:15px;font-weight:700;color:#fff;flex:1}
+.screen{display:none;flex:1;padding:20px 18px 40px;flex-direction:column}
+.screen.active{display:flex}
+.card{background:var(--white);border-radius:16px;padding:18px 16px;border:1px solid var(--border);margin-bottom:14px}
+.steps{display:flex;align-items:flex-start;justify-content:center;gap:0;margin-bottom:22px}
+.st-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--hint);transition:all .2s;flex-shrink:0}
+.st-dot.done{background:var(--green);border-color:var(--green);color:#fff}
+.st-dot.active{border-color:var(--green);color:var(--green)}
+.st-line{flex:1;height:2px;background:var(--border);margin-top:13px;max-width:36px;transition:background .2s}
+.st-line.done{background:var(--green)}
+.st-lbl{font-size:10px;color:var(--hint);text-align:center;margin-top:3px}
+.plan{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.plan:hover{border-color:var(--green)}
+.plan.sel{border-color:var(--green);background:var(--green-l)}
+.plan-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.plan-badge{width:38px;height:38px;border-radius:9px;background:var(--green);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.plan-nm{font-size:15px;font-weight:700;color:var(--text)}
+.plan-tg{font-size:11px;color:var(--sub);margin-top:2px}
+.plan-chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11px;background:#f3f4f6;color:var(--sub);padding:3px 9px;border-radius:20px}
+.plan.sel .chip{background:rgba(46,139,87,.15);color:var(--green-d)}
+.slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.slot{height:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);font-size:13px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.slot:hover{border-color:var(--green)}
+.slot.sel{border-color:var(--green);background:var(--green);color:#fff}
+.slot.full{background:#f3f4f6;color:var(--hint);cursor:not-allowed;border-color:transparent;font-size:11px}
+.btn{width:100%;height:54px;border:none;border-radius:13px;font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-bottom:10px}
+.btn:active{transform:scale(.98)}
+.btn-g{background:var(--green);color:#fff}
+.btn-g:hover{background:var(--green-d)}
+.btn-g:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
+.btn-o{background:var(--white);color:var(--green-d);border:1.5px solid var(--green)}
+.btn-o:hover{background:var(--green-l)}
+.fl-lbl{font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.fl-lbl i{font-size:16px;color:var(--green)}
+.fi{width:100%;height:50px;border:1.5px solid var(--border);border-radius:12px;padding:0 14px;font-size:16px;font-family:'Noto Sans TC',sans-serif;color:var(--text);background:#fafafa;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(46,139,87,.1)}
+.ibox{background:var(--green-l);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:9px;margin-bottom:12px}
+.ibox i{font-size:15px;color:var(--green-d);margin-top:1px;flex-shrink:0}
+.ibox p{font-size:12px;color:#0f3d20;line-height:1.6}
+.appt-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:18px;width:100%}
+.ac-title{font-size:11px;color:var(--hint);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;font-weight:500}
+.ac-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.ac-row:last-child{border-bottom:none;padding-bottom:0}
+.ac-ic{width:32px;height:32px;background:var(--green-l);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-ic i{font-size:15px;color:var(--green-d)}
+.ac-lbl{font-size:11px;color:var(--hint);margin-bottom:1px}
+.ac-val{font-size:13px;font-weight:500;color:var(--text)}
+.suc-ic{width:80px;height:80px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.suc-ic i{font-size:40px;color:var(--green)}
+.spin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+.spinner{width:50px;height:50px;border:4px solid var(--green-l);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--white);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mh-t{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.mc-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--sub);width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.wave-w{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:44px;margin-bottom:10px}
+.wb{width:5px;background:#d1d5db;border-radius:3px;height:10px}
+.wb.on{background:var(--green);animation:wv .6s ease-in-out infinite alternate}
+.wb.on:nth-child(2){animation-delay:.1s}.wb.on:nth-child(3){animation-delay:.2s}
+.wb.on:nth-child(4){animation-delay:.05s}.wb.on:nth-child(5){animation-delay:.15s}
+@keyframes wv{from{height:8px}to{height:36px}}
+.vst{text-align:center;font-size:13px;color:var(--sub);margin-bottom:12px;min-height:20px}
+.vres{display:none;background:#f9fafb;border-radius:11px;padding:12px;margin-bottom:12px;border:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6}
+.vsingle{display:none;background:var(--green-l);border-radius:11px;padding:12px;margin-bottom:12px;font-size:13px;font-weight:500;color:#0f3d20;line-height:1.6}
+.btn-mic{width:100%;height:56px;border-radius:13px;border:none;background:var(--green);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+.btn-mic.rec{background:#dc2626;animation:pr 1s ease-in-out infinite}
+@keyframes pr{0%,100%{opacity:1}50%{opacity:.8}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo"><i class="ti ti-building-hospital"></i></div>
+  <span class="topbar-name">山林診所 · 老人健檢預約</span>
+</div>
+
+<!-- SCREEN 0: 填寫基本資料 -->
+<div class="screen active" id="s0">
+  <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">基本資料</div>
+  <div style="font-size:12px;color:var(--sub);margin-bottom:16px">請填寫您的姓名與手機號碼</div>
+  <div class="card">
+    <div style="margin-bottom:16px">
+      <div class="fl-lbl"><i class="ti ti-user"></i>姓名</div>
+      <input class="fi" id="inputName" type="text" placeholder="例：陳小美" oninput="chkS0()"/>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:4px 0 16px"/>
+    <div>
+      <div class="fl-lbl"><i class="ti ti-device-mobile"></i>手機號碼</div>
+      <input class="fi" id="inputPhone" type="tel" maxlength="10" placeholder="例：0912345678" inputmode="numeric" oninput="chkS0()"/>
+    </div>
+  </div>
+  <button class="btn btn-g" id="btnS0" onclick="goStep(1)" disabled>
+    下一步：選擇方案 <i class="ti ti-arrow-right"></i>
+  </button>
+</div>
+
+<!-- SCREEN 1: 選方案 -->
+<div class="screen" id="s1">
+  <div class="steps">
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="st-dot active" id="d1">1</div><div class="st-lbl">選方案</div>
+    </div>
+    <div class="st-line" id="l1"></div>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="st-dot" id="d2">2</div><div class="st-lbl">選時間</div>
+    </div>
+    <div class="st-line" id="l2"></div>
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div class="st-dot" id="d3">3</div><div class="st-lbl">確認</div>
+    </div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">選擇健檢方案</div>
+  <div style="font-size:12px;color:var(--sub);margin-bottom:12px">不確定選哪個？用語音說症狀，AI 幫您推薦</div>
+  <button class="btn btn-o" style="height:44px;font-size:13px;margin-bottom:14px" onclick="openVoice('plan')">
+    <i class="ti ti-microphone"></i>語音說症狀，幫我選方案
+  </button>
+  <div class="plan" id="pA" onclick="selPlan('A')">
+    <div class="plan-hd"><div class="plan-badge">A</div><div><div class="plan-nm">腦肺方案</div><div class="plan-tg">適合：頭暈、記憶衰退、胸悶、呼吸問題</div></div></div>
+    <div class="plan-chips"><span class="chip">胸部X光</span><span class="chip">甲狀腺刺激素</span><span class="chip">維他命B12</span><span class="chip">葉酸</span><span class="chip">血液常規</span><span class="chip">失智症篩檢</span><span class="chip">早餐</span></div>
+  </div>
+  <div class="plan" id="pB" onclick="selPlan('B')">
+    <div class="plan-hd"><div class="plan-badge">B</div><div><div class="plan-nm">腹部方案</div><div class="plan-tg">適合：腸胃問題、糖尿病、血糖偏高</div></div></div>
+    <div class="plan-chips"><span class="chip">腹部超音波</span><span class="chip">糖化血色素</span><span class="chip">白蛋白</span><span class="chip">球蛋白</span><span class="chip">尿液常規</span><span class="chip">失智症篩檢</span><span class="chip">早餐</span></div>
+  </div>
+  <div class="plan" id="pC" onclick="selPlan('C')">
+    <div class="plan-hd"><div class="plan-badge">C</div><div><div class="plan-nm">骨密肌力方案</div><div class="plan-tg">適合：骨質疏鬆、肌肉無力、易跌倒</div></div></div>
+    <div class="plan-chips"><span class="chip">DXA骨密度</span><span class="chip">肌少症篩檢</span><span class="chip">握力評估</span><span class="chip">鈣</span><span class="chip">血液常規</span><span class="chip">失智症篩檢</span><span class="chip">早餐</span></div>
+  </div>
+  <button class="btn btn-g" id="btnS1" onclick="goStep(2)" disabled>下一步：選擇時間 <i class="ti ti-arrow-right"></i></button>
+  <button class="btn btn-o" style="margin-top:0" onclick="goStep(0)"><i class="ti ti-arrow-left"></i>上一步</button>
+</div>
+
+<!-- SCREEN 2: 選時間 -->
+<div class="screen" id="s2">
+  <div class="steps">
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot done">1</div><div class="st-lbl">選方案</div></div>
+    <div class="st-line done"></div>
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot active">2</div><div class="st-lbl">選時間</div></div>
+    <div class="st-line"></div>
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot">3</div><div class="st-lbl">確認</div></div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">選擇日期與時段</div>
+  <div style="font-size:12px;color:var(--sub);margin-bottom:12px">或用語音說「我想約下週三上午九點」</div>
+  <button class="btn btn-o" style="height:44px;font-size:13px;margin-bottom:14px" onclick="openVoice('time')">
+    <i class="ti ti-microphone"></i>用語音說出想要的時間
+  </button>
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div class="fl-lbl" style="margin-bottom:9px"><i class="ti ti-calendar"></i>選擇日期</div>
+    <input class="fi" id="apptDate" type="date" onchange="chkS2()"/>
+  </div>
+  <div class="card" style="padding:14px">
+    <div class="fl-lbl" style="margin-bottom:12px"><i class="ti ti-clock"></i>選擇時段</div>
+    <div class="slot-grid">
+      <div class="slot" onclick="selSlot(this,'08:30')">08:30</div>
+      <div class="slot" onclick="selSlot(this,'09:00')">09:00</div>
+      <div class="slot full">09:30<br>額滿</div>
+      <div class="slot" onclick="selSlot(this,'10:00')">10:00</div>
+      <div class="slot" onclick="selSlot(this,'10:30')">10:30</div>
+      <div class="slot" onclick="selSlot(this,'11:00')">11:00</div>
+    </div>
+    <div style="font-size:11px;color:var(--hint);margin-top:7px">灰色時段已額滿</div>
+  </div>
+  <button class="btn btn-g" id="btnS2" onclick="goStep(3)" disabled>下一步：確認預約 <i class="ti ti-arrow-right"></i></button>
+  <button class="btn btn-o" style="margin-top:0" onclick="goStep(1)"><i class="ti ti-arrow-left"></i>上一步</button>
+</div>
+
+<!-- SCREEN 3: 確認 -->
+<div class="screen" id="s3">
+  <div class="steps">
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot done">1</div><div class="st-lbl">選方案</div></div>
+    <div class="st-line done"></div>
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot done">2</div><div class="st-lbl">選時間</div></div>
+    <div class="st-line done"></div>
+    <div style="display:flex;flex-direction:column;align-items:center"><div class="st-dot active">3</div><div class="st-lbl">確認</div></div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">確認預約資料</div>
+  <div class="appt-card">
+    <div class="ac-title">預約明細</div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-user"></i></div><div><div class="ac-lbl">姓名</div><div class="ac-val" id="cfName">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-device-mobile"></i></div><div><div class="ac-lbl">手機</div><div class="ac-val" id="cfPhone">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-clipboard-list"></i></div><div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="cfPlan">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-calendar"></i></div><div><div class="ac-lbl">預約日期</div><div class="ac-val" id="cfDate">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-clock"></i></div><div><div class="ac-lbl">時段</div><div class="ac-val" id="cfSlot">—</div></div></div>
+  </div>
+  <div class="ibox"><i class="ti ti-info-circle"></i><p>健檢前須空腹 8 小時、穿著輕便衣物、攜帶雙證件（健保卡＋身分證）</p></div>
+  <button class="btn btn-g" id="btnConfirm" onclick="doConfirm()"><i class="ti ti-check"></i>確認預約</button>
+  <button class="btn btn-o" style="margin-top:0" onclick="goStep(2)"><i class="ti ti-arrow-left"></i>上一步</button>
+</div>
+
+<!-- SCREEN 4: 預約中 -->
+<div class="screen" id="s4">
+  <div class="spin-wrap">
+    <div class="spinner"></div>
+    <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px">預約中...</div>
+    <div style="font-size:13px;color:var(--sub)">請稍候</div>
+  </div>
+</div>
+
+<!-- SCREEN 5: 成功 -->
+<div class="screen" id="s5" style="align-items:center;text-align:center">
+  <br/>
+  <div class="suc-ic"><i class="ti ti-calendar-check"></i></div>
+  <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">預約成功！</div>
+  <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:22px">我們會在健檢前一天透過 LINE<br>發送禁食提醒給您</div>
+  <div class="appt-card">
+    <div class="ac-title">預約明細</div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-user"></i></div><div><div class="ac-lbl">姓名</div><div class="ac-val" id="sucName">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-clipboard-list"></i></div><div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="sucPlan">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-calendar"></i></div><div><div class="ac-lbl">預約日期</div><div class="ac-val" id="sucDate">—</div></div></div>
+    <div class="ac-row"><div class="ac-ic"><i class="ti ti-clock"></i></div><div><div class="ac-lbl">時段</div><div class="ac-val" id="sucSlot">—</div></div></div>
+  </div>
+  <button class="btn btn-g" style="width:100%" onclick="closeLiff()"><i class="ti ti-brand-line"></i>返回 LINE</button>
+</div>
+
+<!-- 語音 Modal -->
+<div class="modal-ov" id="voiceModal">
+  <div class="modal-box">
+    <div class="mh">
+      <div class="mh-t"><i class="ti ti-microphone" style="color:var(--green)"></i><span id="vModalTitle">語音輸入</span></div>
+      <button class="mc-x" onclick="closeVoice()">✕</button>
+    </div>
+    <div class="ibox" style="margin-bottom:14px"><i class="ti ti-bulb"></i><p id="vTip">請說出您想輸入的資料</p></div>
+    <div class="wave-w" id="waveW">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
+    <div class="vst" id="vStat">按下麥克風開始說話</div>
+    <div class="vres" id="vRes"><div style="font-size:10px;color:var(--hint);margin-bottom:5px">辨識結果</div><div id="vResTxt">—</div></div>
+    <div class="vsingle" id="vSingle">—</div>
+    <button class="btn-mic" id="btnMic" onclick="togRec()">
+      <i class="ti ti-microphone" style="font-size:20px"></i><span id="btnMicTxt">按下開始說話</span>
+    </button>
+    <button class="btn btn-o" id="btnVC" style="display:none;margin-top:0" onclick="closeVoice()">關閉</button>
+  </div>
+</div>
+
+<script>
+const LIFF_ID  = '2010169963-n8zZXE1V';
+const API_BASE = 'https://shanlin-bot-production.up.railway.app';
+const pNames   = { A:'A 方案（腦肺方案）', B:'B 方案（腹部方案）', C:'C 方案（骨密肌力方案）' };
+
+let lineUserId = null;
+let recognition = null, isRec = false, vMode = 'plan';
+let curPlan = null, curSlot = null;
+
+window.addEventListener('load', async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const p = await liff.getProfile();
+    lineUserId = p.userId;
+  } catch(e) {
+    lineUserId = 'test_' + Date.now();
+  }
+  initSR();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('apptDate').min = today;
+});
+
+function closeLiff() {
+  try { liff.closeWindow(); }
+  catch(e) { alert('已完成！請返回 LINE 繼續使用。'); }
+}
+
+function goS(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goStep(n) {
+  if (n === 3) fillConfirm();
+  goS('s'+n);
+}
+
+function chkS0() {
+  const name  = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  document.getElementById('btnS0').disabled = !(name && /^09\d{8}$/.test(phone));
+}
+
+function selPlan(p) {
+  curPlan = p;
+  ['A','B','C'].forEach(x => document.getElementById('p'+x).classList.remove('sel'));
+  document.getElementById('p'+p).classList.add('sel');
+  document.getElementById('btnS1').disabled = false;
+}
+
+function selSlot(el, t) {
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  curSlot = t;
+  chkS2();
+}
+
+function chkS2() {
+  document.getElementById('btnS2').disabled = !(document.getElementById('apptDate').value && curSlot);
+}
+
+function fillConfirm() {
+  document.getElementById('cfName').textContent  = document.getElementById('inputName').value.trim();
+  document.getElementById('cfPhone').textContent = document.getElementById('inputPhone').value.trim();
+  document.getElementById('cfPlan').textContent  = pNames[curPlan] || '—';
+  const d = document.getElementById('apptDate').value;
+  document.getElementById('cfDate').textContent  = d ? new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  document.getElementById('cfSlot').textContent  = curSlot || '—';
+}
+
+async function doConfirm() {
+  document.getElementById('btnConfirm').disabled = true;
+  goS('s4');
+
+  const name  = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  const d     = document.getElementById('apptDate').value;
+
+  try {
+    await fetch(`${API_BASE}/api/appointment/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:         name,
+        phone:        phone,
+        plan:         curPlan,
+        date:         d,
+        time_slot:    curSlot,
+        line_user_id: lineUserId
+      })
+    });
+  } catch(e) {
+    console.error(e);
+  }
+
+  document.getElementById('sucName').textContent = name;
+  document.getElementById('sucPlan').textContent = pNames[curPlan] || '—';
+  document.getElementById('sucDate').textContent = d ? new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  document.getElementById('sucSlot').textContent = curSlot || '—';
+  goS('s5');
+}
+
+/* 語音 */
+function initSR() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang = 'zh-TW';
+  recognition.interimResults = true;
+  recognition.onstart = () => { setWave(true); document.getElementById('vStat').textContent='聆聽中，請說話...'; document.getElementById('btnMic').classList.add('rec'); document.getElementById('btnMicTxt').textContent='點擊停止'; };
+  recognition.onresult = (e) => {
+    let fin='',intr='';
+    for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else intr+=t; }
+    const txt=fin||intr;
+    document.getElementById('vRes').style.display='block';
+    document.getElementById('vResTxt').textContent=txt;
+    if(fin) parseVoice(fin);
+  };
+  recognition.onerror = (e) => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='按下開始說話'; document.getElementById('vStat').textContent=e.error==='not-allowed'?'⚠️ 請允許麥克風權限':'辨識失敗，請再試'; };
+  recognition.onend = () => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='再說一次'; };
+}
+
+function setWave(on) { document.querySelectorAll('.wb').forEach(b=>on?b.classList.add('on'):b.classList.remove('on')); }
+
+function togRec() {
+  if(!recognition){ document.getElementById('vStat').textContent='請使用 Chrome 瀏覽器'; return; }
+  if(isRec){ recognition.stop(); isRec=false; }
+  else{ document.getElementById('vRes').style.display='none'; document.getElementById('vSingle').style.display='none'; document.getElementById('btnVC').style.display='none'; recognition.start(); isRec=true; }
+}
+
+function zhN(s) {
+  const m={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','○':'0'};
+  return s.replace(/[零一二三四五六七八九○]/g,c=>m[c]||c);
+}
+
+function parseVoice(txt) {
+  if(vMode==='plan'){
+    let rec=null;
+    if(/頭暈|記憶|忘|胸|呼吸|肺/.test(txt)) rec='A';
+    else if(/肚|腸|胃|糖尿|血糖|腹/.test(txt)) rec='B';
+    else if(/骨|跌|無力|肌肉|走路|腰/.test(txt)) rec='C';
+    const msg=rec?`根據您的症狀，建議選擇「${rec} 方案」✅`:`我聽到：「${txt}」\n如不確定，可諮詢診所護理師`;
+    document.getElementById('vSingle').style.display='block';
+    document.getElementById('vSingle').textContent=msg;
+    document.getElementById('btnVC').style.display='flex';
+    document.getElementById('vStat').textContent=rec?`建議：${rec} 方案`:'請參考上方說明';
+    if(rec) setTimeout(()=>{ selPlan(rec); closeVoice(); },800);
+  } else {
+    const n2=zhN(txt);
+    const sm=n2.match(/(\d{1,2})[點:：時](\d{0,2})?/);
+    const slotStr=sm?`${String(parseInt(sm[1])).padStart(2,'0')}:${String(parseInt(sm[2]||'0')).padStart(2,'0')}`:null;
+    const msg=slotStr?`辨識到時段：${slotStr}\n請在下方手動點選確認`:`我聽到：「${txt}」\n請手動選擇時段`;
+    document.getElementById('vSingle').style.display='block';
+    document.getElementById('vSingle').textContent=msg;
+    document.getElementById('btnVC').style.display='flex';
+    document.getElementById('vStat').textContent=slotStr?`建議時段：${slotStr}`:'請手動選擇';
+  }
+}
+
+const vCfg={
+  plan:{title:'語音說明症狀',tip:'例如說：「我最近常頭暈、記憶力變差」或「我腸胃不好、血糖高」'},
+  time:{title:'語音說出想要時間',tip:'例如說：「我想約下週三早上九點」'},
+};
+
+function openVoice(mode){
+  vMode=mode;
+  const c=vCfg[mode];
+  document.getElementById('vModalTitle').textContent=c.title;
+  document.getElementById('vTip').textContent=c.tip;
+  document.getElementById('vRes').style.display='none';
+  document.getElementById('vSingle').style.display='none';
+  document.getElementById('btnVC').style.display='none';
+  document.getElementById('vStat').textContent='按下麥克風開始說話';
+  document.getElementById('btnMicTxt').textContent='按下開始說話';
+  document.getElementById('btnMic').classList.remove('rec');
+  setWave(false);
+  document.getElementById('voiceModal').classList.add('open');
+}
+
+function closeVoice(){
+  if(isRec&&recognition){recognition.stop();isRec=false;}
+  document.getElementById('voiceModal').classList.remove('open');
+}
+</script>
+</body>
+</html>
