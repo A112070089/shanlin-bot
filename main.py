@@ -26,7 +26,9 @@ app.add_middleware(
 CHANNEL_SECRET       = os.environ.get("CHANNEL_SECRET", "")
 CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
 FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
-LINE_API = "https://api.line.me/v2/bot/message"
+LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
+LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
+LINE_API             = "https://api.line.me/v2/bot/message"
 
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
 try:
@@ -65,8 +67,32 @@ async def reply_message(reply_token: str, messages: list):
         print(f"Reply status: {res.status_code}, body: {res.text}")
 
 
-def get_liff_url():
-    return os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
+def make_liff_button(label: str, url: str) -> dict:
+    return {
+        "type": "template",
+        "altText": label,
+        "template": {
+            "type": "buttons",
+            "text": label,
+            "actions": [{
+                "type": "uri",
+                "label": label[:20],
+                "uri": url
+            }]
+        }
+    }
+
+
+def check_bound(user_id: str) -> bool:
+    """檢查此 LINE User ID 是否已完成身分驗證綁定"""
+    try:
+        users = db.reference("appointments").get() or {}
+        for uid, data in users.items():
+            if isinstance(data, dict) and data.get("lineUserId") == user_id:
+                return True
+    except Exception as e:
+        print(f"check_bound error: {e}")
+    return False
 
 
 @app.post("/webhook")
@@ -116,25 +142,52 @@ async def handle_follow(user_id: str, reply_token: str):
 async def handle_text(user_id: str, reply_token: str, text: str):
     keywords_booking = ["預約", "體檢", "健檢", "掛號"]
     keywords_report  = ["報告", "檢查結果"]
+    keywords_verify  = ["綁定", "驗證", "身分"]
     keywords_hours   = ["時間", "門診", "幾點"]
     keywords_address = ["地址", "位置", "在哪", "怎麼去"]
 
     if any(k in text for k in keywords_booking):
+        # ── 一條龍流程：檢查是否已綁定 ──
+        is_bound = check_bound(user_id)
+
+        if is_bound:
+            # 已綁定 → 直接給預約按鈕
+            await reply_message(reply_token, [
+                {
+                    "type": "text",
+                    "text": "您已完成身分驗證 ✅\n請點下方按鈕進行健檢預約 📋"
+                },
+                make_liff_button("📅 立即預約健檢", LIFF_APPT_URL)
+            ])
+        else:
+            # 未綁定 → 先驗證，驗證成功後再預約
+            await reply_message(reply_token, [
+                {
+                    "type": "text",
+                    "text": (
+                        "您好！要預約老人健檢嗎？😊\n\n"
+                        "第一步：請先完成身分驗證綁定\n"
+                        "驗證成功後即可直接預約健檢，以後說「預約」就會直接跳到預約頁面！"
+                    )
+                },
+                make_liff_button("🔐 第一步：身分驗證綁定", LIFF_VERIFY_URL)
+            ])
+
+    elif any(k in text for k in keywords_verify):
         await reply_message(reply_token, [
-            {
-                "type": "text",
-                "text": "您好！要預約老人健檢嗎？\n請先完成身分驗證綁定，之後就能隨時預約 😊"
-            },
-            make_liff_button("🔐 進行身分驗證綁定", get_liff_url())
+            {"type": "text", "text": "請點下方按鈕完成身分驗證綁定 🔐"},
+            make_liff_button("🔐 身分驗證綁定", LIFF_VERIFY_URL)
         ])
+
     elif any(k in text for k in keywords_report):
         await reply_message(reply_token, [
             {
                 "type": "text",
                 "text": "您的健檢報告可在綁定後查閱，系統會以 AI 白話文解讀紅字數值 📋"
             },
-            make_liff_button("📄 查看我的報告", get_liff_url())
+            make_liff_button("📄 查看我的報告", LIFF_VERIFY_URL)
         ])
+
     elif any(k in text for k in keywords_hours):
         await reply_message(reply_token, [{
             "type": "text",
@@ -146,11 +199,13 @@ async def handle_text(user_id: str, reply_token: str, text: str):
                 "國定假日門診半天"
             )
         }])
+
     elif any(k in text for k in keywords_address):
         await reply_message(reply_token, [{
             "type": "text",
             "text": "📍 台北市文山區羅斯福路六段 407 號 2 樓\n（由車前路門口上樓）\n\n📞 02-2933-2010"
         }])
+
     else:
         await reply_message(reply_token, [{
             "type": "text",
@@ -160,28 +215,22 @@ async def handle_text(user_id: str, reply_token: str, text: str):
 
 async def handle_postback(user_id: str, reply_token: str, data_str: str):
     if data_str == "action=checkup":
-        await reply_message(reply_token, [
-            {"type": "text", "text": "請點下方按鈕進行身分驗證，驗證後即可預約健檢 🏥"},
-            make_liff_button("🔐 身分驗證綁定", get_liff_url())
-        ])
+        is_bound = check_bound(user_id)
+        if is_bound:
+            await reply_message(reply_token, [
+                {"type": "text", "text": "請點下方按鈕進行健檢預約 📋"},
+                make_liff_button("📅 立即預約健檢", LIFF_APPT_URL)
+            ])
+        else:
+            await reply_message(reply_token, [
+                {"type": "text", "text": "請先完成身分驗證綁定 🔐"},
+                make_liff_button("🔐 身分驗證綁定", LIFF_VERIFY_URL)
+            ])
 
 
-def make_liff_button(label: str, url: str) -> dict:
-    return {
-        "type": "template",
-        "altText": label,
-        "template": {
-            "type": "buttons",
-            "text": label,
-            "actions": [{
-                "type": "uri",
-                "label": label[:20],
-                "uri": url
-            }]
-        }
-    }
-
-
+# ══════════════════════════════════════
+#  LIFF 身分驗證 API
+# ══════════════════════════════════════
 class VerifyRequest(BaseModel):
     id_number:    str
     phone:        str
@@ -210,19 +259,18 @@ async def liff_verify(req: VerifyRequest):
 
     ref.update({"lineUserId": req.line_user_id, "boundAt": datetime.now().isoformat()})
 
+    # 驗證成功後推播，並直接附上預約按鈕
     await push_message(req.line_user_id, [
         {
             "type": "text",
             "text": (
                 f"✅ 身分驗證綁定成功！\n\n"
                 f"您好，{data.get('name', '')}！\n"
-                f"以後可以直接透過 LINE 使用以下服務：\n"
-                f"• 語音預約健檢\n"
-                f"• 查看健檢報告\n"
-                f"• 診前禁食提醒\n"
-                f"• AI 護理師問答"
+                f"以後說「預約」就可以直接預約健檢了 😊\n\n"
+                f"現在要立即預約嗎？"
             )
-        }
+        },
+        make_liff_button("📅 立即預約健檢", LIFF_APPT_URL)
     ])
 
     return {
@@ -233,40 +281,49 @@ async def liff_verify(req: VerifyRequest):
     }
 
 
+# ══════════════════════════════════════
+#  語音預約 API
+# ══════════════════════════════════════
 class AppointmentRequest(BaseModel):
-    id_number: str
-    plan:      str
-    date:      str
-    time_slot: str
+    id_number:    str
+    plan:         str
+    date:         str
+    time_slot:    str
+    line_user_id: str = ""
 
 
 @app.post("/api/appointment/book")
 async def book_appointment(req: AppointmentRequest):
-    id_num = req.id_number.upper().strip()
-
-    try:
-        ref  = db.reference(f"appointments/{id_num}")
-        data = ref.get()
-    except Exception:
-        raise HTTPException(status_code=404, detail="查無資料")
-
-    if not data:
-        raise HTTPException(status_code=404, detail="查無此身分證資料")
-
     plan_names = {
         "A": "A 方案（腦肺方案）",
         "B": "B 方案（腹部方案）",
         "C": "C 方案（骨密肌力方案）"
     }
 
-    ref.update({
-        "plan":     req.plan,
-        "date":     req.date,
-        "time":     req.time_slot,
-        "bookedAt": datetime.now().isoformat()
-    })
+    # 用 line_user_id 找到對應的預約資料
+    line_user_id = req.line_user_id
+    target_ref   = None
+    target_data  = None
 
-    line_user_id = data.get("lineUserId")
+    try:
+        all_appts = db.reference("appointments").get() or {}
+        for id_num, data in all_appts.items():
+            if isinstance(data, dict) and data.get("lineUserId") == line_user_id:
+                target_ref  = db.reference(f"appointments/{id_num}")
+                target_data = data
+                break
+    except Exception as e:
+        print(f"book error: {e}")
+
+    if target_ref:
+        target_ref.update({
+            "plan":     req.plan,
+            "date":     req.date,
+            "time":     req.time_slot,
+            "bookedAt": datetime.now().isoformat()
+        })
+
+    # 推播預約成功通知
     if line_user_id:
         await push_message(line_user_id, [{
             "type": "text",
@@ -282,6 +339,9 @@ async def book_appointment(req: AppointmentRequest):
     return {"status": "success", "message": "預約成功"}
 
 
+# ══════════════════════════════════════
+#  診前提醒
+# ══════════════════════════════════════
 @app.post("/api/reminder/send")
 async def send_reminders():
     import datetime as dt
@@ -294,6 +354,8 @@ async def send_reminders():
 
     sent = 0
     for id_num, data in all_appts.items():
+        if not isinstance(data, dict):
+            continue
         if data.get("date") == tomorrow and data.get("lineUserId"):
             await push_message(data["lineUserId"], [{
                 "type": "text",
