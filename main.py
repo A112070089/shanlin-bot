@@ -126,15 +126,48 @@ async def handle_follow(user_id: str, reply_token: str):
 
 
 async def handle_text(user_id: str, reply_token: str, text: str):
-    keywords_query = ["我的預約", "查詢預約", "預約資料", "預約紀錄", "幾點", "幾號"]
     keywords_booking = ["預約", "體檢", "健檢", "掛號"]
     keywords_verify  = ["綁定", "驗證", "身分證"]
+    keywords_query   = ["我的預約", "查詢預約", "預約資料", "預約紀錄", "查預約"]
     keywords_report  = ["報告", "檢查結果"]
     keywords_hours   = ["時間", "門診", "幾點"]
     keywords_address = ["地址", "位置", "在哪", "怎麼去"]
 
-    if any(k in text for k in keywords_booking):
-        # 直接開預約 LIFF
+    if any(k in text for k in keywords_query):
+        appt_data = None
+        try:
+            all_appts = db.reference("appointments").get() or {}
+            for id_num, data in all_appts.items():
+                if isinstance(data, dict) and data.get("lineUserId") == user_id:
+                    appt_data = data
+                    break
+        except Exception as e:
+            print(f"query error: {e}")
+
+        if appt_data:
+            plan_names = {
+                "A": "A 方案（腦肺方案）",
+                "B": "B 方案（腹部方案）",
+                "C": "C 方案（骨密肌力方案）"
+            }
+            await reply_message(reply_token, [{
+                "type": "text",
+                "text": (
+                    f"📋 您的預約資料\n\n"
+                    f"👤 姓名：{appt_data.get('name', '—')}\n"
+                    f"📅 日期：{appt_data.get('date', '—')}\n"
+                    f"⏰ 時段：{appt_data.get('time', '—')}\n"
+                    f"🏥 方案：{plan_names.get(appt_data.get('plan', ''), appt_data.get('plan', '—'))}\n\n"
+                    f"如需修改請撥打 02-2933-2010"
+                )
+            }])
+        else:
+            await reply_message(reply_token, [{
+                "type": "text",
+                "text": "目前查無您的預約紀錄。\n如需預約請說「預約」，或撥打 02-2933-2010 😊"
+            }])
+
+    elif any(k in text for k in keywords_booking):
         await reply_message(reply_token, [
             {
                 "type": "text",
@@ -143,42 +176,7 @@ async def handle_text(user_id: str, reply_token: str, text: str):
             make_liff_button("📅 立即預約健檢", LIFF_APPT_URL)
         ])
 
-    elif any(k in text for k in keywords_query):
-    # 用 LINE User ID 查詢預約資料
-    appt_data = None
-    try:
-        all_appts = db.reference("appointments").get() or {}
-        for id_num, data in all_appts.items():
-            if isinstance(data, dict) and data.get("lineUserId") == user_id:
-                appt_data = data
-                break
-    except Exception as e:
-        print(f"query error: {e}")
-
-    if appt_data:
-        plan_names = {
-            "A": "A 方案（腦肺方案）",
-            "B": "B 方案（腹部方案）",
-            "C": "C 方案（骨密肌力方案）"
-        }
-        await reply_message(reply_token, [{
-            "type": "text",
-            "text": (
-                f"📋 您的預約資料\n\n"
-                f"👤 姓名：{appt_data.get('name', '—')}\n"
-                f"📅 日期：{appt_data.get('date', '—')}\n"
-                f"⏰ 時段：{appt_data.get('time', '—')}\n"
-                f"🏥 方案：{plan_names.get(appt_data.get('plan',''), appt_data.get('plan','—'))}\n\n"
-                f"如需修改請撥打 02-2933-2010"
-            )
-        }])
-    else:
-        await reply_message(reply_token, [{
-            "type": "text",
-            "text": "目前查無您的預約紀錄。\n如需預約請說「預約」，或撥打 02-2933-2010 😊"
-        }])
     elif any(k in text for k in keywords_verify):
-        # 已在診所預約，想綁定 LINE 帳號接收提醒
         await reply_message(reply_token, [
             {
                 "type": "text",
@@ -225,10 +223,6 @@ async def handle_text(user_id: str, reply_token: str, text: str):
         }])
 
 
-# ══════════════════════════════════════
-#  LIFF 身分驗證綁定 API
-#  給已在診所預約但想綁定 LINE 的人用
-# ══════════════════════════════════════
 class VerifyRequest(BaseModel):
     id_number:    str
     phone:        str
@@ -277,10 +271,6 @@ async def liff_verify(req: VerifyRequest):
     }
 
 
-# ══════════════════════════════════════
-#  語音預約 API
-#  預約同時把 LINE User ID 存進 Firebase
-# ══════════════════════════════════════
 class AppointmentRequest(BaseModel):
     name:         str
     phone:        str
@@ -298,7 +288,6 @@ async def book_appointment(req: AppointmentRequest):
         "C": "C 方案（骨密肌力方案）"
     }
 
-    # 用電話號碼找現有資料，或建立新資料
     phone = req.phone.strip()
     if not phone.startswith("0"):
         phone = "0" + phone
@@ -316,12 +305,12 @@ async def book_appointment(req: AppointmentRequest):
                     break
 
         record = {
-            "name":       req.name,
-            "phone":      phone,
-            "plan":       req.plan,
-            "date":       req.date,
-            "time":       req.time_slot,
-            "bookedAt":   datetime.now().isoformat(),
+            "name":     req.name,
+            "phone":    phone,
+            "plan":     req.plan,
+            "date":     req.date,
+            "time":     req.time_slot,
+            "bookedAt": datetime.now().isoformat(),
         }
         if req.line_user_id:
             record["lineUserId"] = req.line_user_id
@@ -329,14 +318,12 @@ async def book_appointment(req: AppointmentRequest):
         if target_key:
             db.reference(f"appointments/{target_key}").update(record)
         else:
-            # 用時間戳建立新資料
             new_key = f"LIFF_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             db.reference(f"appointments/{new_key}").set(record)
 
     except Exception as e:
         print(f"book error: {e}")
 
-    # 推播預約成功通知
     if req.line_user_id:
         await push_message(req.line_user_id, [{
             "type": "text",
@@ -352,9 +339,6 @@ async def book_appointment(req: AppointmentRequest):
     return {"status": "success", "message": "預約成功"}
 
 
-# ══════════════════════════════════════
-#  診前提醒
-# ══════════════════════════════════════
 @app.post("/api/reminder/send")
 async def send_reminders():
     import datetime as dt
