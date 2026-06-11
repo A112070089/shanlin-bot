@@ -278,6 +278,8 @@ class AppointmentRequest(BaseModel):
     date:         str
     time_slot:    str
     line_user_id: str = ""
+    birth:        str = ""
+    id_number:    str = ""
 
 
 @app.post("/api/appointment/book")
@@ -312,6 +314,10 @@ async def book_appointment(req: AppointmentRequest):
             "time":     req.time_slot,
             "bookedAt": datetime.now().isoformat(),
         }
+        if req.birth:
+            record["birth"] = req.birth
+        if req.id_number:
+            record["idNumber"] = req.id_number.upper()
         if req.line_user_id:
             record["lineUserId"] = req.line_user_id
 
