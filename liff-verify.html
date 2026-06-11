@@ -3,180 +3,141 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>山林診所 身分驗證</title>
+<title>山林診所 LINE 帳號綁定</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <style>
 :root{
-  --green:#2E8B57;--green-d:#1f6b40;--green-l:#e8f5ee;
-  --text:#1a1a1a;--sub:#6b7280;--hint:#9ca3af;
-  --border:#e5e7eb;--bg:#f4f6f8;--white:#fff;
-  --red:#dc2626;--red-l:#fef2f2;
+  --blue:#4A90C4;--blue-d:#2E6EA6;--blue-l:#EAF4FB;--blue-ll:#F5FAFD;
+  --red:#C0392B;--green:#27AE60;
+  --text:#2C3E50;--sub:#7F8C8D;--hint:#BDC3C7;
+  --border:#D5E8F0;--bg:#F0F7FC;--white:#fff;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
-
-/* TOPBAR */
-.topbar{background:var(--green);padding:13px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
-.topbar-logo{width:30px;height:30px;background:rgba(255,255,255,.25);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.topbar-logo i{font-size:16px;color:#fff}
-.topbar-name{font-size:15px;font-weight:700;color:#fff;flex:1}
-.topbar-badge{background:rgba(255,255,255,.22);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px}
-
-/* SCREENS */
-.screen{display:none;flex:1;padding:20px 18px 40px;flex-direction:column}
+.topbar{background:var(--blue-l);border-bottom:2px solid var(--blue);padding:12px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-logo{display:flex;align-items:center;gap:8px}
+.topbar-logo-ic{width:36px;height:36px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.topbar-logo-ic i{font-size:18px;color:#fff}
+.topbar-name{font-size:16px;font-weight:700;color:var(--blue-d)}
+.topbar-sub{font-size:11px;color:var(--sub)}
+.screen{display:none;flex:1;padding:20px 18px 50px;flex-direction:column}
 .screen.active{display:flex}
-
-/* CARD */
-.card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--border);margin-bottom:14px}
-
-/* HERO */
-.hero{text-align:center;padding:28px 16px 22px}
-.hero-ic{width:68px;height:68px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
-.hero-ic i{font-size:32px;color:var(--green)}
-.hero-t{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
-.hero-s{font-size:14px;color:var(--sub);line-height:1.7}
-
-/* FORM */
+.page-title{font-size:24px;font-weight:700;color:var(--blue-d);margin-bottom:8px}
+.card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid var(--border);margin-bottom:14px}
 .fl{margin-bottom:16px}
 .fl:last-child{margin-bottom:0}
-.fl-lbl{font-size:14px;font-weight:500;color:var(--text);margin-bottom:7px;display:flex;align-items:center;gap:6px}
-.fl-lbl i{font-size:16px;color:var(--green)}
-.req{color:var(--red);font-size:11px}
-.fi{width:100%;height:54px;border:1.5px solid var(--border);border-radius:12px;padding:0 14px;font-size:20px;font-family:'Noto Sans TC',monospace;font-weight:500;color:var(--text);background:#fafafa;outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:1px}
-.fi:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(46,139,87,.1)}
-.fi::placeholder{font-size:15px;letter-spacing:0;color:var(--hint);font-weight:400}
-.fi.err{border-color:var(--red);background:var(--red-l)}
-.fhint{font-size:12px;color:var(--hint);margin-top:5px}
-.ferr{font-size:12px;color:var(--red);margin-top:5px;display:none;align-items:center;gap:4px}
-.ferr.show{display:flex}
+.fl-lbl{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+.req{color:var(--red);margin-left:2px}
+.fi{width:100%;height:48px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--text);background:#fafafa;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(74,144,196,.1)}
+.fi::placeholder{color:var(--hint)}
+.fi.err{border-color:var(--red);background:#fef9f9}
+.fhint{font-size:11px;color:var(--sub);margin-top:4px}
+.ferr{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.ferr.show{display:block}
 .fdiv{border:none;border-top:1px solid var(--border);margin:10px 0}
-
-/* BUTTONS */
-.btn{width:100%;height:54px;border:none;border-radius:13px;font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-bottom:10px}
+.btn{width:100%;height:50px;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-bottom:10px}
 .btn:active{transform:scale(.98)}
-.btn-g{background:var(--green);color:#fff}
-.btn-g:hover{background:var(--green-d)}
-.btn-g:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
-.btn-o{background:var(--white);color:var(--green-d);border:1.5px solid var(--green)}
-.btn-o:hover{background:var(--green-l)}
-.or-r{display:flex;align-items:center;gap:10px;margin:4px 0 10px;color:var(--hint);font-size:12px}
-.or-l{flex:1;border-top:1px solid var(--border)}
-
-/* INFO */
-.ibox{background:var(--green-l);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:9px;margin-top:4px}
-.ibox i{font-size:15px;color:var(--green-d);margin-top:1px;flex-shrink:0}
-.ibox p{font-size:12px;color:#0f3d20;line-height:1.6}
-
-/* FONT SIZE */
-.ft{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-bottom:14px}
-.ft span{font-size:12px;color:var(--hint)}
-.ftb{width:30px;height:30px;border:1px solid var(--border);border-radius:7px;background:var(--white);cursor:pointer;font-family:'Noto Sans TC',sans-serif;color:var(--sub);display:flex;align-items:center;justify-content:center}
-.ftb.lg{font-size:15px;font-weight:700}.ftb.sm{font-size:10px}
-
-/* SPINNER */
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-d)}
+.btn-blue:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
+.btn-outline{background:#fff;color:var(--blue-d);border:2px solid var(--blue)}
+.btn-outline:hover{background:var(--blue-l)}
+.info-box{background:var(--blue-l);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.info-box p{font-size:12px;color:var(--blue-d);line-height:1.7}
 .spin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
-.spinner{width:50px;height:50px;border:4px solid var(--green-l);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+.spinner{width:48px;height:48px;border:4px solid var(--blue-l);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* SUCCESS */
-.suc-ic{width:80px;height:80px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.suc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 18px 40px}
+.suc-ic{width:80px;height:80px;background:#E8F8EF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
 .suc-ic i{font-size:40px;color:var(--green)}
-.appt-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:18px;width:100%}
-.ac-title{font-size:11px;color:var(--hint);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;font-weight:500}
+.err-ic{width:80px;height:80px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.err-ic i{font-size:40px;color:var(--red)}
+.appt-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:18px;width:100%;text-align:left}
+.ac-title{font-size:11px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;font-weight:500}
 .ac-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .ac-row:last-child{border-bottom:none;padding-bottom:0}
-.ac-ic{width:32px;height:32px;background:var(--green-l);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ac-ic i{font-size:15px;color:var(--green-d)}
-.ac-lbl{font-size:11px;color:var(--hint);margin-bottom:1px}
+.ac-ic{width:30px;height:30px;background:var(--blue-l);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-ic i{font-size:14px;color:var(--blue-d)}
+.ac-lbl{font-size:11px;color:var(--sub);margin-bottom:1px}
 .ac-val{font-size:13px;font-weight:500;color:var(--text)}
-
-/* ERROR SCREEN */
-.err-ic{width:80px;height:80px;background:var(--red-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.err-ic i{font-size:40px;color:var(--red)}
-.btn-d{background:var(--text);color:#fff}
-
-/* VOICE MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
 .modal-ov.open{display:flex}
-.modal-box{background:var(--white);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px}
-.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 44px;width:100%;max-width:480px}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .mh-t{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.mc-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--sub);width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.mc-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--sub);width:30px;height:30px;display:flex;align-items:center;justify-content:center}
 .wave-w{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:44px;margin-bottom:10px}
 .wb{width:5px;background:#d1d5db;border-radius:3px;height:10px}
-.wb.on{background:var(--green);animation:wv .6s ease-in-out infinite alternate}
+.wb.on{background:var(--blue);animation:wv .6s ease-in-out infinite alternate}
 .wb.on:nth-child(2){animation-delay:.1s}.wb.on:nth-child(3){animation-delay:.2s}
 .wb.on:nth-child(4){animation-delay:.05s}.wb.on:nth-child(5){animation-delay:.15s}
-.wb.on:nth-child(6){animation-delay:.25s}.wb.on:nth-child(7){animation-delay:.08s}
-.wb.on:nth-child(8){animation-delay:.18s}.wb.on:nth-child(9){animation-delay:.12s}
 @keyframes wv{from{height:8px}to{height:36px}}
 .vst{text-align:center;font-size:13px;color:var(--sub);margin-bottom:12px;min-height:20px}
-.vres{display:none;background:#f9fafb;border-radius:11px;padding:12px;margin-bottom:12px;border:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6}
+.vres{display:none;background:#f9fafb;border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6}
 .vprev{display:none;margin-bottom:12px}
 .vchips{display:flex;gap:8px}
-.vchip{flex:1;background:var(--green-l);border-radius:9px;padding:9px 11px}
-.vchip-l{font-size:10px;color:var(--green-d);margin-bottom:2px}
-.vchip-v{font-size:14px;font-weight:700;color:#0f3d20;letter-spacing:1px}
-.btn-mic{width:100%;height:56px;border-radius:13px;border:none;background:var(--green);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
-.btn-mic.rec{background:#dc2626;animation:pr 1s ease-in-out infinite}
+.vchip{flex:1;background:var(--blue-l);border-radius:9px;padding:9px 11px}
+.vchip-l{font-size:10px;color:var(--blue-d);margin-bottom:2px}
+.vchip-v{font-size:14px;font-weight:700;color:var(--blue-d);letter-spacing:1px}
+.btn-mic{width:100%;height:52px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+.btn-mic.rec{background:var(--red);animation:pr 1s ease-in-out infinite}
 @keyframes pr{0%,100%{opacity:1}50%{opacity:.8}}
-
-/* LARGE TEXT */
-body.large .fl-lbl{font-size:17px}
-body.large .fi{font-size:22px;height:62px}
-body.large .hero-t{font-size:26px}
-body.large .btn{height:62px;font-size:18px}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo"><i class="ti ti-building-hospital"></i></div>
-  <span class="topbar-name">山林診所</span>
-  <span class="topbar-badge">官方帳號</span>
+  <div class="topbar-logo">
+    <div class="topbar-logo-ic"><i class="ti ti-building-hospital"></i></div>
+    <div>
+      <div class="topbar-name">山林診所</div>
+      <div class="topbar-sub">LINE 帳號綁定</div>
+    </div>
+  </div>
 </div>
 
-<!-- SCREEN 1: 登入 -->
+<!-- SCREEN 1: 輸入 -->
 <div class="screen active" id="sLogin">
-  <div class="ft">
-    <span>文字大小</span>
-    <button class="ftb sm" onclick="setFont('n')">A</button>
-    <button class="ftb lg" onclick="setFont('l')">A</button>
+  <div class="page-title">LINE 帳號綁定</div>
+
+  <div class="info-box">
+    <p>
+      如果您已在診所、電話或官網完成預約，<br>
+      請輸入預約時填寫的身分證字號與手機號碼，<br>
+      綁定後即可透過 LINE 接收健檢提醒與報告通知 🔔
+    </p>
   </div>
-  <div class="card hero">
-    <div class="hero-ic"><i class="ti ti-shield-lock"></i></div>
-    <div class="hero-t">身分驗證</div>
-    <div class="hero-s">驗證後可查詢預約、接收提醒<br>與查看健檢報告</div>
-  </div>
+
   <div class="card">
     <div class="fl">
-      <div class="fl-lbl"><i class="ti ti-id-badge-2"></i>身分證字號<span class="req">*</span></div>
-      <input class="fi" id="inputID" type="text" maxlength="10" placeholder="例：A123456789"
-        autocorrect="off" autocapitalize="characters" oninput="onIDI(this)"/>
-      <div class="fhint">中華民國身分證字號（共 10 碼）</div>
-      <div class="ferr" id="errID"><i class="ti ti-alert-circle"></i>格式不符，請重新確認</div>
+      <div class="fl-lbl">身分證字號<span class="req">*</span></div>
+      <input class="fi" id="inputID" type="text" maxlength="10" placeholder="例：A123456789" autocorrect="off" autocapitalize="characters" oninput="onIDI(this)"/>
+      <div class="fhint">請輸入中華民國身分證字號（共10碼）</div>
+      <div class="ferr" id="errID">格式不符，請重新確認</div>
     </div>
     <hr class="fdiv"/>
     <div class="fl">
-      <div class="fl-lbl"><i class="ti ti-device-mobile"></i>預約時填寫的手機號碼<span class="req">*</span></div>
-      <input class="fi" id="inputPhone" type="tel" maxlength="10" placeholder="例：0912345678"
-        inputmode="numeric" oninput="onPhI(this)"/>
+      <div class="fl-lbl">預約時填寫的手機號碼<span class="req">*</span></div>
+      <input class="fi" id="inputPhone" type="tel" maxlength="10" placeholder="例：0912345678" inputmode="numeric" oninput="onPhI(this)"/>
       <div class="fhint">請輸入預約時登記的手機號碼</div>
-      <div class="ferr" id="errPhone"><i class="ti ti-alert-circle"></i>請輸入 09 開頭的 10 位手機號碼</div>
+      <div class="ferr" id="errPhone">請輸入09開頭的10位手機號碼</div>
     </div>
   </div>
-  <button class="btn btn-g" id="btnVerify" onclick="doVerify()" disabled>
+
+  <button class="btn btn-blue" id="btnVerify" onclick="doVerify()" disabled>
     <i class="ti ti-shield-check"></i>驗證並綁定帳號
   </button>
-  <div class="or-r"><div class="or-l"></div>或<div class="or-l"></div></div>
-  <button class="btn btn-o" onclick="openVoice()">
+  <div style="display:flex;align-items:center;gap:10px;margin:4px 0 10px;color:var(--hint);font-size:12px">
+    <div style="flex:1;border-top:1px solid var(--border)"></div>或<div style="flex:1;border-top:1px solid var(--border)"></div>
+  </div>
+  <button class="btn btn-outline" onclick="openVoice()">
     <i class="ti ti-microphone"></i>用語音輸入資料
   </button>
-  <div class="ibox">
-    <i class="ti ti-lock"></i>
-    <p>您的個人資料僅用於核對預約紀錄，不會儲存於 LINE 平台。本系統符合個資法相關規定。</p>
+  <div class="info-box" style="margin-top:4px">
+    <p><i class="ti ti-lock" style="font-size:13px;margin-right:4px"></i>您的個人資料僅用於核對預約紀錄，不會儲存於 LINE 平台，符合個資法相關規定。</p>
   </div>
 </div>
 
@@ -184,78 +145,64 @@ body.large .btn{height:62px;font-size:18px}
 <div class="screen" id="sLoading">
   <div class="spin-wrap">
     <div class="spinner"></div>
-    <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px" id="loadTxt">比對資料中...</div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px" id="loadTxt">比對資料中...</div>
     <div style="font-size:13px;color:var(--sub)">請稍候，正在核對您的預約資料</div>
   </div>
 </div>
 
 <!-- SCREEN 3: 成功 -->
-<div class="screen" id="sSuccess" style="align-items:center;text-align:center">
-  <br/>
-  <div class="suc-ic"><i class="ti ti-circle-check"></i></div>
-  <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">驗證成功！</div>
-  <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:22px">
-    LINE 帳號已成功綁定<br>現在可以返回 LINE 使用服務
+<div class="screen" id="sSuccess">
+  <div class="suc-wrap">
+    <div class="suc-ic"><i class="ti ti-circle-check"></i></div>
+    <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">綁定成功！</div>
+    <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:22px">
+      LINE 帳號已成功綁定<br>之後健檢前會主動提醒您禁食注意事項
+    </div>
+    <div class="appt-card">
+      <div class="ac-title">您的預約資料</div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-user"></i></div><div><div class="ac-lbl">姓名</div><div class="ac-val" id="sucName">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-calendar"></i></div><div><div class="ac-lbl">預約日期</div><div class="ac-val" id="sucDate">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-clock"></i></div><div><div class="ac-lbl">時段</div><div class="ac-val" id="sucTime">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-clipboard-list"></i></div><div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="sucPlan">—</div></div></div>
+    </div>
+    <button class="btn btn-blue" style="width:100%" onclick="closeLiff()">
+      <i class="ti ti-brand-line"></i>返回 LINE 使用服務
+    </button>
   </div>
-  <div class="appt-card">
-    <div class="ac-title">您最近的預約</div>
-    <div class="ac-row">
-      <div class="ac-ic"><i class="ti ti-user"></i></div>
-      <div><div class="ac-lbl">姓名</div><div class="ac-val" id="sucName">—</div></div>
-    </div>
-    <div class="ac-row">
-      <div class="ac-ic"><i class="ti ti-calendar"></i></div>
-      <div><div class="ac-lbl">預約日期</div><div class="ac-val" id="sucDate">—</div></div>
-    </div>
-    <div class="ac-row">
-      <div class="ac-ic"><i class="ti ti-clock"></i></div>
-      <div><div class="ac-lbl">時段</div><div class="ac-val" id="sucTime">—</div></div>
-    </div>
-    <div class="ac-row">
-      <div class="ac-ic"><i class="ti ti-clipboard-list"></i></div>
-      <div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="sucPlan">—</div></div>
-    </div>
-  </div>
-  <button class="btn btn-g" style="width:100%" onclick="closeLiff()">
-    <i class="ti ti-brand-line"></i>返回 LINE 使用服務
-  </button>
 </div>
 
 <!-- SCREEN 4: 失敗 -->
-<div class="screen" id="sError" style="align-items:center;text-align:center;padding-top:60px">
-  <div class="err-ic"><i class="ti ti-alert-triangle"></i></div>
-  <div style="font-size:21px;font-weight:700;color:var(--text);margin-bottom:8px">查無資料</div>
-  <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:28px">
-    找不到符合的預約紀錄<br>請確認身分證字號與手機號碼<br>是否與預約時填寫的一致
+<div class="screen" id="sError">
+  <div class="suc-wrap">
+    <div class="err-ic"><i class="ti ti-alert-triangle"></i></div>
+    <div style="font-size:21px;font-weight:700;color:var(--text);margin-bottom:8px">查無資料</div>
+    <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:28px">
+      找不到符合的預約紀錄<br>請確認身分證字號與手機號碼<br>是否與預約時填寫的一致
+    </div>
+    <button class="btn btn-blue" style="width:240px" onclick="goS('sLogin')">
+      <i class="ti ti-refresh"></i>重新輸入
+    </button>
   </div>
-  <button class="btn btn-d" style="width:240px" onclick="goS('sLogin')">
-    <i class="ti ti-refresh"></i>重新輸入
-  </button>
 </div>
 
 <!-- 語音 Modal -->
 <div class="modal-ov" id="voiceModal">
   <div class="modal-box">
     <div class="mh">
-      <div class="mh-t"><i class="ti ti-microphone" style="color:var(--green)"></i>語音輸入身分資料</div>
+      <div class="mh-t"><i class="ti ti-microphone" style="color:var(--blue)"></i>語音輸入身分資料</div>
       <button class="mc-x" onclick="closeVoice()">✕</button>
     </div>
-    <div class="ibox" style="margin-bottom:14px">
-      <i class="ti ti-bulb"></i>
+    <div class="info-box" style="margin-bottom:12px">
       <p>請說：「身分證 A 一二三四五六七八九，手機 零九一二三四五六七八」</p>
     </div>
     <div class="wave-w" id="waveW">
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
     </div>
     <div class="vst" id="vStat">按下麥克風開始說話</div>
-    <div class="vres" id="vRes">
-      <div style="font-size:10px;color:var(--hint);margin-bottom:5px">辨識結果</div>
-      <div id="vResTxt">—</div>
-    </div>
+    <div class="vres" id="vRes"><div style="font-size:10px;color:var(--sub);margin-bottom:5px">辨識結果</div><div id="vResTxt">—</div></div>
     <div class="vprev" id="vPrev">
-      <div style="font-size:10px;color:var(--hint);margin-bottom:6px">即將填入</div>
+      <div style="font-size:10px;color:var(--sub);margin-bottom:6px">即將填入</div>
       <div class="vchips">
         <div class="vchip"><div class="vchip-l">身分證字號</div><div class="vchip-v" id="vPID">—</div></div>
         <div class="vchip"><div class="vchip-l">手機號碼</div><div class="vchip-v" id="vPPh">—</div></div>
@@ -264,32 +211,26 @@ body.large .btn{height:62px;font-size:18px}
     <button class="btn-mic" id="btnMic" onclick="togRec()">
       <i class="ti ti-microphone" style="font-size:20px"></i><span id="btnMicTxt">按下開始說話</span>
     </button>
-    <button class="btn btn-g" id="btnFill" style="display:none" onclick="fillV()">✓ 填入資料</button>
-    <button class="btn btn-o" id="btnVC" style="display:none;margin-top:0" onclick="closeVoice()">關閉</button>
+    <button class="btn btn-blue" id="btnFill" style="display:none" onclick="fillV()">✓ 填入資料</button>
+    <button class="btn btn-outline" id="btnVC" style="display:none;margin-top:0" onclick="closeVoice()">關閉</button>
   </div>
 </div>
 
 <script>
-/* ══ 設定 ══ */
 const LIFF_ID  = '2010169963-KEjAbfsW';
 const API_BASE = 'https://shanlin-bot-production.up.railway.app';
 
-/* ══ 狀態 ══ */
 let lineUserId = null;
 let recognition = null, isRec = false;
 let parsedID = null, parsedPh = null;
 
-/* ══ LIFF 初始化 ══ */
 window.addEventListener('load', async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) { liff.login(); return; }
     const p = await liff.getProfile();
     lineUserId = p.userId;
-  } catch(e) {
-    console.warn('LIFF init failed:', e.message);
-    lineUserId = 'test_user_' + Date.now();
-  }
+  } catch(e) { lineUserId = 'test_' + Date.now(); }
   initSR();
 });
 
@@ -298,51 +239,37 @@ function closeLiff() {
   catch(e) { alert('已完成！請返回 LINE 繼續使用。'); }
 }
 
-/* ══ 畫面切換 ══ */
 function goS(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
 }
 
-/* ══ 字體大小 ══ */
-function setFont(s) { document.body.classList.toggle('large', s === 'l'); }
-
-/* ══ 輸入驗證 ══ */
 function onIDI(el) {
-  el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
   el.classList.remove('err');
   document.getElementById('errID').classList.remove('show');
   chkReady();
 }
 function onPhI(el) {
-  el.value = el.value.replace(/[^0-9]/g, '');
+  el.value = el.value.replace(/[^0-9]/g,'');
   el.classList.remove('err');
   document.getElementById('errPhone').classList.remove('show');
   chkReady();
 }
-function valID(v) { return /^[A-Z][12]\d{8}$/.test(v); }
-function valPh(v) { return /^09\d{8}$/.test(v); }
 function chkReady() {
   const id = document.getElementById('inputID').value;
   const ph = document.getElementById('inputPhone').value;
-  document.getElementById('btnVerify').disabled = !(valID(id) && valPh(ph));
+  document.getElementById('btnVerify').disabled = !(/^[A-Z][12]\d{8}$/.test(id) && /^09\d{8}$/.test(ph));
 }
 
-/* ══ 驗證流程 ══ */
 async function doVerify() {
   const id = document.getElementById('inputID').value.trim();
   const ph = document.getElementById('inputPhone').value.trim();
-  let e = false;
-  if (!valID(id)) { document.getElementById('inputID').classList.add('err'); document.getElementById('errID').classList.add('show'); e = true; }
-  if (!valPh(ph)) { document.getElementById('inputPhone').classList.add('err'); document.getElementById('errPhone').classList.add('show'); e = true; }
-  if (e) return;
-
   goS('sLoading');
-  const msgs = ['比對資料中...', '核對預約紀錄...', '綁定 LINE 帳號...'];
+  const msgs = ['比對資料中...','核對預約紀錄...','綁定 LINE 帳號...'];
   let mi = 0;
-  const ticker = setInterval(() => { mi = (mi+1)%3; document.getElementById('loadTxt').textContent = msgs[mi]; }, 900);
-
+  const ticker = setInterval(() => { mi=(mi+1)%3; document.getElementById('loadTxt').textContent=msgs[mi]; }, 900);
   try {
     const res = await fetch(`${API_BASE}/api/liff/verify`, {
       method: 'POST',
@@ -352,112 +279,81 @@ async function doVerify() {
     clearInterval(ticker);
     if (res.ok) {
       const data = await res.json();
+      const pNames = { A:'A方案（腦肺方案）', B:'B方案（腹部方案）', C:'C方案（骨密肌力方案）' };
       document.getElementById('sucName').textContent = data.name || '—';
       document.getElementById('sucDate').textContent = data.date || '—';
       document.getElementById('sucTime').textContent = data.time || '—';
-      document.getElementById('sucPlan').textContent = data.plan || '—';
+      document.getElementById('sucPlan').textContent = pNames[data.plan] || data.plan || '—';
       goS('sSuccess');
-    } else {
-      goS('sError');
-    }
-  } catch(err) {
-    clearInterval(ticker);
-    goS('sError');
-  }
+    } else { goS('sError'); }
+  } catch(e) { clearInterval(ticker); goS('sError'); }
 }
 
-/* ══ 語音辨識 ══ */
+/* 語音 */
 function initSR() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
   recognition = new SR();
-  recognition.lang = 'zh-TW';
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = () => {
-    setWave(true);
-    document.getElementById('vStat').textContent = '聆聽中，請說話...';
-    document.getElementById('btnMic').classList.add('rec');
-    document.getElementById('btnMicTxt').textContent = '點擊停止';
-  };
+  recognition.lang = 'zh-TW'; recognition.interimResults = true;
+  recognition.onstart = () => { setWave(true); document.getElementById('vStat').textContent='聆聽中，請說話...'; document.getElementById('btnMic').classList.add('rec'); document.getElementById('btnMicTxt').textContent='點擊停止'; };
   recognition.onresult = (e) => {
-    let fin = '', intr = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) fin += t; else intr += t;
-    }
-    const txt = fin || intr;
-    document.getElementById('vRes').style.display = 'block';
-    document.getElementById('vResTxt').textContent = txt || '（辨識中...）';
-    if (fin) parseVoice(fin);
+    let fin='',intr='';
+    for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else intr+=t; }
+    const txt=fin||intr;
+    document.getElementById('vRes').style.display='block';
+    document.getElementById('vResTxt').textContent=txt||'（辨識中...）';
+    if(fin) parseVoice(fin);
   };
-  recognition.onerror = (e) => {
-    setWave(false); isRec = false;
-    document.getElementById('btnMic').classList.remove('rec');
-    document.getElementById('btnMicTxt').textContent = '按下開始說話';
-    document.getElementById('vStat').textContent = e.error === 'not-allowed' ? '⚠️ 請允許麥克風權限' : '辨識失敗，請再試';
-  };
-  recognition.onend = () => {
-    setWave(false); isRec = false;
-    document.getElementById('btnMic').classList.remove('rec');
-    document.getElementById('btnMicTxt').textContent = '再說一次';
-  };
+  recognition.onerror = (e) => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='按下開始說話'; document.getElementById('vStat').textContent=e.error==='not-allowed'?'⚠️ 請允許麥克風權限':'辨識失敗，請再試'; };
+  recognition.onend = () => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='再說一次'; };
 }
 
-function setWave(on) { document.querySelectorAll('.wb').forEach(b => on ? b.classList.add('on') : b.classList.remove('on')); }
+function setWave(on) { document.querySelectorAll('.wb').forEach(b=>on?b.classList.add('on'):b.classList.remove('on')); }
 
 function togRec() {
-  if (!recognition) { document.getElementById('vStat').textContent = '您的瀏覽器不支援語音辨識，請改用 Chrome'; return; }
-  if (isRec) { recognition.stop(); isRec = false; }
-  else {
-    parsedID = parsedPh = null;
-    ['vPrev','btnFill','btnVC'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
-    document.getElementById('vRes').style.display = 'none';
-    recognition.start(); isRec = true;
-  }
+  if(!recognition){ document.getElementById('vStat').textContent='請使用 Chrome 瀏覽器'; return; }
+  if(isRec){ recognition.stop(); isRec=false; }
+  else{ parsedID=parsedPh=null; ['vPrev','btnFill','btnVC'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';}); document.getElementById('vRes').style.display='none'; recognition.start(); isRec=true; }
 }
 
 function zhN(s) {
-  const m = {'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','○':'0'};
-  return s.replace(/[零一二三四五六七八九○]/g, c => m[c]||c);
+  const m={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','○':'0'};
+  return s.replace(/[零一二三四五六七八九○]/g,c=>m[c]||c);
 }
 
 function parseVoice(txt) {
-  const n = zhN(txt.toUpperCase().replace(/\s/g,''));
-  const im = n.match(/([A-Z][12]\d{8})/);
-  const pm = n.match(/(09\d{8})/);
-  if (im) parsedID = im[1];
-  if (pm) parsedPh = pm[1];
-  if (parsedID || parsedPh) {
-    document.getElementById('vPrev').style.display = 'block';
-    document.getElementById('vPID').textContent = parsedID || '未辨識';
-    document.getElementById('vPPh').textContent = parsedPh || '未辨識';
-    document.getElementById('btnFill').style.display = 'flex';
-    document.getElementById('vStat').textContent = parsedID && parsedPh ? '✅ 辨識成功！請確認後填入' : '部分辨識，請確認';
-  } else {
-    document.getElementById('vStat').textContent = '未能辨識，請再試一次';
-  }
+  const n=zhN(txt.toUpperCase().replace(/\s/g,''));
+  const im=n.match(/([A-Z][12]\d{8})/);
+  const pm=n.match(/(09\d{8})/);
+  if(im) parsedID=im[1];
+  if(pm) parsedPh=pm[1];
+  if(parsedID||parsedPh){
+    document.getElementById('vPrev').style.display='block';
+    document.getElementById('vPID').textContent=parsedID||'未辨識';
+    document.getElementById('vPPh').textContent=parsedPh||'未辨識';
+    document.getElementById('btnFill').style.display='flex';
+    document.getElementById('vStat').textContent=parsedID&&parsedPh?'✅ 辨識成功！請確認後填入':'部分辨識，請確認';
+  } else { document.getElementById('vStat').textContent='未能辨識，請再試一次'; }
 }
 
 function fillV() {
-  if (parsedID) { document.getElementById('inputID').value = parsedID; onIDI(document.getElementById('inputID')); }
-  if (parsedPh) { document.getElementById('inputPhone').value = parsedPh; onPhI(document.getElementById('inputPhone')); }
+  if(parsedID){ document.getElementById('inputID').value=parsedID; onIDI(document.getElementById('inputID')); }
+  if(parsedPh){ document.getElementById('inputPhone').value=parsedPh; onPhI(document.getElementById('inputPhone')); }
   closeVoice();
 }
 
-function openVoice() {
-  parsedID = parsedPh = null;
-  ['vPrev','btnFill','btnVC'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display='none'; });
-  document.getElementById('vRes').style.display = 'none';
-  document.getElementById('vStat').textContent = '按下麥克風開始說話';
-  document.getElementById('btnMicTxt').textContent = '按下開始說話';
+function openVoice(){
+  parsedID=parsedPh=null;
+  ['vPrev','btnFill','btnVC'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  document.getElementById('vRes').style.display='none';
+  document.getElementById('vStat').textContent='按下麥克風開始說話';
+  document.getElementById('btnMicTxt').textContent='按下開始說話';
   document.getElementById('btnMic').classList.remove('rec');
   setWave(false);
   document.getElementById('voiceModal').classList.add('open');
 }
-function closeVoice() {
-  if (isRec && recognition) { recognition.stop(); isRec = false; }
+function closeVoice(){
+  if(isRec&&recognition){recognition.stop();isRec=false;}
   document.getElementById('voiceModal').classList.remove('open');
 }
 </script>
