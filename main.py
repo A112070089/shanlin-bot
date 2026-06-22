@@ -5,14 +5,17 @@ import hashlib
 import base64
 from datetime import datetime
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Header, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from typing import Optional
+import io
 
 import httpx
 import firebase_admin
 from firebase_admin import credentials, db
+from openpyxl import load_workbook
 
 app = FastAPI(title="山林診所 LINE Bot API")
 
@@ -28,6 +31,7 @@ CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
 FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
 LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
+ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "shanlin2025")
 LINE_API             = "https://api.line.me/v2/bot/message"
 
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
@@ -83,6 +87,14 @@ def make_liff_button(label: str, url: str) -> dict:
     }
 
 
+def check_admin(x_admin_password: Optional[str]):
+    if x_admin_password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="密碼錯誤")
+
+
+# ══════════════════════════════════════
+#  LINE Webhook
+# ══════════════════════════════════════
 @app.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -223,6 +235,9 @@ async def handle_text(user_id: str, reply_token: str, text: str):
         }])
 
 
+# ══════════════════════════════════════
+#  LIFF 身分驗證綁定 API
+# ══════════════════════════════════════
 class VerifyRequest(BaseModel):
     id_number:    str
     phone:        str
@@ -271,6 +286,9 @@ async def liff_verify(req: VerifyRequest):
     }
 
 
+# ══════════════════════════════════════
+#  語音預約 API
+# ══════════════════════════════════════
 class AppointmentRequest(BaseModel):
     name:         str
     phone:        str
@@ -313,6 +331,7 @@ async def book_appointment(req: AppointmentRequest):
             "date":     req.date,
             "time":     req.time_slot,
             "bookedAt": datetime.now().isoformat(),
+            "source":   "LINE",
         }
         if req.birth:
             record["birth"] = req.birth
@@ -324,7 +343,7 @@ async def book_appointment(req: AppointmentRequest):
         if target_key:
             db.reference(f"appointments/{target_key}").update(record)
         else:
-            new_key = f"LIFF_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            new_key = req.id_number.upper().strip() if req.id_number else f"LIFF_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             db.reference(f"appointments/{new_key}").set(record)
 
     except Exception as e:
@@ -345,6 +364,9 @@ async def book_appointment(req: AppointmentRequest):
     return {"status": "success", "message": "預約成功"}
 
 
+# ══════════════════════════════════════
+#  診前提醒
+# ══════════════════════════════════════
 @app.post("/api/reminder/send")
 async def send_reminders():
     import datetime as dt
@@ -375,6 +397,221 @@ async def send_reminders():
             sent += 1
 
     return {"status": "success", "sent": sent}
+
+
+# ══════════════════════════════════════
+#  後台管理 API
+# ══════════════════════════════════════
+@app.post("/api/admin/login")
+async def admin_login(payload: dict):
+    password = payload.get("password", "")
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="密碼錯誤")
+    return {"status": "ok"}
+
+
+@app.get("/api/admin/appointments")
+async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    try:
+        all_appts = db.reference("appointments").get() or {}
+    except Exception:
+        return {"appointments": []}
+
+    result = []
+    for key, data in all_appts.items():
+        if isinstance(data, dict):
+            item = dict(data)
+            item["_key"] = key
+            item["_bound"] = bool(data.get("lineUserId"))
+            result.append(item)
+
+    result.sort(key=lambda x: x.get("date", ""), reverse=True)
+    return {"appointments": result}
+
+
+class AdminCreateRequest(BaseModel):
+    name:      str
+    phone:     str
+    plan:      str
+    date:      str
+    time:      str
+    source:    str = "電話"
+    birth:     str = ""
+    id_number: str = ""
+    note:      str = ""
+
+
+@app.post("/api/admin/appointments")
+async def admin_create_appointment(req: AdminCreateRequest, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    phone = req.phone.strip()
+    if phone and not phone.startswith("0"):
+        phone = "0" + phone
+
+    record = {
+        "name":     req.name,
+        "phone":    phone,
+        "plan":     req.plan,
+        "date":     req.date,
+        "time":     req.time,
+        "source":   req.source,
+        "bookedAt": datetime.now().isoformat(),
+    }
+    if req.birth:
+        record["birth"] = req.birth
+    if req.id_number:
+        record["idNumber"] = req.id_number.upper()
+    if req.note:
+        record["note"] = req.note
+
+    key = req.id_number.upper().strip() if req.id_number else f"ADMIN_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    try:
+        db.reference(f"appointments/{key}").set(record)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"status": "success", "key": key}
+
+
+class AdminUpdateRequest(BaseModel):
+    name:      Optional[str] = None
+    phone:     Optional[str] = None
+    plan:      Optional[str] = None
+    date:      Optional[str] = None
+    time:      Optional[str] = None
+    source:    Optional[str] = None
+    birth:     Optional[str] = None
+    id_number: Optional[str] = None
+    note:      Optional[str] = None
+
+
+@app.put("/api/admin/appointments/{key}")
+async def admin_update_appointment(key: str, req: AdminUpdateRequest, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    update_data = {}
+    if req.name is not None: update_data["name"] = req.name
+    if req.phone is not None:
+        p = req.phone.strip()
+        if p and not p.startswith("0"):
+            p = "0" + p
+        update_data["phone"] = p
+    if req.plan is not None: update_data["plan"] = req.plan
+    if req.date is not None: update_data["date"] = req.date
+    if req.time is not None: update_data["time"] = req.time
+    if req.source is not None: update_data["source"] = req.source
+    if req.birth is not None: update_data["birth"] = req.birth
+    if req.id_number is not None: update_data["idNumber"] = req.id_number.upper()
+    if req.note is not None: update_data["note"] = req.note
+
+    try:
+        db.reference(f"appointments/{key}").update(update_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"status": "success"}
+
+
+@app.delete("/api/admin/appointments/{key}")
+async def admin_delete_appointment(key: str, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    try:
+        db.reference(f"appointments/{key}").delete()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "success"}
+
+
+# ══════════════════════════════════════
+#  Excel 批次匯入 API
+# ══════════════════════════════════════
+@app.post("/api/admin/import")
+async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    if not file.filename.endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="請上傳 Excel 檔案（.xlsx 或 .xls）")
+
+    contents = await file.read()
+    try:
+        wb = load_workbook(io.BytesIO(contents), data_only=True)
+        sheet = wb.worksheets[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"無法讀取 Excel 檔案：{e}")
+
+    rows = list(sheet.iter_rows(min_row=2, values_only=True))
+
+    imported = 0
+    skipped = 0
+    errors = []
+
+    for idx, row in enumerate(rows, start=2):
+        if not row or not row[0]:
+            continue
+
+        try:
+            name      = str(row[0]).strip() if row[0] else ""
+            phone     = str(row[1]).strip() if len(row) > 1 and row[1] else ""
+            id_number = str(row[2]).strip().upper() if len(row) > 2 and row[2] else ""
+            birth     = str(row[3]).strip() if len(row) > 3 and row[3] else ""
+            plan      = str(row[4]).strip().upper() if len(row) > 4 and row[4] else ""
+            date_val  = row[5] if len(row) > 5 else None
+            time_val  = row[6] if len(row) > 6 else None
+            source    = str(row[7]).strip() if len(row) > 7 and row[7] else "Excel匯入"
+            note      = str(row[8]).strip() if len(row) > 8 and row[8] else ""
+
+            if not name or not phone or plan not in ("A", "B", "C"):
+                skipped += 1
+                errors.append(f"第 {idx} 列：缺少必填欄位或方案格式錯誤")
+                continue
+
+            # 處理日期格式（可能是 datetime 物件或字串）
+            if hasattr(date_val, "strftime"):
+                date_str = date_val.strftime("%Y-%m-%d")
+            else:
+                date_str = str(date_val).strip() if date_val else ""
+
+            if hasattr(time_val, "strftime"):
+                time_str = time_val.strftime("%H:%M")
+            else:
+                time_str = str(time_val).strip() if time_val else ""
+
+            if not phone.startswith("0"):
+                phone = "0" + phone
+
+            record = {
+                "name":     name,
+                "phone":    phone,
+                "plan":     plan,
+                "date":     date_str,
+                "time":     time_str,
+                "source":   source,
+                "bookedAt": datetime.now().isoformat(),
+            }
+            if birth:
+                record["birth"] = birth
+            if id_number:
+                record["idNumber"] = id_number
+            if note:
+                record["note"] = note
+
+            key = id_number if id_number else f"IMPORT_{datetime.now().strftime('%Y%m%d%H%M%S')}_{idx}"
+            db.reference(f"appointments/{key}").set(record)
+            imported += 1
+
+        except Exception as e:
+            skipped += 1
+            errors.append(f"第 {idx} 列：{str(e)}")
+
+    return {
+        "status": "success",
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors[:20]
+    }
 
 
 @app.get("/")
