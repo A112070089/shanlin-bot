@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>山林診所 預約管理後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+:root{
+  --ink:#1C2B33;--ink-soft:#4A5D68;--paper:#F6F4EF;--paper-deep:#ECE8DF;
+  --pine:#2F4F44;--pine-d:#203A32;--pine-l:#E4ECE6;
+  --rust:#B5562C;--rust-l:#FBE8DE;
+  --gold:#B8923D;
+  --line-green:#06C755;
+  --white:#fff;
+  --border:#DCD6C8;
+  --danger:#B5302C;--danger-l:#FBE5E3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ══════ LOGIN SCREEN ══════ */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:
+  radial-gradient(circle at 20% 20%, rgba(47,79,68,.05), transparent 50%),
+  radial-gradient(circle at 80% 80%, rgba(181,86,44,.04), transparent 50%),
+  var(--paper)}
+.login-card{width:100%;max-width:380px;background:var(--white);border:1px solid var(--border);border-radius:4px;padding:48px 36px;box-shadow:0 1px 3px rgba(28,43,51,.06)}
+.login-mark{width:48px;height:48px;background:var(--pine);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.login-mark i{font-size:22px;color:#fff}
+.login-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--rust);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.login-title{font-size:24px;font-weight:900;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em}
+.login-sub{font-size:13px;color:var(--ink-soft);margin-bottom:32px;line-height:1.6}
+.login-field{margin-bottom:18px}
+.login-label{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:block}
+.login-input{width:100%;height:48px;border:1.5px solid var(--border);border-radius:3px;padding:0 14px;font-size:16px;font-family:'IBM Plex Mono',monospace;background:var(--paper);outline:none;transition:border-color .15s,background .15s;letter-spacing:.05em}
+.login-input:focus{border-color:var(--pine);background:var(--white)}
+.login-btn{width:100%;height:48px;background:var(--pine);color:#fff;border:none;border-radius:3px;font-size:14px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;letter-spacing:.04em;transition:background .15s;margin-top:6px}
+.login-btn:hover{background:var(--pine-d)}
+.login-err{font-size:12px;color:var(--danger);margin-top:10px;display:none}
+.login-err.show{display:block}
+
+/* ══════ ADMIN SHELL ══════ */
+.shell{display:none;min-height:100vh;flex-direction:column}
+.shell.active{display:flex}
+
+.topbar{background:var(--pine);padding:0 28px;height:64px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+.topbar-mark{width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-mark i{font-size:16px;color:#fff}
+.topbar-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:.01em}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:1px}
+.topbar-spacer{flex:1}
+.topbar-stat{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:13px;margin-right:20px}
+.topbar-stat b{font-family:'IBM Plex Mono',monospace;color:#fff}
+.btn-logout{background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);font-size:12px;font-weight:600;padding:8px 16px;border-radius:3px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:background .15s}
+.btn-logout:hover{background:rgba(255,255,255,.1)}
+
+.main{flex:1;max-width:1320px;width:100%;margin:0 auto;padding:32px 28px 80px}
+
+/* ══════ HEADER ROW ══════ */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.page-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--rust);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.page-title{font-size:30px;font-weight:900;color:var(--ink);letter-spacing:-.01em}
+.btn-primary{background:var(--rust);color:#fff;border:none;border-radius:3px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:8px;transition:opacity .15s}
+.btn-primary:hover{opacity:.9}
+
+/* ══════ STAT CARDS ══════ */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:28px}
+.stat-card{background:var(--white);padding:20px 22px}
+.stat-num{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:600;color:var(--ink);line-height:1}
+.stat-lbl{font-size:12px;color:var(--ink-soft);margin-top:8px;font-weight:500}
+.stat-card.accent .stat-num{color:var(--pine)}
+.stat-card.warn .stat-num{color:var(--rust)}
+
+/* ══════ FILTER BAR ══════ */
+.filter-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.filter-input{height:40px;border:1.5px solid var(--border);border-radius:3px;padding:0 12px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--white);outline:none;color:var(--ink)}
+.filter-input:focus{border-color:var(--pine)}
+#searchInput{flex:1;min-width:180px}
+.filter-select{height:40px;border:1.5px solid var(--border);border-radius:3px;padding:0 10px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--white);cursor:pointer;color:var(--ink)}
+.filter-tag{height:40px;padding:0 14px;border:1.5px solid var(--border);border-radius:3px;background:var(--white);font-size:13px;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+.filter-tag.active{background:var(--pine);border-color:var(--pine);color:#fff}
+
+/* ══════ TABLE ══════ */
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--paper-deep)}
+th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);padding:13px 16px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:14px 16px;font-size:14px;color:var(--ink);border-bottom:1px solid var(--paper-deep);vertical-align:middle}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:var(--paper)}
+tbody tr:last-child td{border-bottom:none}
+
+.cell-name{font-weight:700}
+.cell-sub{font-size:11px;color:var(--ink-soft);margin-top:2px;font-family:'IBM Plex Mono',monospace}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px}
+.badge-plan-A{background:#E6EEFA;color:#2E5BA8}
+.badge-plan-B{background:var(--pine-l);color:var(--pine-d)}
+.badge-plan-C{background:#F5E9D8;color:#8A6219}
+.badge-source{background:var(--paper-deep);color:var(--ink-soft);font-weight:600}
+.badge-bound{background:#E3F8EB;color:#1A7F44}
+.badge-unbound{background:var(--paper-deep);color:var(--ink-soft)}
+.badge-bound i,.badge-unbound i{font-size:11px}
+
+.row-actions{display:flex;gap:6px}
+.icon-btn{width:30px;height:30px;border-radius:3px;border:1px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:all .15s}
+.icon-btn:hover{border-color:var(--pine);color:var(--pine);background:var(--pine-l)}
+.icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-l)}
+
+.empty-state{padding:80px 20px;text-align:center}
+.empty-state i{font-size:40px;color:var(--border);margin-bottom:14px;display:block}
+.empty-state p{font-size:14px;color:var(--ink-soft)}
+
+/* ══════ MODAL ══════ */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(28,43,51,.45);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--white);border-radius:4px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.modal-head{padding:24px 28px 18px;border-bottom:1px solid var(--paper-deep);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:900;color:var(--ink)}
+.modal-close{width:30px;height:30px;border:none;background:var(--paper);border-radius:3px;cursor:pointer;color:var(--ink-soft);font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:24px 28px}
+.modal-foot{padding:18px 28px 24px;display:flex;gap:10px}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-field{margin-bottom:14px}
+.form-field:last-child{margin-bottom:0}
+.form-label{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;height:42px;border:1.5px solid var(--border);border-radius:3px;padding:0 12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;background:var(--paper);outline:none;color:var(--ink);transition:border-color .15s}
+.form-input:focus,.form-select:focus{border-color:var(--pine);background:#fff}
+.form-textarea{width:100%;min-height:70px;border:1.5px solid var(--border);border-radius:3px;padding:10px 12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;background:var(--paper);outline:none;resize:vertical}
+.form-textarea:focus{border-color:var(--pine);background:#fff}
+
+.btn-modal-primary{flex:1;height:46px;background:var(--pine);color:#fff;border:none;border-radius:3px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.btn-modal-primary:hover{background:var(--pine-d)}
+.btn-modal-secondary{flex:1;height:46px;background:var(--white);color:var(--ink-soft);border:1.5px solid var(--border);border-radius:3px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.btn-modal-secondary:hover{background:var(--paper)}
+.btn-modal-danger{flex:1;height:46px;background:var(--danger);color:#fff;border:none;border-radius:3px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+
+/* ══════ TOAST ══════ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:4px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:300;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast i{color:#7FD99B}
+.toast.error i{color:#F5A3A0}
+
+/* ══════ SPINNER ══════ */
+.loading-wrap{display:flex;align-items:center;justify-content:center;padding:80px 20px;flex-direction:column;gap:14px}
+.spinner-sm{width:32px;height:32px;border:3px solid var(--paper-deep);border-top-color:var(--pine);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:760px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .main{padding:20px 16px 60px}
+  table{font-size:12px}
+  th,td{padding:10px 8px}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN ════════ -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark"><i class="ti ti-building-hospital"></i></div>
+    <div class="login-eyebrow">管理後台 · Staff Only</div>
+    <div class="login-title">山林診所</div>
+    <div class="login-sub">預約資料管理系統<br>請輸入管理密碼以繼續</div>
+    <div class="login-field">
+      <label class="login-label">密碼</label>
+      <input class="login-input" id="pwInput" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">登入後台</button>
+    <div class="login-err" id="loginErr">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<!-- ════════ ADMIN SHELL ════════ -->
+<div class="shell" id="shell">
+  <div class="topbar">
+    <div class="topbar-mark"><i class="ti ti-building-hospital"></i></div>
+    <div>
+      <div class="topbar-title">山林診所 預約管理</div>
+      <div class="topbar-sub">Appointment Management System</div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-stat"><i class="ti ti-calendar-event" style="color:rgba(255,255,255,.6)"></i> 共 <b id="topbarCount">0</b> 筆預約</div>
+    <button class="btn-logout" onclick="doLogout()">登出</button>
+  </div>
+
+  <div class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">Appointments</div>
+        <div class="page-title">預約總覽</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-modal-secondary" style="height:46px;width:auto;padding:0 20px;display:flex;align-items:center;gap:8px;background:var(--white)" onclick="openImportModal()"><i class="ti ti-file-spreadsheet"></i>匯入 Excel</button>
+        <button class="btn-primary" onclick="openCreateModal()"><i class="ti ti-plus"></i>手動新增預約</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num mono" id="statTotal">—</div>
+        <div class="stat-lbl">全部預約</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-num mono" id="statBound">—</div>
+        <div class="stat-lbl">已綁定 LINE</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-num mono" id="statUnbound">—</div>
+        <div class="stat-lbl">尚未綁定</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num mono" id="statToday">—</div>
+        <div class="stat-lbl">今日預約</div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <input class="filter-input" id="searchInput" placeholder="搜尋姓名 / 手機 / 身分證..." oninput="renderTable()"/>
+      <select class="filter-select" id="planFilter" onchange="renderTable()">
+        <option value="">所有方案</option>
+        <option value="A">A 方案（腦肺）</option>
+        <option value="B">B 方案（腹部）</option>
+        <option value="C">C 方案（骨密肌力）</option>
+      </select>
+      <select class="filter-select" id="sourceFilter" onchange="renderTable()">
+        <option value="">所有來源</option>
+        <option value="LINE">LINE</option>
+        <option value="電話">電話</option>
+        <option value="現場">現場</option>
+        <option value="官網">官網</option>
+      </select>
+      <div class="filter-tag" id="boundFilterTag" onclick="toggleBoundFilter()">
+        <i class="ti ti-brand-line"></i><span id="boundFilterLabel">全部綁定狀態</span>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <div id="loadingWrap" class="loading-wrap">
+        <div class="spinner-sm"></div>
+        <div style="font-size:13px;color:var(--ink-soft)">載入預約資料中...</div>
+      </div>
+      <table id="apptTable" style="display:none">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>聯絡方式</th>
+            <th>方案</th>
+            <th>預約時間</th>
+            <th>來源</th>
+            <th>LINE 狀態</th>
+            <th style="text-align:right">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <i class="ti ti-calendar-off"></i>
+        <p>目前沒有符合條件的預約紀錄</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CREATE / EDIT MODAL ════════ -->
+<div class="modal-ov" id="formModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="formModalTitle">新增預約</div>
+      <button class="modal-close" onclick="closeFormModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">姓名 <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fName" placeholder="陳○美"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">手機號碼 <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fPhone" placeholder="0912345678" maxlength="10"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">出生年月日（民國）</label>
+          <input class="form-input" id="fBirth" placeholder="500619" maxlength="7"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">身分證字號</label>
+          <input class="form-input" id="fIdNumber" placeholder="A123456789" maxlength="10" style="text-transform:uppercase"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">健檢方案 <span style="color:var(--danger)">*</span></label>
+          <select class="form-select" id="fPlan">
+            <option value="A">A 方案（腦肺方案）</option>
+            <option value="B">B 方案（腹部方案）</option>
+            <option value="C">C 方案（骨密肌力方案）</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">預約來源</label>
+          <select class="form-select" id="fSource">
+            <option value="電話">電話</option>
+            <option value="現場">現場</option>
+            <option value="官網">官網</option>
+            <option value="LINE">LINE</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">預約日期 <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fDate" type="date"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">預約時段 <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fTime" type="time"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">備註</label>
+        <textarea class="form-textarea" id="fNote" placeholder="其他需要記錄的事項..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-secondary" onclick="closeFormModal()">取消</button>
+      <button class="btn-modal-primary" id="formSubmitBtn" onclick="submitForm()">儲存預約</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ DELETE CONFIRM MODAL ════════ -->
+<div class="modal-ov" id="deleteModal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-head">
+      <div class="modal-title">刪除預約紀錄</div>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--ink-soft);line-height:1.7">
+        確定要刪除 <strong id="deleteTargetName" style="color:var(--ink)">—</strong> 的預約紀錄嗎？<br>
+        此操作無法復原。
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-secondary" onclick="closeDeleteModal()">取消</button>
+      <button class="btn-modal-danger" onclick="confirmDelete()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ IMPORT EXCEL MODAL ════════ -->
+<div class="modal-ov" id="importModal">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-head">
+      <div class="modal-title">匯入 Excel 預約資料</div>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:16px">
+        適用於電話、現場或官網等管道的預約紀錄，請使用統一範本批次上傳。
+      </p>
+      <a href="https://a112070089.github.io/shanlin-bot/山林診所_預約資料匯入範本.xlsx" download
+        style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--pine);font-weight:700;text-decoration:none;margin-bottom:18px;padding:10px 14px;background:var(--pine-l);border-radius:3px">
+        <i class="ti ti-download"></i>下載 Excel 範本
+      </a>
+      <div class="form-field">
+        <label class="form-label">選擇檔案</label>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls" style="width:100%;font-size:13px;font-family:'Noto Sans TC',sans-serif"/>
+      </div>
+      <div id="importResult" style="display:none;margin-top:16px;padding:14px;background:var(--paper);border-radius:3px;font-size:13px;line-height:1.8"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-secondary" onclick="closeImportModal()">取消</button>
+      <button class="btn-modal-primary" id="importSubmitBtn" onclick="submitImport()">開始匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-circle-check"></i><span id="toastMsg">已儲存</span></div>
+
+<script>
+const API_BASE = 'https://shanlin-bot-production.up.railway.app';
+const PLAN_NAMES = { A: 'A 方案（腦肺）', B: 'B 方案（腹部）', C: 'C 方案（骨密肌力）' };
+
+let adminPassword = '';
+let allAppts = [];
+let editingKey = null;
+let deleteKey = null;
+let boundFilterState = 'all'; // all | bound | unbound
+
+/* ══════════ 登入 ══════════ */
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('shanlin_admin_pw');
+  if (saved) {
+    adminPassword = saved;
+    showShell();
+    loadAppointments();
+  }
+});
+
+async function doLogin() {
+  const pw = document.getElementById('pwInput').value;
+  if (!pw) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    if (res.ok) {
+      adminPassword = pw;
+      sessionStorage.setItem('shanlin_admin_pw', pw);
+      document.getElementById('loginErr').classList.remove('show');
+      showShell();
+      loadAppointments();
+    } else {
+      document.getElementById('loginErr').classList.add('show');
+    }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = '連線失敗，請確認網路狀態';
+    document.getElementById('loginErr').classList.add('show');
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('shanlin_admin_pw');
+  adminPassword = '';
+  document.getElementById('shell').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+}
+
+function showShell() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('shell').classList.add('active');
+}
+
+/* ══════════ 載入資料 ══════════ */
+async function loadAppointments() {
+  document.getElementById('loadingWrap').style.display = 'flex';
+  document.getElementById('apptTable').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/appointments`, {
+      headers: { 'X-Admin-Password': adminPassword }
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    allAppts = data.appointments || [];
+    updateStats();
+    renderTable();
+  } catch(e) {
+    showToast('載入失敗，請檢查網路連線', true);
+  }
+
+  document.getElementById('loadingWrap').style.display = 'none';
+}
+
+function updateStats() {
+  const total = allAppts.length;
+  const bound = allAppts.filter(a => a._bound).length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayCount = allAppts.filter(a => a.date === today).length;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statBound').textContent = bound;
+  document.getElementById('statUnbound').textContent = total - bound;
+  document.getElementById('statToday').textContent = todayCount;
+  document.getElementById('topbarCount').textContent = total;
+}
+
+/* ══════════ 篩選與表格渲染 ══════════ */
+function toggleBoundFilter() {
+  const states = ['all', 'bound', 'unbound'];
+  const labels = { all: '全部綁定狀態', bound: '僅看已綁定', unbound: '僅看未綁定' };
+  const idx = states.indexOf(boundFilterState);
+  boundFilterState = states[(idx + 1) % 3];
+  document.getElementById('boundFilterLabel').textContent = labels[boundFilterState];
+  document.getElementById('boundFilterTag').classList.toggle('active', boundFilterState !== 'all');
+  renderTable();
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const planF  = document.getElementById('planFilter').value;
+  const srcF   = document.getElementById('sourceFilter').value;
+
+  let filtered = allAppts.filter(a => {
+    if (search) {
+      const hay = `${a.name||''} ${a.phone||''} ${a.idNumber||''}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (planF && a.plan !== planF) return false;
+    if (srcF && a.source !== srcF) return false;
+    if (boundFilterState === 'bound' && !a._bound) return false;
+    if (boundFilterState === 'unbound' && a._bound) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    document.getElementById('apptTable').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('apptTable').style.display = 'table';
+  document.getElementById('emptyState').style.display = 'none';
+
+  filtered.forEach(a => {
+    const tr = document.createElement('tr');
+    const planClass = `badge-plan-${a.plan || 'A'}`;
+    const dateDisplay = a.date ? formatDate(a.date) : '—';
+
+    tr.innerHTML = `
+      <td>
+        <div class="cell-name">${esc(a.name || '—')}</div>
+        ${a.idNumber ? `<div class="cell-sub">${esc(a.idNumber)}</div>` : ''}
+      </td>
+      <td>
+        <div>${esc(a.phone || '—')}</div>
+        ${a.birth ? `<div class="cell-sub">民國 ${esc(a.birth)}</div>` : ''}
+      </td>
+      <td><span class="badge ${planClass}">${PLAN_NAMES[a.plan] || a.plan || '—'}</span></td>
+      <td>
+        <div>${dateDisplay}</div>
+        <div class="cell-sub">${esc(a.time || '—')}</div>
+      </td>
+      <td><span class="badge badge-source">${esc(a.source || '—')}</span></td>
+      <td>
+        ${a._bound
+          ? `<span class="badge badge-bound"><i class="ti ti-circle-check"></i>已綁定</span>`
+          : `<span class="badge badge-unbound"><i class="ti ti-circle-dashed"></i>未綁定</span>`}
+      </td>
+      <td>
+        <div class="row-actions" style="justify-content:flex-end">
+          <button class="icon-btn" onclick='openEditModal(${JSON.stringify(a).replace(/'/g, "&apos;")})' title="編輯"><i class="ti ti-pencil"></i></button>
+          <button class="icon-btn danger" onclick="openDeleteModal('${a._key}', '${esc(a.name||'此筆資料')}')" title="刪除"><i class="ti ti-trash"></i></button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function formatDate(d) {
+  try {
+    const date = new Date(d + 'T00:00:00');
+    return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  } catch(e) { return d; }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════ 新增 / 編輯 Modal ══════════ */
+function openCreateModal() {
+  editingKey = null;
+  document.getElementById('formModalTitle').textContent = '新增預約';
+  document.getElementById('formSubmitBtn').textContent = '儲存預約';
+  ['fName','fPhone','fBirth','fIdNumber','fNote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fPlan').value = 'A';
+  document.getElementById('fSource').value = '電話';
+  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fTime').value = '09:00';
+  document.getElementById('formModal').classList.add('open');
+}
+
+function openEditModal(a) {
+  editingKey = a._key;
+  document.getElementById('formModalTitle').textContent = '編輯預約';
+  document.getElementById('formSubmitBtn').textContent = '更新預約';
+  document.getElementById('fName').value = a.name || '';
+  document.getElementById('fPhone').value = a.phone || '';
+  document.getElementById('fBirth').value = a.birth || '';
+  document.getElementById('fIdNumber').value = a.idNumber || '';
+  document.getElementById('fPlan').value = a.plan || 'A';
+  document.getElementById('fSource').value = a.source || '電話';
+  document.getElementById('fDate').value = a.date || '';
+  document.getElementById('fTime').value = a.time || '';
+  document.getElementById('fNote').value = a.note || '';
+  document.getElementById('formModal').classList.add('open');
+}
+
+function closeFormModal() {
+  document.getElementById('formModal').classList.remove('open');
+}
+
+async function submitForm() {
+  const name  = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const date  = document.getElementById('fDate').value;
+  const time  = document.getElementById('fTime').value;
+
+  if (!name || !phone || !date || !time) {
+    showToast('請填寫姓名、手機、日期與時段', true);
+    return;
+  }
+
+  const payload = {
+    name, phone,
+    plan: document.getElementById('fPlan').value,
+    date, time,
+    source: document.getElementById('fSource').value,
+    birth: document.getElementById('fBirth').value.trim(),
+    id_number: document.getElementById('fIdNumber').value.trim(),
+    note: document.getElementById('fNote').value.trim(),
+  };
+
+  try {
+    let res;
+    if (editingKey) {
+      res = await fetch(`${API_BASE}/api/admin/appointments/${editingKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await fetch(`${API_BASE}/api/admin/appointments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+        body: JSON.stringify(payload)
+      });
+    }
+    if (res.ok) {
+      showToast(editingKey ? '預約已更新' : '預約已新增');
+      closeFormModal();
+      loadAppointments();
+    } else {
+      showToast('儲存失敗，請再試一次', true);
+    }
+  } catch(e) {
+    showToast('連線失敗', true);
+  }
+}
+
+/* ══════════ 刪除 Modal ══════════ */
+function openDeleteModal(key, name) {
+  deleteKey = key;
+  document.getElementById('deleteTargetName').textContent = name;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteKey = null;
+}
+
+async function confirmDelete() {
+  if (!deleteKey) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/appointments/${deleteKey}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Password': adminPassword }
+    });
+    if (res.ok) {
+      showToast('已刪除預約紀錄');
+      closeDeleteModal();
+      loadAppointments();
+    } else {
+      showToast('刪除失敗', true);
+    }
+  } catch(e) {
+    showToast('連線失敗', true);
+  }
+}
+
+/* ══════════ 匯入 Excel ══════════ */
+function openImportModal() {
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('importSubmitBtn').disabled = false;
+  document.getElementById('importSubmitBtn').textContent = '開始匯入';
+  document.getElementById('importModal').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('open');
+}
+
+async function submitImport() {
+  const fileInput = document.getElementById('importFileInput');
+  const file = fileInput.files[0];
+  if (!file) {
+    showToast('請先選擇 Excel 檔案', true);
+    return;
+  }
+
+  document.getElementById('importSubmitBtn').disabled = true;
+  document.getElementById('importSubmitBtn').textContent = '匯入中...';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/import`, {
+      method: 'POST',
+      headers: { 'X-Admin-Password': adminPassword },
+      body: formData
+    });
+    const data = await res.json();
+
+    const resultEl = document.getElementById('importResult');
+    resultEl.style.display = 'block';
+
+    if (res.ok) {
+      let html = `<div style="color:var(--pine-d);font-weight:700;margin-bottom:6px">✓ 成功匯入 ${data.imported} 筆</div>`;
+      if (data.skipped > 0) {
+        html += `<div style="color:var(--rust);font-weight:700;margin-bottom:6px">⚠ 略過 ${data.skipped} 筆</div>`;
+        if (data.errors && data.errors.length) {
+          html += `<div style="font-size:12px;color:var(--ink-soft);margin-top:8px">${data.errors.map(e => esc(e)).join('<br>')}</div>`;
+        }
+      }
+      resultEl.innerHTML = html;
+      showToast(`已匯入 ${data.imported} 筆預約資料`);
+      loadAppointments();
+    } else {
+      resultEl.innerHTML = `<div style="color:var(--danger)">匯入失敗：${esc(data.detail || '未知錯誤')}</div>`;
+    }
+  } catch(e) {
+    showToast('上傳失敗，請檢查網路連線', true);
+  }
+
+  document.getElementById('importSubmitBtn').disabled = false;
+  document.getElementById('importSubmitBtn').textContent = '開始匯入';
+}
+
+/* ══════════ Toast ══════════ */
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.toggle('error', isError);
+  toast.querySelector('i').className = isError ? 'ti ti-alert-circle' : 'ti ti-circle-check';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
