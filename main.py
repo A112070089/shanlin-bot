@@ -298,6 +298,7 @@ class AppointmentRequest(BaseModel):
     line_user_id: str = ""
     birth:        str = ""
     id_number:    str = ""
+    veg:          str = "葷"
 
 
 @app.post("/api/appointment/book")
@@ -337,6 +338,8 @@ async def book_appointment(req: AppointmentRequest):
             record["birth"] = req.birth
         if req.id_number:
             record["idNumber"] = req.id_number.upper()
+        if req.veg:
+            record["veg"] = req.veg
         if req.line_user_id:
             record["lineUserId"] = req.line_user_id
 
@@ -440,6 +443,7 @@ class AdminCreateRequest(BaseModel):
     birth:     str = ""
     id_number: str = ""
     note:      str = ""
+    veg:       str = "葷"
 
 
 @app.post("/api/admin/appointments")
@@ -465,6 +469,8 @@ async def admin_create_appointment(req: AdminCreateRequest, x_admin_password: Op
         record["idNumber"] = req.id_number.upper()
     if req.note:
         record["note"] = req.note
+    if req.veg:
+        record["veg"] = req.veg
 
     key = req.id_number.upper().strip() if req.id_number else f"ADMIN_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
@@ -486,6 +492,7 @@ class AdminUpdateRequest(BaseModel):
     birth:     Optional[str] = None
     id_number: Optional[str] = None
     note:      Optional[str] = None
+    veg:       Optional[str] = None
 
 
 @app.put("/api/admin/appointments/{key}")
@@ -506,6 +513,7 @@ async def admin_update_appointment(key: str, req: AdminUpdateRequest, x_admin_pa
     if req.birth is not None: update_data["birth"] = req.birth
     if req.id_number is not None: update_data["idNumber"] = req.id_number.upper()
     if req.note is not None: update_data["note"] = req.note
+    if req.veg is not None: update_data["veg"] = req.veg
 
     try:
         db.reference(f"appointments/{key}").update(update_data)
