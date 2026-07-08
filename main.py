@@ -32,6 +32,8 @@ FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
 LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
 ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "shanlin2025")
+DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
+DIFY_API_URL         = "https://api.dify.ai/v1"
 LINE_API             = "https://api.line.me/v2/bot/message"
 
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
@@ -95,6 +97,37 @@ def check_admin(x_admin_password: Optional[str]):
 # ══════════════════════════════════════
 #  LINE Webhook
 # ══════════════════════════════════════
+async def call_dify(user_id: str, message: str) -> str:
+    """呼叫 Dify AI，回傳回覆文字"""
+    if not DIFY_API_KEY:
+        return "AI 助理目前無法使用，請稍後再試。"
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            res = await client.post(
+                f"{DIFY_API_URL}/chat-messages",
+                headers={
+                    "Authorization": f"Bearer {DIFY_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "inputs": {},
+                    "query": message,
+                    "response_mode": "blocking",
+                    "conversation_id": "",
+                    "user": user_id
+                }
+            )
+            if res.status_code == 200:
+                data = res.json()
+                return data.get("answer", "抱歉，我暫時無法回答這個問題。")
+            else:
+                print(f"Dify error: {res.status_code}, {res.text}")
+                return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+    except Exception as e:
+        print(f"Dify exception: {e}")
+        return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+
+
 @app.post("/webhook")
 async def webhook(request: Request):
     body = await request.body()
@@ -229,9 +262,11 @@ async def handle_text(user_id: str, reply_token: str, text: str):
         }])
 
     else:
+        # 其他問題轉發給 Dify AI 智能回覆
+        ai_reply = await call_dify(user_id, text)
         await reply_message(reply_token, [{
             "type": "text",
-            "text": "感謝您的訊息！如需協助請使用下方選單，或撥打 02-2933-2010 🙏"
+            "text": ai_reply
         }])
 
 
