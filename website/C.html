@@ -1,0 +1,816 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required Meta Tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Document Title, Description, and Author -->
+  <title>山林診所</title>
+  <meta name="description" content="山林診所－提供之服務：1.心臟內科及一般內科健保&自費醫療門診服務 2.非侵入性心血管重建治療/心血管震波治療 3.心血管疾病與代謝症候群運動處方 4.台北市老人健康檢查">
+  <meta name="author" content="山林診所">
+  <meta name="description" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+  <meta name="keywords" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+
+  <!-- Favicon and Touch Icons -->
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/favicon/favicon.png">
+
+  <!-- Google Fonts Files -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Satisfy&display=swap" rel="stylesheet">
+
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="./assets/css/main.css">
+
+  <!-- BSB Head -->
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#bsb-tpl-navbar" data-bs-smooth-scroll="true" tabindex="0">
+  <!-- Header -->
+  <header id="header" class="sticky-top bsb-tpl-header-sticky bsb-tpl-header-sticky-animationX">
+
+    <!-- Navbar 1 - Bootstrap Brain Component -->
+    <nav id="scrollspyNav" class="navbar navbar-expand-lg bsb-tpl-bg-blue bsb-navbar bsb-navbar-hover bsb-navbar-caret bsb-tpl-navbar-sticky" data-bsb-sticky-target="#header">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="./assets/img/branding/logo.png" class="bsb-tpl-logo" alt=""> 山林診所
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+          </svg>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+          <div class="offcanvas-header">
+            <!-- <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5> -->
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <ul id="bsb-tpl-navbar" class="navbar-nav justify-content-end flex-grow-1">
+              <li class="nav-item">
+                <a class="nav-link" href="../ShanLinHC/index.html">首頁</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../ShanLinHC/index.html">預約健檢</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../ShanLinHC/index.html">健檢資訊</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../ShanLinHC/search.html" >預約資訊查詢</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#scrollspyFooter" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">聯絡資訊</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="" data-bs-toggle="modal" data-bs-target="#staticBackdrop">登入</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+  </header>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form action="login.php" name="frm1" id="frm1" method="post">
+	  <input type="hidden" name="act" id="act"  value="Login"/>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">登入後台</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+              <label for="account" class="col-form-label">帳號:</label>
+              <input type="text" class="form-control" id="account" name="account">
+            </div>
+            <div class="mb-3">
+              <label for="password" class="col-form-label">密碼:</label>
+              <input type="password" class="form-control" id="password" name="password">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">登入</button>
+        </div>
+      </div>
+	  </form>
+    </div>
+  </div>
+  
+
+  <!-- Main -->
+  <main id="main">
+
+    <section class="py-5 py-xl-8 py-xxl-10">
+        <div class="container overflow-hidden">
+            <div class="row gy-5 gy-lg-0 justify-content-center">
+                <div class="col-md-auto">
+                    <h4 class="display-3 fw-bolder mb-4"><mark class="bsb-tpl-highlight bsb-tpl-highlight-yellow"><span class="fw-normal">填寫基本資料</span></mark></h4>
+                    <p class="fs-4 mb-4 mb-xl-5">
+                        <span class="text-medium">您已選擇: <span id="project_name" name="project_name" class="text-accent">A方案 腦肺方案</span></span><br/>
+                    </p>
+					<form class="row g-3" action="appointment_info.php" name="frm2" id="frm2" method="post">
+					<input type="hidden" name="project_type" id="project_type"  value="A"/>
+					<input type="hidden" name="act2" id="act2"  value=""/>
+					<input type="hidden" name="breakfastValue" id="breakfastValue"  value=""/>
+					<input type="hidden" name="idtypeValue" id="idtypeValue"  value=""/>
+					<input type="hidden" name="ans" id="ans"  value=""/>
+					<input type="hidden" name="booking_count" id="booking_count"  value=""/>
+					<input type="hidden" name="visitname" id="visitname"  value=""/>
+					
+			
+                        <div class="col-12">
+                          <label for="name" class="form-label">姓名</label>
+                          <input type="text" class="form-control" id="member_name" name="member_name" maxlength=32>
+                        </div>
+                        <div class="col-12">
+                          <label for="birthday" class="form-label">出生年月日(民國) *需為年滿65歲(民國<span id="t_age" name="t_age" >49</span>年以前)</label>
+                          <input type="text" class="form-control" id="member_birthday" name="member_birthday" oninput="value=value.replace(/[^\d]/g,'')">
+                        </div>
+                        <div class="col-12">
+						  <label for="birthday" class="form-label">(範例：出生日期為：民國101年6月19日，請輸入1010619)</label>
+						</div>
+						<!--<div class="col-12">						
+							<div class="form-check form-check-inline col-md-2">
+								<input class="form-check-input" type="radio" name="id_type" id="id_type1" onclick="handleClick2(this);" value="1" checked>
+								<label class="form-check-label" for="inlineRadio1">身分證字號</label>
+							</div>
+							<div class="form-check form-check-inline col-md-2">
+								<input class="form-check-input" type="radio" name="id_type" id="id_type2" onclick="handleClick2(this);" value="2">
+								<label class="form-check-label" for="inlineRadio2">護照號碼</label>
+							</div>
+							<div class="form-check form-check-inline col-md-2">
+								<input class="form-check-input" type="radio" name="id_type" id="id_type3" onclick="handleClick2(this);" value="3">
+								<label class="form-check-label" for="inlineRadio3">居留證</label>
+							</div>
+						</div>-->
+                        <div class="col-12">
+						  <label class="form-label" for="member_pid">身分證字號</label>
+						</div>						
+                        <div class="col-12">
+                            <input type="text" class="form-control" id="member_pid" name="member_pid" maxlength=20>
+                        </div>
+                        <div class="col-12">
+						  <label for="birthday" class="form-label">（需為臺北市戶籍）</label>
+						</div>
+                        <div class="col-12">
+                          <label for="phone" class="form-label">手機號碼</label>
+                          <input type="text" class="form-control" id="member_phone" name="member_phone" oninput="value=value.replace(/[^\d]/g,'')">
+                        </div>
+                        <div class="col-12">
+						  <label for="birthday" class="form-label">（範例：0912345678）</label>
+						</div>
+                        <div class="col-4">
+                            <label for="inputState" class="form-label">預約日期</label>
+                            <!--<input type="date" class="form-control" id="reserve_date" name="reserve_date" min="2025-02-06" max="2025-02-27">-->
+							<select name="reserve_date" id="reserve_date" class="form-control custom-select">
+							  <option value="0" selected>--請選擇--</option>
+							</select>							
+						
+                        </div>
+						<script>
+						
+							//Date.prototype.addDays = function(days) {
+							//  this.setDate(this.getDate() + days);
+							//  return this;
+							//}						
+							function getWeek(weeknum)
+							{
+								if(weeknum==0)  week="(日)";
+								if(weeknum==1)  week="(一)";
+								if(weeknum==2)  week="(二)";
+								if(weeknum==3)  week="(三)";
+								if(weeknum==4)  week="(四)";
+								if(weeknum==5)  week="(五)";
+								if(weeknum==6)  week="(六)";
+								return week;
+							}	
+							
+						    var enddate = new Date("2026-12-12");
+
+							var dd2 = enddate.getDate();
+							var mm2 = enddate.getMonth() + 1;
+							var yyyy2 = enddate.getFullYear();
+
+				
+							if (dd2 < 10) {
+								dd2 = '0' + dd2
+							}
+							if (mm2 < 10) {
+								mm2 = '0' + mm2
+							}
+							var enddate2 = yyyy2 + '-' + mm2 + '-' + dd2 ;
+							//console.log(enddate2);
+						  var list = document.getElementById("reserve_date");
+  						  let startdate = new Date("2026-04-01");
+						  //let startdate = new Date("2026-02-02");
+						  //let today = new Date("2026-01-26");
+						  
+						  var today = new Date();
+
+							var dd3 = today.getDate();
+							var mm3 = today.getMonth() + 1;
+							var yyyy3 = today.getFullYear();
+
+				
+							if (dd3 < 10) {
+								dd3 = '0' + dd3
+							}
+							if (mm3 < 10) {
+								mm3 = '0' + mm3
+							}
+							var todate = yyyy3 + '-' + mm3 + '-' + dd3 ;
+							
+						  if (todate < "2026-03-04") {
+								today = startdate;
+						  }
+							//console.log(today);
+						  //var startdate = new Date();
+						  //日期：2/2～2/7、2/24～12/12的每個週一到週六
+
+						  //let Difference_In_Time = today.getTime() - startdate.getTime();
+						  //let Difference_In_Days = Math.round(Difference_In_Time / (1000 * 3600 * 24));
+						  //alert(Difference_In_Days);
+						  //if (Difference_In_Days > 0) startdate = today;
+						  
+						  startdate.setDate(today.getDate()+7);
+						//console.log(startdate);
+							//var date = new Date();
+						  var newdate = new Date(startdate.toDateString());
+
+						  var i = 0;
+						  do {
+						    //newdate = new Date(startdate.addDays(i).toDateString()); //startdate.addDays(i);
+							//newdate = new Date(newdate.setDate(startdate.getDate() + i));
+							newdate = new Date(newdate.setTime(startdate.getTime() +  (i * 24 * 60 * 60 * 1000)));
+						    //alert(startdate.getDate());
+							//console.log(newdate);
+							let dd = newdate.getDate();
+							let mm = newdate.getMonth() + 1;
+							let yyyy = newdate.getFullYear();
+							let weeknum = newdate.getDay();
+							if ((mm == 3)||(mm == 4)) {
+								//if ((( dd >= 9 )&&(dd <= 11))||((dd >= 24)&&(dd <= 28))) {
+								//if (((dd >= 24)&&(dd <= 28))) {
+									if (dd < 10) {
+										dd = '0' + dd
+									}
+									if (mm < 10) {
+										mm = '0' + mm
+									}
+									var newdate2 = yyyy + '-' + mm + '-' + dd;
+									//console.log(newdate2);
+									//if ((newdate2 != "2026-02-27")&&(newdate2 != "2026-02-28")&&(newdate2 != "2026-04-03")&&(newdate2 != "2026-04-04")&&(newdate2 != "2026-04-06")&&(newdate2 != "2026-05-01")&&(newdate2 != "2026-06-19")&&(newdate2 != "2026-06-20")&&(newdate2 != "2026-09-25")&&(newdate2 != "2026-09-26")&&(newdate2 != "2026-09-28")&&(newdate2 != "2026-10-09")&&(newdate2 != "2026-10-10")){
+										//console.log(weeknum);
+										//if( (weeknum !=0)&&(weeknum !=6)) {
+										if ((weeknum !=0)) {
+											var weekstr =  getWeek(weeknum);
+											var  newdate3 = yyyy + '-' + mm + '-' + dd + ' ' + weekstr;
+											let newOption = new Option(newdate3,newdate2);
+											//list.add(newOption,undefined);
+										}
+									//}								
+								//}
+							}else{
+								if (dd < 10) {
+									dd = '0' + dd
+								}
+								if (mm < 10) {
+									mm = '0' + mm
+								}
+								var newdate2 = yyyy + '-' + mm + '-' + dd;
+								//console.log(newdate2);
+								//if ((newdate2 != "2026-03-26")&&(newdate2 != "2026-02-28")&&(newdate2 != "2026-04-03")&&(newdate2 != "2026-04-04")&&(newdate2 != "2026-04-06")&&(newdate2 != "2026-05-01")&&(newdate2 != "2026-06-19")&&(newdate2 != "2026-06-20")&&(newdate2 != "2026-09-25")&&(newdate2 != "2026-09-26")&&(newdate2 != "2026-09-28")&&(newdate2 != "2026-10-09")&&(newdate2 != "2026-10-10")){
+								if ((newdate2 != "2026-05-02")&&(newdate2 != "2026-05-09")&&(newdate2 != "2026-05-20")&&(newdate2 != "2026-04-06")&&(newdate2 != "2026-04-07")){
+									//console.log(weeknum);
+									//if( (weeknum !=0)&&(weeknum !=6)) {
+									if( (weeknum !=0)) {
+										var weekstr =  getWeek(weeknum);
+										var  newdate3 = yyyy + '-' + mm + '-' + dd + ' ' + weekstr;
+										let newOption = new Option(newdate3,newdate2);
+										list.add(newOption,undefined);
+									}
+								}
+							}
+							i++;
+							//console.log(i);
+						 }
+						 while (newdate2 < enddate2 );
+
+						</script>						
+                        <div class="col-4">
+                          <label for="inputState" class="form-label">預約時間</label>
+                          <!--<input type="time" class="form-control" id="reserve_time" name="reserve_time">-->
+							<select name="reserve_time" id="reserve_time" class="form-control custom-select" onchange="checkbooking()">
+							  <option value="0" selected>--請選擇--</option>
+							  <option value="08:30">08:30</option>
+							  <option value="09:30">09:30</option>
+							  <option value="10:30">10:30</option>
+							  <option value="11:30">11:30</option>
+							</select>						  
+                        </div>
+                        <div class="col-4"></div>
+                        <div class="col-2">
+                          <label for="inputState" class="form-label">早餐: </label>
+                        </div>
+						<div class="col-10">
+							<div class="form-check form-check-inline col-md-4">
+							  <input class="form-check-input" type="radio" name="breakfast" id="breakfast1" onclick="handleClick(this);" value="1" checked>
+							  <label class="form-check-label" for="breakfast1">葷食(豆奶+三明治)</label>
+							</div>
+							<div class="form-check form-check-inline col-md-4">
+							  <input class="form-check-input" type="radio" name="breakfast" id="breakfast2" onclick="handleClick(this);" value="2">
+							  <label class="form-check-label" for="breakfast2">素食(豆奶+超商50元禮卷)</label>
+							</div>
+						</div>
+                        <div class="col-2">
+                          <label for="inputAddress" class="form-label">驗證碼</label>
+                        </div>
+                        <div class="col-4">
+                          <input type="text" class="form-control" id="val2" name="val2" >
+                        </div>
+						  <div class="col-6">
+							<canvas id="canvas" width="100" height="35"></canvas>
+							<p class="mb-0 ms-2 d-inline-block text-muted"><a id="canvas2" >重新產生圖片</a></p>
+						  </div>						
+                        <span class="text-secondary text-small">也可透過 Line 和 電話預約，相關資訊在網頁最下方</span></br>
+                        <div class="col-12 my-3">
+                            <a class="btn btn-primary" onclick='Submit()'>送出</a>
+                          <!-- <button type="submit" class="btn btn-primary">送出</button> -->
+                        </div>
+                      </form>
+                </div>
+            </div>
+        </div>
+      </section>
+
+  </main>
+
+  <!-- Footer 2 - Bootstrap Brain Component -->
+  <footer class="footer">
+
+    <!-- Widgets - Bootstrap Brain Component -->
+    <section class="bg-light py-4 py-xl-8 border-top border-light"  id="scrollspyFooter">
+      <div class="container overflow-hidden">
+        <div class="row gy-4 gy-lg-0 justify-content-xl-between">
+          <div class="col-12">
+            <div class="widget">
+              <h4 class="widget-title mb-4">聯絡資訊</h4>
+              <address class="mb-4">臺北市文山區羅斯福路六段407號2樓</address>
+              <p class="mb-4">
+                <a class="text-decoration-none" href="tel:+886-2-29332010">02 2933 2010</a>
+              </p>
+              <div class="copyright text-center text-md-start link-secondary text-decoration-none">
+                &copy; 2025. All Rights Reserved.
+              </div>
+              <div class="credits text-secondary text-center text-md-start mt-2 fs-7">
+                Built by 依德科技 with <span class="text-primary">&#9829;</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-xs-12 order-0 order-md-1">
+            <ul class="nav justify-content-center justify-content-md-end">
+              <li class="nav-item">
+                <a class="nav-link link-dark" href="https://www.facebook.com/ShanLinHC?locale=zh_TW">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
+                    <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+                  </svg>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link link-dark" href="https://line.me/R/ti/p/@997dabri">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-line" viewBox="0 0 16 16">
+                    <path d="M8 0c4.411 0 8 2.912 8 6.492 0 1.433-.555 2.723-1.715 3.994-1.678 1.932-5.431 4.285-6.285 4.645-.83.35-.734-.197-.696-.413l.003-.018.114-.685c.027-.204.055-.521-.026-.723-.09-.223-.444-.339-.704-.395C2.846 12.39 0 9.701 0 6.492 0 2.912 3.59 0 8 0ZM5.022 7.686H3.497V4.918a.156.156 0 0 0-.155-.156H2.78a.156.156 0 0 0-.156.156v3.486c0 .041.017.08.044.107v.001l.002.002.002.002a.154.154 0 0 0 .108.043h2.242c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157Zm.791-2.924a.156.156 0 0 0-.156.156v3.486c0 .086.07.155.156.155h.562c.086 0 .155-.07.155-.155V4.918a.156.156 0 0 0-.155-.156h-.562Zm3.863 0a.156.156 0 0 0-.156.156v2.07L7.923 4.832a.17.17 0 0 0-.013-.015v-.001a.139.139 0 0 0-.01-.01l-.003-.003a.092.092 0 0 0-.011-.009h-.001L7.88 4.79l-.003-.002a.029.029 0 0 0-.005-.003l-.008-.005h-.002l-.003-.002-.01-.004-.004-.002a.093.093 0 0 0-.01-.003h-.002l-.003-.001-.009-.002h-.006l-.003-.001h-.004l-.002-.001h-.574a.156.156 0 0 0-.156.155v3.486c0 .086.07.155.156.155h.56c.087 0 .157-.07.157-.155v-2.07l1.6 2.16a.154.154 0 0 0 .039.038l.001.001.01.006.004.002a.066.066 0 0 0 .008.004l.007.003.005.002a.168.168 0 0 0 .01.003h.003a.155.155 0 0 0 .04.006h.56c.087 0 .157-.07.157-.155V4.918a.156.156 0 0 0-.156-.156h-.561Zm3.815.717v-.56a.156.156 0 0 0-.155-.157h-2.242a.155.155 0 0 0-.108.044h-.001l-.001.002-.002.003a.155.155 0 0 0-.044.107v3.486c0 .041.017.08.044.107l.002.003.002.002a.155.155 0 0 0 .108.043h2.242c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157H11.81v-.589h1.525c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157H11.81v-.589h1.525c.086 0 .155-.07.155-.156Z"/>
+                  </svg>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link link-dark" href="https://www.instagram.com/shanlin_healthcare?igsh=dGdoOWx2Zjdjejcx">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16">
+                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+                  </svg>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Copyright - Bootstrap Brain Component -->
+    
+
+  </footer>
+
+  <!-- Javascript Files: Vendors -->
+  <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
+  <script src="https://unpkg.com/isotope-layout@3.0.6/dist/isotope.pkgd.min.js"></script>
+  <script src="https://unpkg.com/isotope-packery@2.0.1/packery-mode.pkgd.min.js"></script>
+  <script src="https://unpkg.com/imagesloaded@5.0.0/imagesloaded.pkgd.min.js"></script>
+  <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Javascript Files: Controllers -->
+  <script src="./assets/controller/project-2.js"></script>
+  <script src="./assets/controller/wave-bsb.js"></script>
+  <script src="assets/js/comm.js"></script>
+  
+	<SCRIPT LANGUAGE=javascript>
+	<!--
+
+	var idtypeValue = 1;
+	var breakfastValue = 1;
+	function handleClick(breakfast) {
+		breakfastValue = breakfast.value;
+	}
+	function handleClick2(id_type) {
+		idtypeValue = id_type.value;
+	}
+	function checkbooking(){
+		var dataUrl= "checkbooking.php?rd="+document.getElementById("reserve_date").value+"&rt="+document.getElementById("reserve_time").value;
+		//console.log(dataUrl);
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET',dataUrl, true);
+		xhr.send();
+		xhr.onreadystatechange = function(){
+			if(this.readyState === 4 && this.status === 200){
+				///alert (this.responseText);
+				//console.log(this.responseText);
+				//booking_count = parseInt(this.responseText);
+				document.all.booking_count.value=this.responseText;
+			}
+		}	
+	}
+	function check_id(id){                                                
+		//var id=document.all("txt_id").value.toUpperCase();
+		//var kind=document.all("ddl_idkind").options[document.all("ddl_idkind").selectedIndex].text;
+		//檢查身分證字號
+		if (idtypeValue=="1"){
+			if (id.length != 10) return(false);
+
+			if (isNaN(id.substr(1,9)) || (id.substr(0,1)<"A" ||id.substr(0,1)>"Z")){
+				return(false);					
+			}
+
+			var head="ABCDEFGHJKLMNPQRSTUVXYWZIO";
+			id = (head.indexOf(id.substring(0,1))+10) +''+ id.substr(1,9)
+			s =parseInt(id.substr(0,1)) + 
+			parseInt(id.substr(1,1)) * 9 + 
+			parseInt(id.substr(2,1)) * 8 + 
+			parseInt(id.substr(3,1)) * 7 + 			
+			parseInt(id.substr(4,1)) * 6 + 
+			parseInt(id.substr(5,1)) * 5 + 
+			parseInt(id.substr(6,1)) * 4 + 
+			parseInt(id.substr(7,1)) * 3 + 
+			parseInt(id.substr(8,1)) * 2 + 
+			parseInt(id.substr(9,1)) + 
+			parseInt(id.substr(10,1));
+
+			//判斷是否可整除
+			if ((s % 10) != 0) return(false);
+
+			//身分證字號正確		
+			return(true);
+			
+		//檢查居留證號碼
+		}else if  (idtypeValue=="3"){
+			if (id.length != 10) return(false);
+
+			if (isNaN(id.substr(2,8)) || (id.substr(0,1)<"A" ||id.substr(0,1)>"Z") || (id.substr(1,1)<"A" ||id.substr(1,1)>"Z")){
+				return(false);					
+			}
+	
+			var head="ABCDEFGHJKLMNPQRSTUVXYWZIO";
+			id = (head.indexOf(id.substr(0,1))+10) +''+ ((head.indexOf(id.substr(1,1))+10)%10) +''+ id.substr(2,8)
+			s =parseInt(id.substr(0,1)) + 
+			parseInt(id.substr(1,1)) * 9 + 
+			parseInt(id.substr(2,1)) * 8 + 
+			parseInt(id.substr(3,1)) * 7 + 			
+			parseInt(id.substr(4,1)) * 6 + 
+			parseInt(id.substr(5,1)) * 5 + 
+			parseInt(id.substr(6,1)) * 4 + 
+			parseInt(id.substr(7,1)) * 3 + 
+			parseInt(id.substr(8,1)) * 2 + 
+			parseInt(id.substr(9,1)) + 
+			parseInt(id.substr(10,1));
+
+			//判斷是否可整除
+			if ((s % 10) != 0) return(false);
+			//居留證號碼正確		
+			return(true);
+		//檢查護照號碼
+		}else if (idtypeValue=="2"){
+			if (id.length > 20) return(false);
+
+			var regExp = /^[\d|a-zA-Z]+$/;
+			if (!regExp.test(id)) {
+				return false;
+			}
+			//if ((pattern1.test(id)==false) || (pattern2.test(id)==false)){
+			//	return(false);	
+			//}
+			
+			//護照號碼正確		
+			return(true);
+		//其他錯誤的格式	
+		}else{
+			return(false);
+		}
+	}	
+	
+	function validateMobile(sMobile) {
+	  //var reEmail = /^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/;
+	  var reMobile = /((?=(09))[0-9]{10})$/g;
+	  if(!sMobile.match(reMobile)) {
+		alert("輸入的 手機號碼 格式有誤!");
+		return false;
+	  }
+
+	  return true;
+
+	}	
+	var validateDate = function (originalYear, originalMonth, originalDay) {
+		var newyear = originalYear+1911;
+		var date = new Date(newyear, originalMonth - 1, originalDay);
+		var year = date.getFullYear();
+		var month = date.getMonth()+1;
+		var day = date.getDate();
+
+		return ((year == newyear) && (month == originalMonth) && (day == originalDay));
+	}
+
+	function Submit()
+	{
+	//alert(idtypeValue);
+	//alert(breakfastValue);
+	   //if (currentValue == 0){
+		   var mname = document.all.member_name.value;
+		   if (mname == '') {
+				alert('請輸入姓名資料！');
+				document.all.member_name.focus();
+				return false;
+		   }
+	   //}
+	   /*
+	   if (verifyId(pid) == false) {
+	   		alert('請輸入正確的身分證資料！');
+			document.all.member_pid.focus();
+			return false;
+	   }*/
+	   //if (currentValue == 0){
+		   var bid = document.all.member_birthday.value.trim();
+
+		   if (bid == '') {
+				alert('請輸入民國年出生日期資料！');
+				document.all.member_birthday.focus();
+				return false;
+		   }
+		    if ((bid.length != 7)&&(bid.length != 6)) {
+				alert('請輸入民國年出生日期資料！');
+				document.all.member_birthday.focus();	
+				return false;			
+			}	
+			if (bid.length == 6)	{	
+				if (validateDate(parseInt(bid.substr(0,2)), parseInt(bid.substr(2,2)), parseInt(bid.substr(4,2)))==false){
+					alert('出生日期為不合法的資料！');
+					return false;
+				}
+			}
+			if (bid.length == 7)	{	
+				if (validateDate(parseInt(bid.substr(0,3)), parseInt(bid.substr(3,2)), parseInt(bid.substr(5,2)))==false){
+					alert('出生日期為不合法的資料！');
+					return false;
+				}
+			}
+
+	   var pid = document.all.member_pid.value.trim();
+	   if (pid == "") {
+	   		alert('證號資料不能為空白！');
+			document.all.member_pid.focus();
+			return false;			   
+	   }
+	   if (check_id(pid) == false) {
+	   		alert('請輸入正確的證號資料！');
+			document.all.member_pid.focus();
+			return false;		   
+	   }
+			
+	   	 //}  
+	   //var rdate = document.all.Rdate.value;
+	   //var sid = document.all.sid.value;
+	   //var yy = parseInt(rdate.substr(0,3),10) + 1911;
+	   
+	   //var rtdate = yy +rdate.substr(3,2)+rdate.substr(5,2);
+	   //document.all.rtdate.value = rtdate;
+	   //alert(rtdate);
+	   //alert(currentValue);
+	   //if (currentValue == 0){
+		   var mphone = document.all.member_phone.value.trim();
+		   if (mphone == '') {
+				alert('請輸入手機號碼資料！');
+				document.all.member_phone.focus();
+				return false;
+		   }
+		   if (validateMobile(mphone) == false) return false;
+
+		if (document.getElementById("reserve_date").value == "0") {
+			alert("請輸入預約日期 !");
+			document.getElementById("reserve_date").focus(); 			
+			return false;
+		}
+		
+		if (document.getElementById("reserve_time").value == "0") {
+			alert("請輸入預約時間 !");
+			document.getElementById("reserve_time").focus(); 			
+			return false;
+		}
+		
+	   //check 已預約的人數
+	   var booking_count = 0;
+
+		booking_count = document.all.booking_count.value;
+		//alert(booking_count);
+		if (booking_count >= 1) {
+			alert("本時段已經預約滿了 !");
+			document.getElementById("reserve_time").focus(); 			
+			return false;
+		}	   
+	   //document.all.current.value = currentValue;
+	   var val = document.all.val2.value.toLowerCase();
+	   //alert(val);
+	   var num = document.all.ans.value;
+	   if(val==''){
+			alert('請輸入驗證碼！');
+			document.all.val2.focus();
+			return false;
+	   }else if(val == num){
+			//alert('提交成功！');
+			$(".input-val").val('');
+			
+			// draw(show_num);
+	   }else{
+			alert('驗證碼錯誤！請重新輸入！');
+			$(".input-val").val('');
+			document.all.val2.focus();
+			return false;
+			// draw(show_num);
+	   }
+	   document.all.idtypeValue.value = idtypeValue;
+	   document.all.breakfastValue.value = breakfastValue;
+	   document.all.act2.value = "Add";
+	   document.frm2.submit();
+	   return false;
+
+	}
+	//-->
+	</SCRIPT>  
+<script>
+ $(function(){
+	var visitname = getCookie("visit");
+	//alert(visitname);
+	//console.log(visitname);
+	if (typeof visitname === "string" && visitname.length === 0) {
+	  //alert("The string is empty");
+	  document.getElementById("visitname").value = "";
+	} else if (visitname === null) {
+	  //alert("The string is null");
+	  document.getElementById("visitname").value = "";
+	} else {
+	  	if (visitname == "null") {
+			document.getElementById("visitname").value = "";
+		}else{
+			document.getElementById("visitname").value = visitname;
+		}
+	}
+	
+
+  var show_num = [];
+  draw(show_num);
+  $("#canvas2").on('click',function(){
+   draw(show_num);
+  })
+  //$(".btn2").on('click',function(){
+   //var val = $(".input-val").val().toLowerCase();
+   //var num = show_num.join("");
+   //if(val==''){
+	//	alert('請輸入驗證碼！');
+   //}else if(val == num){
+	//	alert('提交成功！');
+	//	$(".input-val").val('');
+		// draw(show_num);
+   //}else{
+	//	alert('驗證碼錯誤！請重新輸入！');
+	//	$(".input-val").val('');
+		// draw(show_num);
+   //}
+   //})
+ })
+ //生成並渲染出驗證碼圖形
+ function draw(show_num) {
+  var canvas_width=$('#canvas').width();
+  var canvas_height=$('#canvas').height();
+  var canvas = document.getElementById("canvas");//獲取到canvas的對象，演員
+  var context = canvas.getContext("2d");//獲取到canvas畫圖的環境，演員表演的舞臺
+  canvas.width = canvas_width;
+  canvas.height = canvas_height;
+  var sCode = "a,b,c,d,e,f,g,h,i,j,k,m,n,p,q,r,s,t,u,v,w,x,y,z,A,B,C,E,F,G,H,J,K,L,M,N,P,Q,R,S,T,W,X,Y,Z,1,2,3,4,5,6,7,8,9,0";
+  var aCode = sCode.split(",");
+  var aLength = aCode.length;//獲取到數組的長度
+  for (var i = 0; i < 4; i++) { //這裏的for循環可以控制驗證碼位數（如果想顯示6位數，4改成6即可）
+   var j = Math.floor(Math.random() * aLength);//獲取到隨機的索引值
+   // var deg = Math.random() * 30 * Math.PI / 180;//產生0~30之間的隨機弧度
+   var deg = Math.random() - 0.5; //產生一個隨機弧度
+   var txt = aCode[j];//得到隨機的一個內容
+   show_num[i] = txt.toLowerCase();
+   
+   var x = 10 + i * 20;//文字在canvas上的x座標
+   var y = 20 + Math.random() * 8;//文字在canvas上的y座標
+   context.font = "bold 23px 微軟雅黑";
+   context.translate(x, y);
+   context.rotate(deg);
+   context.fillStyle = randomColor();
+   context.fillText(txt, 0, 0);
+   context.rotate(-deg);
+   context.translate(-x, -y);
+  }
+  document.getElementById("ans").value = show_num.join("");
+  /*for (var i = 0; i <= 5; i++) { //驗證碼上顯示線條
+   context.strokeStyle = randomColor();
+   context.beginPath();
+   context.moveTo(Math.random() * canvas_width, Math.random() * canvas_height);
+   context.lineTo(Math.random() * canvas_width, Math.random() * canvas_height);
+   context.stroke();
+  }
+  for (var i = 0; i <= 30; i++) { //驗證碼上顯示小點
+   context.strokeStyle = randomColor();
+   context.beginPath();
+   var x = Math.random() * canvas_width;
+   var y = Math.random() * canvas_height;
+   context.moveTo(x, y);
+   context.lineTo(x + 1, y + 1);
+   context.stroke();
+  }*/
+ }
+ //得到隨機的顏色值
+ function randomColor() {
+  var r = Math.floor(Math.random() * 256);
+  var g = Math.floor(Math.random() * 256);
+  var b = Math.floor(Math.random() * 256);
+  return "rgb(" + r + "," + g + "," + b + ")";
+ }
+</script>
+	<SCRIPT LANGUAGE=javascript>
+	<!--
+	const queryString = window.location.search;
+	//console.log(queryString);
+
+	const urlParams = new URLSearchParams(queryString);
+	const p = urlParams.get('p')
+	//console.log(p);
+	
+	if (p=="") p = 'A';
+
+	switch(p) {
+	  case "A":
+		pname = "A方案 腦肺方案";
+		break;
+	  case "B":
+		pname = "B方案 腹部方案";
+		break;
+	  case "C":
+		pname = "C方案 骨密肌力方案";
+		break;
+	  default:
+		pname = "A方案 腦肺方案";
+	}
+
+	document.all.project_type.value = p;
+	var el = document.getElementById("project_name");
+	el.innerHTML = pname;
+	
+	var nowdate = new Date();
+	var nowyear = nowdate.getFullYear();
+	
+	var t = nowyear - 1911 - 65;
+	//console.log(nowyear);
+	//console.log(t);
+
+	var t_age = document.getElementById("t_age");
+	t_age.innerHTML = t;
+	//const s = urlParams.get('s')
+	//console.log(s);
+
+	//-->
+	</SCRIPT>
+
+  <!-- BSB Body End -->
+</body>
+
+</html>

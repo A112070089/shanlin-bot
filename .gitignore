@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+**/.env
+
+# Python virtual environments
+venv/
+.venv/
+**/venv/
+**/.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# VS Code local files
+.vscode/
+
+# Temporary / debug files
+temp_*
+*.webm
+
+# Backup files
+*.bak

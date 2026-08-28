@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <title>AI 語音輔助預約 - 山林診所</title>
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <style>
+    .mic-btn {
+      width: 120px; height: 120px; border-radius: 50%;
+      font-size: 3rem; border: none; background: #0d6efd; color: white;
+      box-shadow: 0 10px 20px rgba(13,110,253,0.3); transition: 0.3s;
+    }
+    .mic-btn.listening {
+      background: #dc3545; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); }
+      70% { box-shadow: 0 0 0 30px rgba(220,53,69,0); }
+      100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <main class="container py-5 text-center">
+    <h2 class="mb-4 text-primary fw-bold">🎙️ 山林診所 AI 語音助理</h2>
+    <div class="card shadow p-5 mx-auto" style="max-width: 600px;">
+      
+      <p class="fs-5 mb-4 text-secondary">請點擊麥克風，告訴我您的需求。<br>
+        <small class="text-muted">例如：「我要約腦肺方案，我叫王大明，身分證是 A123456789」</small>
+      </p>
+
+      <button id="micBtn" class="mic-btn mb-4">🎤</button>
+      
+      <h4 id="statusText" class="text-muted fw-bold">等待語音輸入...</h4>
+      
+      <div id="resultText" class="alert alert-info mt-4 d-none fs-5 fw-bold text-dark"></div>
+      
+      <div id="actionBtns" class="mt-4 d-none">
+          <button id="reRecordBtn" class="btn btn-outline-danger btn-lg me-3 px-4">❌ 說錯了，重錄</button>
+          <button id="confirmBtn" class="btn btn-success btn-lg px-4">✅ 確認無誤，送出預約</button>
+      </div>
+
+    </div>
+    <a href="index.html" class="btn btn-outline-secondary mt-4">返回首頁</a>
+  </main>
+
+  <script>
+    const micBtn = document.getElementById('micBtn');
+    const statusText = document.getElementById('statusText');
+    const resultText = document.getElementById('resultText');
+    const actionBtns = document.getElementById('actionBtns');
+    const reRecordBtn = document.getElementById('reRecordBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
+    
+    let finalTranscript = ""; // 儲存長輩說的話
+
+    // 初始化語音辨識
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW';
+
+    // 點擊麥克風開始聆聽
+    micBtn.addEventListener('click', () => {
+      recognition.start();
+      micBtn.classList.add('listening');
+      statusText.innerText = "正在聆聽... 請說話";
+      resultText.classList.add('d-none');
+      actionBtns.classList.add('d-none');
+    });
+
+    // 聽到聲音後的處理
+    recognition.onresult = (event) => {
+      finalTranscript = event.results[0][0].transcript;
+      micBtn.classList.remove('listening');
+      statusText.innerText = "請確認您的需求是否正確：";
+      resultText.innerText = "「" + finalTranscript + "」";
+      
+      // 顯示文字與確認按鈕
+      resultText.classList.remove('d-none');
+      actionBtns.classList.remove('d-none'); 
+    };
+
+    recognition.onspeechend = () => recognition.stop();
+
+    // 點擊重錄
+    reRecordBtn.addEventListener('click', () => {
+        micBtn.click(); 
+    });
+
+    // 點擊確認送出
+    confirmBtn.addEventListener('click', () => {
+        actionBtns.classList.add('d-none');
+        statusText.innerHTML = "<span class='text-primary'>AI 正在為您處理中，請稍候... 🚀</span>";
+        sendToAI(finalTranscript); 
+    });
+
+    // 傳送資料給 Python 後台
+    async function sendToAI(text) {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/ai_voice_booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text })
+        });
+        const data = await response.json();
+        
+        if(data.status === "success") {
+            statusText.innerHTML = "✅ <span class='text-success fw-bold'>預約已送出！機器人正在幫您填表...</span>";
+        } else {
+            statusText.innerHTML = "❌ <span class='text-danger fw-bold'>資料不齊全：" + data.message + "</span>";
+            actionBtns.classList.remove('d-none'); // 失敗的話讓長輩可以重錄
+        }
+      } catch (error) {
+        statusText.innerText = "無法連線到 AI 伺服器，請確認黑盒子 (main.py) 有打開！";
+      }
+    }
+  </script>
+</body>
+</html>

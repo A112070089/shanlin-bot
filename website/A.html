@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>山林診所</title>
+  <meta name="description" content="山林診所－提供之服務：1.心臟內科及一般內科健保&自費醫療門診服務 2.非侵入性心血管重建治療/心血管震波治療 3.心血管疾病與代謝症候群運動處方 4.台北市老人健康檢查">
+  <meta name="author" content="山林診所">
+  <meta name="description" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+  <meta name="keywords" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/favicon/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Satisfy&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./assets/css/main.css">
+
+  <style>
+    .floating-mic-container { position: fixed; bottom: 30px; right: 30px; z-index: 1000; text-align: right; }
+    .mic-btn { width: 80px; height: 80px; border-radius: 50%; background: #0d6efd; color: white; border: none; font-size: 2.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer; transition: 0.3s; }
+    .mic-btn.listening { background: #dc3545; animation: pulse 1s infinite; }
+    .ai-bubble { background: #333; color: white; padding: 12px 20px; border-radius: 15px; margin-bottom: 15px; display: none; font-weight: bold; max-width: 250px; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .loading-spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#bsb-tpl-navbar" data-bs-smooth-scroll="true" tabindex="0">
+  <header id="header" class="sticky-top bsb-tpl-header-sticky bsb-tpl-header-sticky-animationX">
+    <nav id="scrollspyNav" class="navbar navbar-expand-lg bsb-tpl-bg-blue bsb-navbar bsb-navbar-hover bsb-navbar-caret bsb-tpl-navbar-sticky" data-bsb-sticky-target="#header">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="./assets/img/branding/logo.png" class="bsb-tpl-logo" alt=""> 山林診所
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+          </svg>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar">
+          <div class="offcanvas-body">
+            <ul id="bsb-tpl-navbar" class="navbar-nav justify-content-end flex-grow-1">
+              <li class="nav-item"><a class="nav-link" href="../ShanLinHC/index.html">首頁</a></li>
+              <li class="nav-item"><a class="nav-link" href="../ShanLinHC/index.html">預約健檢</a></li>
+              <li class="nav-item"><a class="nav-link" href="../ShanLinHC/index.html">健檢資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="../ShanLinHC/search.html" >預約資訊查詢</a></li>
+              <li class="nav-item"><a class="nav-link" href="#scrollspyFooter">聯絡資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="" data-bs-toggle="modal" data-bs-target="#staticBackdrop">登入</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="py-5 py-xl-8 py-xxl-10">
+        <div class="container overflow-hidden">
+            <div class="row gy-5 justify-content-center">
+                <div class="col-md-auto">
+                    <h4 class="display-3 fw-bolder mb-4"><mark class="bsb-tpl-highlight bsb-tpl-highlight-yellow"><span class="fw-normal">填寫基本資料</span></mark></h4>
+                    <p class="fs-4 mb-4 mb-xl-5">
+                        <span class="text-medium">您已選擇: <span id="project_name" name="project_name" class="text-accent">A方案 腦肺方案</span></span><br/>
+                    </p>
+                    <form class="row g-3" action="appointment_info.php" name="frm2" id="frm2" method="post">
+                        <input type="hidden" name="project_type" id="project_type"  value="A"/>
+                        <input type="hidden" name="act2" id="act2"  value=""/>
+                        <input type="hidden" name="breakfastValue" id="breakfastValue"  value=""/>
+                        <input type="hidden" name="idtypeValue" id="idtypeValue"  value=""/>
+                        <input type="hidden" name="ans" id="ans"  value=""/>
+                        <input type="hidden" name="booking_count" id="booking_count"  value=""/>
+                        <input type="hidden" name="visitname" id="visitname"  value=""/>
+                        
+                        <div class="col-12">
+                          <label for="name" class="form-label">姓名</label>
+                          <input type="text" class="form-control" id="member_name" name="member_name" maxlength=32>
+                        </div>
+                        <div class="col-12">
+                          <label for="birthday" class="form-label">出生年月日(民國) *需為年滿65歲(民國<span id="t_age" name="t_age" >49</span>年以前)</label>
+                          <input type="text" class="form-control" id="member_birthday" name="member_birthday" oninput="value=value.replace(/[^\d]/g,'')">
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label">(範例：出生日期為：民國101年6月19日，請輸入1010619)</label>
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label" for="member_pid">身分證字號</label>
+                          <input type="text" class="form-control" id="member_pid" name="member_pid" maxlength=20>
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label">（需為臺北市戶籍）</label>
+                        </div>
+                        <div class="col-12">
+                          <label for="phone" class="form-label">手機號碼</label>
+                          <input type="text" class="form-control" id="member_phone" name="member_phone" oninput="value=value.replace(/[^\d]/g,'')">
+                        </div>
+                        <div class="col-4">
+                            <label for="inputState" class="form-label">預約日期</label>
+                            <select name="reserve_date" id="reserve_date" class="form-control custom-select">
+                              <option value="0" selected>--請選擇--</option>
+                            </select> 
+                        </div>
+                        <div class="col-4">
+                          <label for="inputState" class="form-label">預約時間</label>
+                            <select name="reserve_time" id="reserve_time" class="form-control custom-select" onchange="checkbooking()">
+                              <option value="0" selected>--請選擇--</option>
+                              <option value="08:30">08:30</option>
+                              <option value="09:30">09:30</option>
+                              <option value="10:30">10:30</option>
+                              <option value="11:30">11:30</option>
+                            </select> 
+                        </div>
+                        <div class="col-4"></div>
+                        <div class="col-2">
+                          <label class="form-label">早餐: </label>
+                        </div>
+                        <div class="col-10">
+                            <div class="form-check form-check-inline col-md-4">
+                              <input class="form-check-input" type="radio" name="breakfast" id="breakfast1" onclick="handleClick(this);" value="1" checked>
+                              <label class="form-check-label" for="breakfast1">葷食(豆奶+三明治)</label>
+                            </div>
+                            <div class="form-check form-check-inline col-md-4">
+                              <input class="form-check-input" type="radio" name="breakfast" id="breakfast2" onclick="handleClick(this);" value="2">
+                              <label class="form-check-label" for="breakfast2">素食(豆奶+禮券)</label>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                          <label class="form-label">驗證碼</label>
+                        </div>
+                        <div class="col-4">
+                          <input type="text" class="form-control" id="val2" name="val2" >
+                        </div>
+                        <div class="col-6">
+                          <canvas id="canvas" width="100" height="35"></canvas>
+                          <p class="mb-0 ms-2 d-inline-block text-muted"><a id="canvas2" style="cursor:pointer">重新產生圖片</a></p>
+                        </div>
+                        <div class="col-12 my-3">
+                            <a class="btn btn-primary" onclick='Submit()'>送出</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+      </section>
+  </main>
+
+  <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
+  <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script language="javascript">
+    var idtypeValue = 1;
+    var breakfastValue = 1;
+    function handleClick(breakfast) { breakfastValue = breakfast.value; }
+    function handleClick2(id_type) { idtypeValue = id_type.value; }
+    
+    function checkbooking(){
+        var dataUrl= "checkbooking.php?rd="+document.getElementById("reserve_date").value+"&rt="+document.getElementById("reserve_time").value;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET',dataUrl, true);
+        xhr.send();
+        xhr.onreadystatechange = function(){
+            if(this.readyState === 4 && this.status === 200){
+                document.all.booking_count.value=this.responseText;
+            }
+        }   
+    }
+
+    // 原始身分證驗證邏輯
+    function check_id(id){
+        if (id.length != 10) return(false);
+        if (isNaN(id.substr(1,9)) || (id.substr(0,1)<"A" ||id.substr(0,1)>"Z")) return(false);
+        var head="ABCDEFGHJKLMNPQRSTUVXYWZIO";
+        id = (head.indexOf(id.substring(0,1))+10) +''+ id.substr(1,9)
+        s =parseInt(id.substr(0,1)) + parseInt(id.substr(1,1)) * 9 + parseInt(id.substr(2,1)) * 8 + parseInt(id.substr(3,1)) * 7 + parseInt(id.substr(4,1)) * 6 + parseInt(id.substr(5,1)) * 5 + parseInt(id.substr(6,1)) * 4 + parseInt(id.substr(7,1)) * 3 + parseInt(id.substr(8,1)) * 2 + parseInt(id.substr(9,1)) + parseInt(id.substr(10,1));
+        return ((s % 10) == 0);
+    }
+
+    function validateMobile(sMobile) {
+      var reMobile = /((?=(09))[0-9]{10})$/g;
+      if(!sMobile.match(reMobile)) { alert("手機號碼格式有誤!"); return false; }
+      return true;
+    }
+
+    function validateDate(y, m, d) {
+        var newyear = y + 1911;
+        var date = new Date(newyear, m - 1, d);
+        return (date.getFullYear() == newyear && (date.getMonth()+1) == m && date.getDate() == d);
+    }
+
+    function Submit() {
+        var mname = document.getElementById('member_name').value;
+        if (mname == '') { alert('請輸入姓名資料！'); return false; }
+        var bid = document.getElementById('member_birthday').value.trim();
+        if (bid == '' || (bid.length != 7 && bid.length != 6)) { alert('請輸入民國年出生日期！'); return false; }
+        var pid = document.getElementById('member_pid').value.trim();
+        if (!check_id(pid)) { alert('身分證資料有誤！'); return false; }
+        if (!validateMobile(document.getElementById('member_phone').value.trim())) return false;
+        if (document.getElementById("reserve_date").value == "0") { alert("請選擇預約日期"); return false; }
+        
+        var val = document.getElementById('val2').value.toLowerCase();
+        if(val != document.getElementById('ans').value){ alert('驗證碼錯誤！'); return false; }
+        
+        document.all.idtypeValue.value = idtypeValue;
+        document.all.breakfastValue.value = breakfastValue;
+        document.all.act2.value = "Add";
+        document.frm2.submit();
+    }
+
+    // 驗證碼繪圖
+    function draw(show_num) {
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
+        canvas.width = 100; canvas.height = 35;
+        var sCode = "A,B,C,E,F,G,H,J,K,L,M,N,P,Q,R,S,T,W,X,Y,Z,1,2,3,4,5,6,7,8,9,0";
+        var aCode = sCode.split(",");
+        for (var i = 0; i < 4; i++) {
+            var txt = aCode[Math.floor(Math.random() * aCode.length)];
+            show_num[i] = txt.toLowerCase();
+            context.font = "bold 23px Arial";
+            context.fillStyle = "blue";
+            context.fillText(txt, 10 + i*20, 25);
+        }
+        document.getElementById("ans").value = show_num.join("");
+    }
+
+    $(function(){
+        var show_num = [];
+        draw(show_num);
+        $("#canvas2").click(function(){ draw(show_num); });
+        
+        // 初始化日期選單
+        var list = document.getElementById("reserve_date");
+        var start = new Date("2026-04-01");
+        var end = new Date("2026-12-12");
+        for(var d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+            if(d.getDay() != 0) {
+                var v = d.toISOString().split('T')[0];
+                list.add(new Option(v, v));
+            }
+        }
+    });
+  </script>
+
+  <div class="floating-mic-container">
+    <div class="ai-bubble" id="aiBubble">您好！點我可以用語音幫您填表喔</div>
+    <button class="mic-btn" id="micBtn">🎤</button>
+  </div>
+
+  <script>
+    const micBtn = document.getElementById('micBtn');
+    const aiBubble = document.getElementById('aiBubble');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW';
+
+        micBtn.addEventListener('click', () => {
+            recognition.start();
+            micBtn.classList.add('listening');
+            aiBubble.innerHTML = "正在聆聽...";
+            aiBubble.style.display = 'block';
+        });
+
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            micBtn.classList.remove('listening');
+            aiBubble.innerHTML = '<div class="loading-spinner"></div> AI 正在填寫...';
+            
+            fetch('http://127.0.0.1:8000/api/ai_autofill', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === 'success') {
+                    const data = result.data;
+                    if(data.name) document.getElementById('member_name').value = data.name;
+                    if(data.pid) document.getElementById('member_pid').value = data.pid;
+                    if(data.phone) document.getElementById('member_phone').value = data.phone;
+                    aiBubble.innerText = "✅ 填寫完成！";
+                    setTimeout(() => { aiBubble.style.display = 'none'; }, 3000);
+                }
+            })
+            .catch(() => { aiBubble.innerText = "❌ 解析失敗"; });
+        };
+    }
+  </script>
+</body>
+</html>

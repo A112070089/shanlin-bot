@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>山林診所</title>
+  <meta name="description" content="山林診所－提供之服務：1.心臟內科及一般內科健保&自費醫療門診服務 2.非侵入性心血管重建治療/心血管震波治療 3.心血管疾病與代謝症候群運動處方 4.台北市老人健康檢查">
+  <meta name="author" content="山林診所">
+  <meta name="keywords" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/favicon/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Satisfy&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/main.css">
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#bsb-tpl-navbar" data-bs-smooth-scroll="true" tabindex="0">
+  <header id="header" class="sticky-top bsb-tpl-header-sticky bsb-tpl-header-sticky-animationX">
+    <nav id="scrollspyNav" class="navbar navbar-expand-lg bsb-tpl-bg-blue bsb-navbar bsb-navbar-hover bsb-navbar-caret bsb-tpl-navbar-sticky" data-bsb-sticky-target="#header">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="./assets/img/branding/logo.png" class="bsb-tpl-logo" alt=""> 山林診所
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+          </svg>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+          <div class="offcanvas-header">
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <ul id="bsb-tpl-navbar" class="navbar-nav justify-content-end flex-grow-1">
+              <li class="nav-item"><a class="nav-link" href="index.html">首頁</a></li>
+              <li class="nav-item"><a class="nav-link" href="appointment.html">預約健檢</a></li>
+              <li class="nav-item"><a class="nav-link" href="index.html">健檢資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="search.html" >預約資訊查詢</a></li>
+              <li class="nav-item"><a class="nav-link" href="#scrollspyFooter" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">聯絡資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="" data-bs-toggle="modal" data-bs-target="#staticBackdrop">登入</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form action="login.php" name="frm1" id="frm1" method="post">
+      <input type="hidden" name="act" id="act"  value="Login"/>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">登入後台</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+              <label for="account" class="col-form-label">帳號:</label>
+              <input type="text" class="form-control" id="account" name="account">
+            </div>
+            <div class="mb-3">
+              <label for="password" class="col-form-label">密碼:</label>
+              <input type="password" class="form-control" id="password" name="password">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">登入</button>
+        </div>
+      </div>
+      </form>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="py-5 py-xl-8 py-xxl-10">
+        <div class="container overflow-hidden">
+            <div class="row gy-5 gy-lg-0 justify-content-center">
+                <div class="col-md-auto">
+                    <p class="fs-4 mb-4 mb-xl-5">
+                        <span class="text-medium">請點選以下三事項,若未符合,將無法進行下一步</span><br/>
+                    </p>
+                    <form class="row g-3" id="frm2">
+                        <input type="hidden" name="project_type" id="project_type" value="A"/>
+
+                        <div class="col-12">
+                          <label for="inputState" class="form-label">1. 您是設籍台北市的市民嗎? </label>
+                        </div>
+                        <div class="col-12">                        
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="city_type" id="city_type1" onclick="handleClick1(this);" value="1" checked>
+                                <label class="form-check-label" for="city_type1">是</label>
+                            </div>
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="city_type" id="city_type2" onclick="handleClick1(this);" value="2">
+                                <label class="form-check-label" for="city_type2">不是</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                          <label for="inputState" class="form-label">2. 您是年滿65歲以上長者或55歲以上原住民嗎? </label>
+                        </div>
+                        <div class="col-12">                        
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="age_type" id="age_type1" onclick="handleClick2(this);" value="1" checked>
+                                <label class="form-check-label" for="age_type1">是</label>
+                            </div>
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="age_type" id="age_type2" onclick="handleClick2(this);" value="2">
+                                <label class="form-check-label" for="age_type2">不是</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                          <label for="inputState" class="form-label">3. 您若不符合受檢資格及未依照特約醫事機構規定辦理登記.醫事機構將取消已取號後之登記資格,您同意嗎? </label>
+                        </div>
+                        <div class="col-12">                        
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="c_type" id="c_type1" onclick="handleClick3(this);" value="1" checked>
+                                <label class="form-check-label" for="c_type1">同意</label>
+                            </div>
+                            <div class="form-check form-check-inline col-md-2">
+                                <input class="form-check-input" type="radio" name="c_type" id="c_type2" onclick="handleClick3(this);" value="2">
+                                <label class="form-check-label" for="c_type2">不同意</label>
+                            </div>
+                        </div>
+                        <div class="col-4"></div>
+
+                        <div class="col-12 my-3">
+                            <button type="button" class="btn btn-primary" style="color: white; cursor: pointer; padding: 10px 30px;" onclick="goNextStep()">下一步</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+      </section>
+  </main>
+
+  <footer class="footer">
+    <section class="bg-light py-4 py-xl-8 border-top border-light" id="scrollspyFooter">
+      <div class="container overflow-hidden">
+        <div class="row gy-4 gy-lg-0 justify-content-xl-between">
+          <div class="col-12">
+            <div class="widget">
+              <h4 class="widget-title mb-4">聯絡資訊</h4>
+              <address class="mb-4">臺北市文山區羅斯福路六段407號2樓</address>
+              <p class="mb-4">
+                <a class="text-decoration-none" href="tel:+886-2-29332010">02 2933 2010</a>
+              </p>
+              <div class="copyright text-center text-md-start link-secondary text-decoration-none">
+                &copy; 2025. All Rights Reserved.
+              </div>
+              <div class="credits text-secondary text-center text-md-start mt-2 fs-7">
+                Built by 依德科技 with <span class="text-primary">&#9829;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </footer>
+
+  <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
+  <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let citytypeValue = 1;
+    let agetypeValue = 1;
+    let ctypeValue = 1;
+
+    function handleClick1(ele) { citytypeValue = ele.value; }
+    function handleClick2(ele) { agetypeValue = ele.value; }
+    function handleClick3(ele) { ctypeValue = ele.value; }
+
+    function goNextStep() {
+       if (citytypeValue == 2 || agetypeValue == 2 || ctypeValue == 2){
+            alert("不符資格，無法預約");
+            return false;
+       }
+
+       // 🌟 完整抓取 7 個參數，接力傳遞
+       const urlParams = new URLSearchParams(window.location.search);
+       let p = urlParams.get('p');
+       if (!p) {
+           const projElem = document.getElementById('project_type');
+           p = projElem ? projElem.value : 'A';
+       }
+       const name = urlParams.get('name') || '';
+       const pid = urlParams.get('pid') || '';
+       const phone = urlParams.get('phone') || '';
+       const birthday = urlParams.get('birthday') || '';
+       const date = urlParams.get('date') || '';
+       const time = urlParams.get('time') || '';
+
+       // 🚀 正確路徑：傳送到 appointment2.html
+       const nextUrl = "appointment2.html?p=" + p + "&name=" + name + "&pid=" + pid + "&phone=" + phone + "&birthday=" + birthday + "&date=" + date + "&time=" + time;
+       window.location.href = nextUrl;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let p = urlParams.get('p');
+        if (p) {
+            document.getElementById('project_type').value = p;
+        }
+    });
+  </script>
+</body>
+</html>
