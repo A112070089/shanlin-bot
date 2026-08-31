@@ -760,6 +760,84 @@
       cursor: pointer;
     }
 
+    /* ==================================================
+       自費加購清單：固定底部操作區
+       - 清單過長時只捲動中間項目
+       - 合計 / 提醒 / 按鈕永遠留在視窗底部
+    ================================================== */
+    #selfPayCartDialog {
+      width: min(680px, 92vw);
+      height: min(760px, 88vh);
+      max-height: 88vh;
+    }
+
+    #selfPayCartDialog .self-pay-detail-body {
+      height: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    #selfPayCartDialog .self-pay-cart-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 8px;
+      overscroll-behavior: contain;
+    }
+
+    #selfPayCartDialog .self-pay-cart-bottom {
+      flex: 0 0 auto;
+      background: #ffffff;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -10px 22px rgba(23, 52, 95, 0.05);
+    }
+
+    #selfPayCartDialog .self-pay-cart-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-radius: 12px;
+      background: #edf4ff;
+      color: #17345f;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    #selfPayCartDialog .self-pay-cart-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    #selfPayCartDialog .self-pay-cart-actions .self-pay-add-btn,
+    #selfPayCartDialog .self-pay-cart-actions .self-pay-detail-close {
+      flex: 1;
+      margin-top: 0;
+      min-height: 48px;
+    }
+
+    @media (max-width: 700px) {
+      #selfPayCartDialog {
+        width: 94vw;
+        height: 90vh;
+        max-height: 90vh;
+      }
+
+      #selfPayCartDialog .self-pay-detail-body {
+        max-height: 90vh;
+        padding: 18px;
+      }
+
+      #selfPayCartDialog .self-pay-cart-actions {
+        flex-direction: column;
+      }
+    }
+
     @media (max-width: 700px) {
       #selfPayModal {
         padding: 0;
@@ -2998,101 +3076,65 @@
         <div
           class="self-pay-detail-body">
 
-
           <h3>
             🛒 自費加購清單
           </h3>
 
-
           <div
-            style="
-              max-height:420px;
-              overflow-y:auto;
-            ">
+            class="self-pay-cart-list">
 
             ${listHtml}
 
           </div>
 
-
           <div
-            style="
-              display:flex;
-              justify-content:
-                space-between;
-              align-items:center;
-              margin-top:20px;
-              padding:16px;
-              border-radius:12px;
-              background:#edf4ff;
-              color:#17345f;
-              font-size:20px;
-              font-weight:800;
-            ">
+            class="self-pay-cart-bottom">
 
-            <span>
-              合計
-            </span>
+            <div
+              class="self-pay-cart-total">
 
-            <span>
-              NT$${total.toLocaleString(
+              <span>合計</span>
+
+              <span>
+                NT$${total.toLocaleString(
           "zh-TW"
         )}
-            </span>
+              </span>
 
-          </div>
+            </div>
 
+            <div
+              class="self-pay-item-note">
+              價格需確認的項目不列入目前合計。
+              最終金額以診所確認為準。
+            </div>
 
-          <div
-            class="self-pay-item-note">
+            <div
+              class="self-pay-cart-actions">
 
-            價格需確認的項目
-            不列入目前合計。
-            最終金額以診所確認為準。
+              <button
+                type="button"
+                class="self-pay-add-btn"
+                onclick="
+                  window.confirmSelfPayItems()
+                ">
+                確認加購
+              </button>
 
-          </div>
+              <button
+                type="button"
+                class="self-pay-detail-close"
+                onclick="
+                  document
+                    .getElementById(
+                      'selfPayCartDialog'
+                    )
+                    .close()
+                ">
+                繼續選擇
+              </button>
 
-
-          <div
-            style="
-              display:flex;
-              gap:12px;
-              margin-top:20px;
-            ">
-
-
-            <button
-              type="button"
-              class="self-pay-add-btn"
-              style="flex:1;"
-              onclick="
-                window.confirmSelfPayItems()
-              ">
-
-              確認加購
-
-            </button>
-
-
-            <button
-              type="button"
-              class="self-pay-detail-close"
-              style="
-                flex:1;
-                margin-top:0;
-              "
-              onclick="
-                document
-                  .getElementById(
-                    'selfPayCartDialog'
-                  )
-                  .close()
-              ">
-
-              繼續選擇
-
-            </button>
-
+            </div>
 
           </div>
 
