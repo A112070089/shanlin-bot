@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>預約成功 - 山林診所</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      color: #173b5c;
+      background: #ffffff;
+    }
+
+    /* 頂部 */
+    .header {
+      height: 82px;
+      background: #d9effc;
+      display: flex;
+      align-items: center;
+      padding: 0 38px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* 主內容 */
+    .main {
+      max-width: 650px;
+      margin: 55px auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .success-icon {
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: #e8f8ef;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 34px;
+    }
+
+    h1 {
+      font-size: 25px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-bottom: 35px;
+    }
+
+    /* 方案 */
+    .plan {
+      padding: 15px;
+      margin-bottom: 25px;
+      border: 1px solid #efc8c2;
+      background: #fff5f3;
+      border-radius: 8px;
+      font-weight: 700;
+      color: #c64a3b;
+    }
+
+    /* 預約資料 */
+    .booking-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 22px 25px;
+      text-align: left;
+      background: white;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid #eee;
+      gap: 25px;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      color: #666;
+    }
+
+    .value {
+      font-weight: 600;
+      text-align: right;
+      color: #25394c;
+    }
+
+    /* 提醒 */
+    .notice {
+      margin-top: 25px;
+      padding: 17px;
+      background: #fff9e9;
+      border: 1px solid #eadcae;
+      border-radius: 8px;
+      text-align: left;
+      color: #8b762f;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    /* 按鈕 */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 13px 30px;
+      border-radius: 7px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-home {
+      background: #174d78;
+      color: white;
+      border: 1px solid #174d78;
+    }
+
+    .btn-selfpay {
+      background: white;
+      color: #174d78;
+      border: 1px solid #174d78;
+    }
+
+    @media (max-width: 600px) {
+      .main {
+        margin-top: 35px;
+      }
+
+      .row {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .value {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    山林診所
+  </div>
+
+  <main class="main">
+
+    <div class="success-icon">✅</div>
+
+    <h1>預約成功，感謝您的預約！</h1>
+
+    <div class="subtitle">
+      以下是您的預約資料，建議截圖保留
+    </div>
+
+    <div class="plan" id="plan">
+      健檢方案
+    </div>
+
+    <div class="booking-card">
+
+      <div class="row">
+        <span class="label">姓名</span>
+        <span class="value" id="name">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">身分證字號</span>
+        <span class="value" id="pid">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">手機號碼</span>
+        <span class="value" id="phone">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">出生年月日</span>
+        <span class="value" id="birthday">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">預約時段</span>
+        <span class="value" id="datetime">—</span>
+      </div>
+
+    </div>
+
+    <div class="notice">
+      請於健檢當天攜帶健保卡、身分證，並保持空腹 8 小時。
+      若需要異動或取消預約，請於健檢前一日致電本診所櫃檯。
+    </div>
+
+    <div class="buttons">
+
+      <a href="index.html" class="btn btn-home">
+        回首頁
+      </a>
+
+      <a href="index.html?mode=self_pay" class="btn btn-selfpay">
+        順便看看自費健康管理項目
+      </a>
+
+    </div>
+
+  </main>
+
+  <script>
+    const booking =
+      JSON.parse(sessionStorage.getItem("lastBooking") || "{}");
+
+    const planNames = {
+      A: "A方案：腦肺方案",
+      B: "B方案：腹部方案",
+      C: "C方案：基本方案"
+    };
+
+    document.getElementById("plan").textContent =
+      planNames[booking.plan] || booking.plan || "健檢方案";
+
+    document.getElementById("name").textContent =
+      booking.name || "—";
+
+    document.getElementById("pid").textContent =
+      booking.pid || "—";
+
+    document.getElementById("phone").textContent =
+      booking.phone || "—";
+
+    const rawBirthday = booking.birthday || "";
+
+let birthdayText = "—";
+
+if (/^\d{6,7}$/.test(rawBirthday)) {
+    const yearLength = rawBirthday.length - 4;
+
+    const rocYear = parseInt(
+        rawBirthday.slice(0, yearLength),
+        10
+    );
+
+    const month = parseInt(
+        rawBirthday.slice(yearLength, yearLength + 2),
+        10
+    );
+
+    const day = parseInt(
+        rawBirthday.slice(yearLength + 2),
+        10
+    );
+
+    birthdayText =
+        `民國${rocYear}年${month}月${day}日`;
+} else if (rawBirthday) {
+    birthdayText = rawBirthday;
+}
+
+document.getElementById("birthday").textContent =
+    birthdayText;
+
+    const date = booking.date || "";
+    const time = booking.time || "";
+
+    document.getElementById("datetime").textContent =
+      (date || time)
+        ? `${date} ${time}`.trim()
+        : "—";
+  </script>
+
+</body>
+</html>

@@ -961,7 +961,7 @@
                 語音智慧助理
               </button>
 
-              <button type="button" onclick="openSelfPayBrowser()"
+              <button type="button" onclick="openSelfPayChat()"
                 class="btn btn-outline-primary bsb-btn-2xl rounded-pill d-flex align-items-center justify-content-center">
                 <span class="me-2">🧾</span>
                 自費加購
@@ -1408,7 +1408,8 @@
     const chatMicBtn = document.getElementById('chatMicBtn');
     const loadingStatus = document.getElementById('loading');
     const chatInput = document.getElementById('chat-input');
-
+   
+    let bookingMode = "elderly";
     let currentStep = "plan";
     let bookingData = { plan: "", name: "", pid: "", phone: "", birthday: "", date: "", time: "" };
     let mediaRecorder, audioChunks = [], globalStream = null;
@@ -1446,11 +1447,113 @@
     }
 
     function toggleSize() { chatWidget.classList.toggle('large-mode'); setTimeout(() => chatBody.scrollTop = chatBody.scrollHeight, 100); }
-    function closeChat() { chatWidget.style.display = 'none'; chatBtn.style.display = 'block'; }
+    function closeChat() {
+  // 立即停止 AI 語音朗讀
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+
+  // 如果正在錄音，也立即停止
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    chatMicBtn.classList.remove('recording');
+  }
+
+  // 關閉聊天視窗
+  chatWidget.style.display = 'none';
+  chatBtn.style.display = 'block';
+}
     async function openChat() {
       chatWidget.style.display = 'flex'; chatBtn.style.display = 'none';
       if (!globalStream) { globalStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(e => null); }
     }
+    async function openSelfPayChat() {
+
+  // 切換成自費健檢模式
+  bookingMode = "self_pay";
+
+  // 清除上一輪資料
+  bookingData = {
+    plan: "",
+    name: "",
+    pid: "",
+    phone: "",
+    birthday: "",
+    date: "",
+    time: ""
+  };
+
+  // 跳過 A / B / C，直接從姓名開始
+  currentStep = "name";
+
+  bookingConfirmMode = "";
+  correctingField = null;
+
+  // 開啟原本的 AI 對話視窗
+  chatWidget.style.display = "flex";
+  chatBtn.style.display = "none";
+
+  // 清除上一輪對話
+  chatBody.querySelectorAll(".msg").forEach(msg => msg.remove());
+
+  // 自費流程開場
+  addMsg(
+    "您好！我是健檢小幫手。<br>" +
+    "在選擇自費檢查項目前，我先協助您建立基本資料。<br><br>" +
+    "👉 請問您的姓名是？",
+    "ai"
+  );
+
+  // 啟用麥克風
+  if (!globalStream) {
+    globalStream = await navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .catch(e => null);
+  }
+}
+    async function openSelfPayChat() {
+
+  // 切換成「純自費健檢」模式
+  bookingMode = "self_pay";
+
+  // 清除上一輪預約資料
+  bookingData = {
+    plan: "",
+    name: "",
+    pid: "",
+    phone: "",
+    birthday: "",
+    date: "",
+    time: ""
+  };
+
+  // 自費流程跳過 A / B / C，直接從姓名開始
+  currentStep = "name";
+
+  bookingConfirmMode = "";
+  correctingField = null;
+
+  // 開啟原本的 AI 對話視窗
+  chatWidget.style.display = "flex";
+  chatBtn.style.display = "none";
+
+  // 清除原本 A / B / C 的對話內容
+  chatBody.querySelectorAll(".msg").forEach(msg => msg.remove());
+
+  const welcomeMessage =
+    "您好！我是健檢小幫手。<br>" +
+    "在選擇自費檢查項目前，我先協助您建立基本資料。<br><br>" +
+    "👉 請問您的姓名是？";
+
+  addMsg(welcomeMessage, "ai");
+
+  // 啟用麥克風
+  if (!globalStream) {
+    globalStream = await navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .catch(e => null);
+  }
+}
 
     function goBack() {
       if (currentStep === "plan") {
@@ -1683,11 +1786,14 @@
           break;
 
         case "birthday": {
+           age = null;
           // 優先使用 AI 解析出的生日；沒有才從使用者輸入抓數字
           let b =
-            bookingData.birthday ||
-            data.birthday ||
-            "";
+  normalizeRocBirthday(
+    bookingData.birthday ||
+    data.birthday ||
+    rawText
+  ) || "";
 
           if (!b) {
             const rawDigits =
@@ -1757,7 +1863,7 @@
                 const today =
                   new Date();
 
-                let age =
+                age =
                   today.getFullYear() -
                   adYear;
 
@@ -1780,14 +1886,13 @@
 
 
                 isQualified =
-                  age >= 65;
+  age >= 65;
 
-
-                if (!isQualified) {
-                  ageMsg =
-                    `（您的出生年份換算西元為 ${adYear} 年，` +
-                    `目前年齡約 ${age} 歲，未達 65 歲受檢資格）`;
-                }
+if (!isQualified) {
+  ageMsg =
+    `（您的出生年份換算西元為 ${adYear} 年，` +
+    `目前年齡約 ${age} 歲，未達 65 歲受檢資格）`;
+}
               }
             }
 
@@ -1815,42 +1920,84 @@
                年齡不符合
             ===================================== */
 
-            else if (!isQualified) {
-              bookingData.birthday = "";
+            else if (
+  bookingMode !== "self_pay" &&
+  !isQualified
+) {
 
-              addMsg(
-                `<span style='color:red;'>` +
-                `⚠️ 很抱歉，不符合受檢資格。` +
-                `${ageMsg}<br>` +
-                `本健檢對象為年滿 65 歲以上市民。` +
-                `</span><br>` +
-                `👉 請確認出生年月日是否正確？` +
-                `（若要更正請重新輸入）`,
-                "ai"
-              );
-            }
+  bookingData.birthday = "";
+
+  addMsg(
+    `<span style='color:red;'>` +
+    `⚠️ 很抱歉，不符合受檢資格。` +
+    `${ageMsg}<br>` +
+    `本健檢對象為年滿 65 歲以上市民。` +
+    `</span><br>` +
+    `👉 請確認出生年月日是否正確？` +
+    `（若要更正請重新輸入）`,
+    "ai"
+  );
+
+}
 
 
-            /* =====================================
-               生日正確 → 進入資料確認
-            ===================================== */
+/* =====================================
+   生日正確
+===================================== */
 
-            else {
+else {
               bookingData.birthday = b;
 
-              // 生日完成後，不直接進入確認
-              // 下一題改問「預約日期」
-              currentStep = "date";
+bookingConfirmMode = "";
+correctingField = null;
 
-              bookingConfirmMode = "";
+if (bookingMode === "self_pay") {
 
-              correctingField = null;
+  currentStep = "confirm";
 
-              addMsg(
-                `✅ 出生年月日已記錄。<br>` +
-                `👉 請問您想預約哪一天？（5/1 或 5/4）`,
-                "ai"
-              );
+  const birthdayText =
+    formatRocBirthday(
+      bookingData.birthday
+    );
+
+  let under18Notice = "";
+
+  // age 變數前面已經計算好
+  if (
+  Number.isFinite(age) &&
+  age < 18
+) {
+    under18Notice =
+      `<br><br>` +
+      `<span style="color:#d97706; font-weight:700;">` +
+      `⚠️ 您目前未滿 18 歲，建議由家長或監護人陪同就診。` +
+      `</span>`;
+  }
+
+  addMsg(
+    `✅ 基本資料已完成。<br><br>` +
+    `資料核對：<br>` +
+    `姓名：${bookingData.name}<br>` +
+    `證號：${bookingData.pid}<br>` +
+    `電話：${bookingData.phone}<br>` +
+    `生日：${birthdayText}` +
+    `${under18Notice}<br><br>` +
+    `👉 以上資料正確嗎？`,
+    "ai"
+  );
+
+} else {
+
+  // 老人健檢維持原流程
+  currentStep = "date";
+
+  addMsg(
+    `✅ 出生年月日已記錄。<br>` +
+    `👉 請問您想預約哪一天？（5/1 或 5/4）`,
+    "ai"
+  );
+
+}
 
               break;
             }
@@ -2419,7 +2566,26 @@
               /對|是|好|正確|沒錯|可以/
             )
           ) {
+if (bookingMode === "self_pay") {
 
+  addMsg(
+    "✅ 基本資料確認完成！<br>" +
+    "接下來請選擇您想加購的自費檢查項目。",
+    "ai"
+  );
+
+  setTimeout(() => {
+
+    // 停止語音並關閉聊天視窗
+    closeChat();
+
+    // 開啟既有自費項目選擇畫面
+    openSelfPayBrowser();
+
+  }, 1200);
+
+  return;
+}
             addMsg(
               "✅ 資料確認完成！正在進入預約頁面...",
               "ai"

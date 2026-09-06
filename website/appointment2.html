@@ -893,9 +893,26 @@
                     padding:8px;
                   ">
                       ↻ 重新產生圖片
-                    </button>
+                    ↻ 重新產生圖片
+</button>
 
-                  </div>
+<button
+  type="button"
+  id="speakCaptchaBtn"
+  style="
+    margin-left:10px;
+    border:1px solid #3154b8;
+    border-radius:8px;
+    background:#ffffff;
+    color:#3154b8;
+    font-size:16px;
+    cursor:pointer;
+    padding:8px 12px;
+  ">
+  🔊 語音播放
+</button>
+
+</div>
 
 
                   <!-- 驗證失敗訊息 -->
@@ -2016,7 +2033,10 @@
           button.addEventListener(
             "click",
             async function () {
-
+if (option.value === "done") {
+  window.location.href = "booking_success.html";
+  return;
+}
               await handleSelfPayAnswer(
                 option.value,
                 option.label
@@ -4624,6 +4644,20 @@
               .selfPayTotal ??
             0
           );
+const successBookingData = {
+  plan: finalBookingData.planName || "",
+  name: finalBookingData.name || "",
+  pid: finalBookingData.pid || "",
+  phone: finalBookingData.phone || "",
+  birthday: finalBookingData.birthday || "",
+  date: finalBookingData.date || "",
+  time: finalBookingData.time || ""
+};
+
+sessionStorage.setItem(
+  "lastBooking",
+  JSON.stringify(successBookingData)
+);
 
         addSelfPayAIMessage(
           `✅ <strong>預約已完成。</strong><br><br>` +
@@ -4754,7 +4788,40 @@
     ========================================================= */
 
     let currentCaptcha = "";
+    if ("speechSynthesis" in window) {
+  window.speechSynthesis.getVoices();
 
+  window.speechSynthesis.onvoiceschanged = function () {
+    window.speechSynthesis.getVoices();
+  };
+}
+function validateCaptcha() {
+  const captchaInput = document.getElementById("captchaInput");
+
+  if (!captchaInput) {
+    alert("找不到驗證碼輸入欄位。");
+    return false;
+  }
+
+  const userInput = captchaInput.value.trim().toUpperCase();
+  const correctCaptcha = String(currentCaptcha || "").trim().toUpperCase();
+
+  if (!userInput) {
+    alert("請輸入驗證碼。");
+    captchaInput.focus();
+    return false;
+  }
+
+  if (userInput !== correctCaptcha) {
+    alert("驗證碼錯誤，請重新輸入。");
+    generateCaptcha();
+    captchaInput.value = "";
+    captchaInput.focus();
+    return false;
+  }
+
+  return true;
+}
 
     /* ---------------------------------------------------------
        產生驗證碼
@@ -4774,340 +4841,170 @@
 
         currentCaptcha +=
           chars[index];
-
       }
-
-
       const canvas =
-        document.getElementById(
-          "captchaCanvas"
-        );
+  document.getElementById("captchaCanvas");
 
-      if (!canvas) {
+if (!canvas) return;
 
-        console.warn(
-          "找不到 captchaCanvas"
-        );
+const ctx =
+  canvas.getContext("2d");
 
-        return;
+// 清空舊驗證碼
+ctx.clearRect(
+  0,
+  0,
+  canvas.width,
+  canvas.height
+);
 
-      }
+// 背景
+ctx.fillStyle = "#f5f7fa";
+ctx.fillRect(
+  0,
+  0,
+  canvas.width,
+  canvas.height
+);
 
+// 干擾線
+for (let i = 0; i < 5; i++) {
+  ctx.beginPath();
 
-      const ctx =
-        canvas.getContext("2d");
+  ctx.moveTo(
+    Math.random() * canvas.width,
+    Math.random() * canvas.height
+  );
 
+  ctx.lineTo(
+    Math.random() * canvas.width,
+    Math.random() * canvas.height
+  );
 
-      /* 清除舊內容 */
+  ctx.strokeStyle =
+    "rgba(100,100,100,0.25)";
 
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+  ctx.lineWidth = 1;
 
+  ctx.stroke();
+}
 
-      /* 背景 */
+// 驗證碼文字
+ctx.font = "bold 34px Arial";
+ctx.textBaseline = "middle";
 
-      ctx.fillStyle =
-        "#f5f7fa";
+for (let i = 0; i < currentCaptcha.length; i++) {
 
-      ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+  const char =
+    currentCaptcha[i];
 
+  const x =
+    18 + i * 31;
 
-      /* -------------------------------------------------------
-         背景干擾點
-      ------------------------------------------------------- */
+  const y =
+    canvas.height / 2 +
+    (Math.random() * 8 - 4);
 
-      for (let i = 0; i < 30; i++) {
+  const angle =
+    Math.random() * 0.35 - 0.175;
 
-        ctx.beginPath();
+  ctx.save();
 
-        ctx.arc(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height,
-          Math.random() * 2 + 1,
-          0,
-          Math.PI * 2
-        );
+  ctx.translate(x, y);
 
-        ctx.fillStyle =
-          "rgba(100,100,100,0.25)";
+  ctx.rotate(angle);
 
-        ctx.fill();
+  ctx.fillStyle = "#2f4fb3";
 
-      }
+  ctx.fillText(
+    char,
+    0,
+    0
+  );
 
-
-      /* -------------------------------------------------------
-         干擾線
-      ------------------------------------------------------- */
-
-      for (let i = 0; i < 5; i++) {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height
-        );
-
-        ctx.lineTo(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height
-        );
-
-        ctx.strokeStyle =
-          "rgba(70,70,70,0.30)";
-
-        ctx.lineWidth =
-          1;
-
-        ctx.stroke();
+  ctx.restore();
+}
 
       }
-
-
-      /* -------------------------------------------------------
-         驗證碼文字
-      ------------------------------------------------------- */
-
-      ctx.font =
-        "bold 30px Arial";
-
-      ctx.textBaseline =
-        "middle";
-
-
-      for (
-        let i = 0;
-        i < currentCaptcha.length;
-        i++
-      ) {
-
-        ctx.save();
-
-
-        const x =
-          18 + i * 31;
-
-        const y =
-          canvas.height / 2;
-
-
-        const angle =
-          (Math.random() - 0.5) * 0.35;
-
-
-        ctx.translate(
-          x,
-          y
-        );
-
-        ctx.rotate(
-          angle
-        );
-
-
-        ctx.fillStyle =
-          "#303f9f";
-
-
-        ctx.fillText(
-          currentCaptcha[i],
-          0,
-          0
-        );
-
-
-        ctx.restore();
-
-      }
-
-
-      /* 清除錯誤訊息 */
-
-      const error =
-        document.getElementById(
-          "captchaError"
-        );
-
-      if (error) {
-
-        error.style.display =
-          "none";
-
-      }
-
-    }
-
-
-    /* =========================================================
-       驗證 CAPTCHA
-    ========================================================= */
-
-    function validateCaptcha() {
-
-      const input =
-        document.getElementById(
-          "captchaInput"
-        );
-
-
-      const error =
-        document.getElementById(
-          "captchaError"
-        );
-
-
-      if (!input) {
-
-        console.error(
-          "找不到 captchaInput"
-        );
-
-        return false;
-
-      }
-
-
-      const userValue =
-        input.value
-          .trim()
-          .toUpperCase();
-
-
-      /* 沒輸入 */
-
-      if (!userValue) {
-
-        if (error) {
-
-          error.textContent =
-            "請輸入驗證碼。";
-
-          error.style.display =
-            "block";
-
-        }
-
-        input.focus();
-
-        return false;
-
-      }
-
-
-      /* 驗證失敗 */
-
-      if (
-        userValue !==
-        currentCaptcha.toUpperCase()
-      ) {
-
-        if (error) {
-
-          error.textContent =
-            "驗證碼錯誤，請重新輸入。";
-
-          error.style.display =
-            "block";
-
-        }
-
-
-        input.value =
-          "";
-
-
-        generateCaptcha();
-
-
-        input.focus();
-
-
-        return false;
-
-      }
-
-
-      /* 驗證成功 */
-
-      if (error) {
-
-        error.style.display =
-          "none";
-
-      }
-
-
-      return true;
-
-    }
-
-
-    /* =========================================================
-       確認資料
-    ========================================================= */
-
-    function confirmBasicData() {
-
-      /* 先檢查驗證碼 */
-
-      if (!validateCaptcha()) {
-
-        return;
-
-      }
-
-
-      console.log(
-        "驗證碼正確"
-      );
-
-
-      /* =====================================================
-         ★ 如果你原本已有「確認資料並繼續」的函式，
-           請把原本跳下一頁的程式放在這裡。
-      ===================================================== */
-
-
-      /*
-      範例：
-    
-      const name =
-        document.getElementById("name")?.value || "";
-    
-      const birthday =
-        document.getElementById("birthday")?.value || "";
-    
-      const pid =
-        document.getElementById("pid")?.value || "";
-    
-      const phone =
-        document.getElementById("phone")?.value || "";
-    
-      const params =
-        new URLSearchParams({
-          name,
-          birthday,
-          pid,
-          phone
-        });
-    
-      window.location.href =
-        "下一頁.html?" +
-        params.toString();
-      */
-
-
-    }
+      let captchaVoices = [];
+
+function loadCaptchaVoices() {
+  if (!("speechSynthesis" in window)) return;
+  captchaVoices = window.speechSynthesis.getVoices();
+}
+
+if ("speechSynthesis" in window) {
+  loadCaptchaVoices();
+
+  window.speechSynthesis.addEventListener(
+    "voiceschanged",
+    loadCaptchaVoices
+  );
+}
+
+function speakCaptcha() {
+  if (!currentCaptcha) {
+    alert("目前沒有可播放的驗證碼。");
+    return;
+  }
+
+  if (!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援語音播放。");
+    return;
+  }
+
+  // 停止上一段語音
+  window.speechSynthesis.cancel();
+
+  // 驗證碼逐字分開
+  const spokenText =
+    "驗證碼是，" +
+    currentCaptcha.split("").join("，");
+
+  const utterance =
+    new SpeechSynthesisUtterance(spokenText);
+
+  utterance.lang = "zh-TW";
+
+  if (captchaVoices.length === 0) {
+    captchaVoices =
+      window.speechSynthesis.getVoices();
+  }
+
+  // 使用和首頁健檢小幫手相同的選音邏輯
+  const bestVoice =
+    captchaVoices.find(
+      v =>
+        v.name.includes("Google") &&
+        v.lang === "zh-TW"
+    ) ||
+    captchaVoices.find(
+      v =>
+        v.name.includes("Google") &&
+        v.lang.includes("zh")
+    ) ||
+    captchaVoices.find(
+      v =>
+        v.name.includes("Microsoft Yating")
+    ) ||
+    captchaVoices.find(
+      v =>
+        v.name.includes("Microsoft HsiaoChen")
+    ) ||
+    captchaVoices.find(
+      v => v.lang === "zh-TW"
+    );
+
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+  }
+
+  utterance.rate = 0.8;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  window.speechSynthesis.speak(utterance);
+}
 
 
     /* =========================================================
@@ -5138,7 +5035,17 @@
             }
           );
         }
+const speakCaptchaBtn =
+  document.getElementById("speakCaptchaBtn");
 
+if (speakCaptchaBtn) {
+  speakCaptchaBtn.addEventListener(
+    "click",
+    function () {
+      speakCaptcha();
+    }
+  );
+}
         const captchaInput =
           document.getElementById(
             "captchaInput"
