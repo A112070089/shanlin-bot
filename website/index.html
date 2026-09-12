@@ -118,14 +118,36 @@
       border-bottom-right-radius: 2px;
     }
 
-    .quick-actions {
-      display: flex;
-      gap: 10px;
-      padding: 8px 15px;
-      background: white;
-      border-top: 1px solid #eee;
-      justify-content: center;
-    }
+    .quick-actions,
+.voice-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 15px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.quick-actions {
+  border-top: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.voice-actions {
+  padding-top: 5px;
+  padding-bottom: 8px;
+}
+
+.quick-actions .action-btn,
+.voice-actions .action-btn {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
 
     .action-btn {
       background: #f1f3f5;
@@ -1214,9 +1236,31 @@
       <button class="action-btn" onclick="handleAction('上一步')">🔙 回上一步</button>
       <button class="action-btn" onclick="handleAction('重來')">🔄 重新開始</button>
     </div>
+<div class="voice-actions">
+  <button
+    type="button"
+    id="pauseSpeechBtn"
+    class="action-btn"
+    onclick="toggleSpeaking()"
+  >
+    ⏸ 暫停播放
+  </button>
 
+  <button
+    type="button"
+    class="action-btn"
+    onclick="replaySpeaking()"
+  >
+    🔁 重新播放
+  </button>
+</div>
     <div id="chat-footer">
-      <input type="text" id="chat-input" placeholder="打字，或按住說話...">
+      <input
+  type="text"
+  id="chat-input"
+  placeholder="打字，或按住說話..."
+  style="min-height:72px; font-size:20px; padding:14px 22px; border-radius:22px; flex:1;"
+>
       <button id="chatMicBtn" class="mic-btn-chat" onmousedown="startRec()" onmouseup="stopRec()"
         onmouseleave="stopRec()" ontouchstart="startRec()" ontouchend="stopRec()">🎤</button>
     </div>
@@ -1418,33 +1462,99 @@
     let availableVoices = [];
     function loadVoices() { availableVoices = window.speechSynthesis.getVoices(); }
     if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = loadVoices; }
-
+let lastSpokenText = "";
     function speakText(htmlText) {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      let plainText = htmlText.replace(/<[^>]+>/g, '')
-        .replace(/👉|⚠️|✅|🏥|🔊/g, '')
-        .replace(/\(如果您不知道怎麼選，可以告訴我您哪裡不舒服喔！\)/g, '')
-        .replace(/450101/g, '民國45年，1月1號')
-        .replace(/5\/1/g, '5月1號')
-        .replace(/5\/4/g, '5月4號')
-        .trim();
-      if (!plainText) return;
+  if (!("speechSynthesis" in window)) {
+    return;
+  }
 
-      const utterance = new SpeechSynthesisUtterance(plainText);
-      utterance.lang = 'zh-TW';
-      if (availableVoices.length === 0) availableVoices = window.speechSynthesis.getVoices();
+  const text = String(htmlText || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/👉/g, "")
+    .trim();
 
-      let bestVoice = availableVoices.find(v => v.name.includes('Google') && v.lang === 'zh-TW') ||
-        availableVoices.find(v => v.name.includes('Google') && v.lang.includes('zh')) ||
-        availableVoices.find(v => v.name.includes('Microsoft Yating')) ||
-        availableVoices.find(v => v.name.includes('Microsoft HsiaoChen')) ||
-        availableVoices.find(v => v.lang === 'zh-TW');
+  if (!text) {
+    return;
+  }
 
-      if (bestVoice) utterance.voice = bestVoice;
-      utterance.rate = 1.05;
-      window.speechSynthesis.speak(utterance);
+  // 記住目前最新一題
+  lastSpokenText = text;
+
+  // 新題目開始前，先停止上一題殘留語音
+  window.speechSynthesis.cancel();
+const pauseBtn = document.getElementById("pauseSpeechBtn");
+if (pauseBtn) {
+  pauseBtn.innerHTML = "⏸ 暫停播放";
+}
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "zh-TW";
+
+  const voices = window.speechSynthesis.getVoices();
+  const bestVoice =
+    voices.find(v => v.lang === "zh-TW") ||
+    voices.find(v => v.lang.startsWith("zh"));
+
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+  }
+
+  utterance.rate = 1.05;
+
+  window.speechSynthesis.speak(utterance);
+}
+function toggleSpeaking() {
+  if (!("speechSynthesis" in window)) return;
+
+  const btn = document.getElementById("pauseSpeechBtn");
+
+  if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+    // 正在播放 → 暫停
+    window.speechSynthesis.pause();
+
+    if (btn) {
+      btn.innerHTML = "▶ 繼續播放";
     }
+  } else if (window.speechSynthesis.paused) {
+    // 已暫停 → 從原位置繼續
+    window.speechSynthesis.resume();
+
+    if (btn) {
+      btn.innerHTML = "⏸ 暫停播放";
+    }
+  }
+}
+
+function replaySpeaking() {
+  if (!lastSpokenText) {
+    return;
+  }
+
+  if (!("speechSynthesis" in window)) {
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+const pauseBtn = document.getElementById("pauseSpeechBtn");
+if (pauseBtn) {
+  pauseBtn.innerHTML = "⏸ 暫停播放";
+}
+  const utterance = new SpeechSynthesisUtterance(lastSpokenText);
+  utterance.lang = "zh-TW";
+
+  const voices = window.speechSynthesis.getVoices();
+  const bestVoice =
+    voices.find(v => v.lang === "zh-TW") ||
+    voices.find(v => v.lang.startsWith("zh"));
+
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+  }
+
+  utterance.rate = 1.05;
+
+  window.speechSynthesis.speak(utterance);
+}
 
     function toggleSize() { chatWidget.classList.toggle('large-mode'); setTimeout(() => chatBody.scrollTop = chatBody.scrollHeight, 100); }
     function closeChat() {
@@ -1464,9 +1574,44 @@
   chatBtn.style.display = 'block';
 }
     async function openChat() {
-      chatWidget.style.display = 'flex'; chatBtn.style.display = 'none';
-      if (!globalStream) { globalStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(e => null); }
-    }
+      bookingMode = "health_check";
+  // 顯示聊天視窗
+  chatWidget.style.display = "flex";
+  chatBtn.style.display = "none";
+
+  // 只清除上一輪訊息
+  const body = document.getElementById("chat-body");
+
+  if (body) {
+    body.querySelectorAll(".msg").forEach(msg => msg.remove());
+  }
+
+  // 一般健檢從方案選擇開始
+  currentStep = "plan";
+
+  // 第一題可以使用語音選 A / B / C
+  const micBtn = document.getElementById("chatMicBtn");
+  if (micBtn) {
+    micBtn.style.display = "";
+  }
+
+  const welcomeMessage =
+    "您好！我是健檢小幫手。<br>" +
+    "我會先協助您選擇適合的老人健康檢查方案。<br><br>" +
+    "👉 請問您想預約 A方案、B方案，還是 C方案？";
+
+  // 顯示訊息
+  addMsg(welcomeMessage, "ai");
+
+  
+
+  // 最後才取得麥克風權限
+  if (!globalStream) {
+    globalStream = await navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .catch(() => null);
+  }
+}
     async function openSelfPayChat() {
 
   // 切換成自費健檢模式
@@ -1511,25 +1656,43 @@
       .catch(e => null);
   }
 }
-    async function openSelfPayChat() {
+    async function openSelfPayChat(preserveSelfPay = false) {
 
   // 切換成「純自費健檢」模式
   bookingMode = "self_pay";
 
   // 清除上一輪預約資料
-  bookingData = {
-    plan: "",
-    name: "",
-    pid: "",
-    phone: "",
-    birthday: "",
-    date: "",
-    time: ""
-  };
+  const savedSelfPayItems =
+  preserveSelfPay &&
+  bookingData &&
+  Array.isArray(bookingData.selfPayItems)
+    ? bookingData.selfPayItems
+    : [];
+
+const savedSelfPayTotal =
+  preserveSelfPay &&
+  bookingData
+    ? Number(bookingData.selfPayTotal || 0)
+    : 0;
+
+bookingData = {
+  plan: "",
+  name: "",
+  pid: "",
+  phone: "",
+  birthday: "",
+  date: "",
+  time: "",
+  selfPayItems: savedSelfPayItems,
+  selfPayTotal: savedSelfPayTotal
+};
 
   // 自費流程跳過 A / B / C，直接從姓名開始
   currentStep = "name";
-
+const micBtn = document.getElementById("chatMicBtn");
+if (micBtn) {
+  micBtn.style.display = "none";
+}
   bookingConfirmMode = "";
   correctingField = null;
 
@@ -1541,9 +1704,9 @@
   chatBody.querySelectorAll(".msg").forEach(msg => msg.remove());
 
   const welcomeMessage =
-    "您好！我是健檢小幫手。<br>" +
-    "在選擇自費檢查項目前，我先協助您建立基本資料。<br><br>" +
-    "👉 請問您的姓名是？";
+  "您好！我是自費健康管理項目的線上小幫手。<br>" +
+  "在開始之前，需要先跟您核對一下基本資料，方便診所後續安排與收費。<br><br>" +
+  "👉 姓名請直接使用鍵盤打字輸入，請問您的大名是？";
 
   addMsg(welcomeMessage, "ai");
 
@@ -1590,6 +1753,9 @@
     }
 
     function startRec() {
+      if (currentStep === "name") {
+  return;
+}
       if (!globalStream) return addMsg("請開啟麥克風權限", "ai");
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       audioChunks = []; mediaRecorder = new MediaRecorder(globalStream);
@@ -1725,17 +1891,58 @@
 
       switch (currentStep) {
         case "plan":
+          const normalizedPlanInput = String(rawText || "")
+  .trim()
+  .toUpperCase()
+  .replace(/\s+/g, "")
+  .replace(/Ａ/g, "A")
+  .replace(/Ｂ/g, "B")
+  .replace(/Ｃ/g, "C");
+
+if (
+  normalizedPlanInput === "A" ||
+  normalizedPlanInput === "A方案"
+) {
+  bookingData.plan = "A";
+  bookingData.name = "";
+} else if (
+  normalizedPlanInput === "B" ||
+  normalizedPlanInput === "B方案"
+) {
+  bookingData.plan = "B";
+  bookingData.name = "";
+} else if (
+  normalizedPlanInput === "C" ||
+  normalizedPlanInput === "C方案"
+) {
+  bookingData.plan = "C";
+  bookingData.name = "";
+}
           if (bookingData.plan === "COMMON") {
             addMsg("您提到的項目是 A、B、C 三個方案都有的喔！請問您還有特別想針對腦部、腹部還是骨質做檢查嗎？", "ai");
             bookingData.plan = "";
           } else if (bookingData.plan) {
             if (bookingData.name) {
               currentStep = "pid";
+              const micBtn = document.getElementById("chatMicBtn");
+if (micBtn) {
+  micBtn.style.display = "";
+}
               addMsg(`好的！為您推薦「${bookingData.plan}」方案。已記錄姓名：「${bookingData.name}」。<br>👉 請問身分證字號？`, "ai");
             } else {
-              currentStep = "name";
-              addMsg(`好的！為您推薦「${bookingData.plan}」方案。<br>👉 請問您的大名是？`, "ai");
-            }
+  currentStep = "name";
+
+  const micBtn = document.getElementById("chatMicBtn");
+  if (micBtn) {
+    micBtn.style.display = "none";
+  }
+
+  addMsg(
+    `好的！為您推薦「${bookingData.plan}」方案。<br>` +
+    `👉 姓名請直接使用鍵盤打字輸入，請問您的大名是？`,
+    "ai"
+  );
+}
           } else {
             addMsg("不好意思沒抓到方案。請問您想預約哪一區的檢查？（如：A方案、頭部、腹部）", "ai");
           }
@@ -1744,22 +1951,68 @@
         case "name":
           if (bookingData.name) {
             currentStep = "pid";
+            const micBtn = document.getElementById("chatMicBtn");
+if (micBtn) {
+  micBtn.style.display = "";
+}
             addMsg(`已記錄姓名：「${bookingData.name}」。<br>👉 請問身分證字號？`, "ai");
           } else {
             addMsg("不好意思，我剛剛沒有聽得很清楚。👉 請問您的全名是？", "ai");
           }
           break;
 
-        case "pid":
-          if (bookingData.pid && bookingData.pid.match(/^[A-Z]\d{9}$/)) {
-            currentStep = "phone";
-            addMsg(`證號無誤。<br>👉 請問手機號碼？`, "ai");
-          } else {
-            bookingData.pid = "";
-            // 把這裡的 ** 移除，改用引號標示重點
-            addMsg("<span style='color:red;'>⚠️ 身分證格式不對喔。</span><br>格式應該是「一個大寫英文加上九位數字」。<br><br>👉 您可以「再說一次」，或是直接在下方「輸入框打字」給我。", "ai");
-          }
-          break;
+        case "pid": {
+  const pidInput = String(rawText || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/Ａ/g, "A")
+    .replace(/Ｂ/g, "B")
+    .replace(/Ｃ/g, "C")
+    .replace(/Ｄ/g, "D")
+    .replace(/Ｅ/g, "E")
+    .replace(/Ｆ/g, "F")
+    .replace(/Ｇ/g, "G")
+    .replace(/Ｈ/g, "H")
+    .replace(/Ｉ/g, "I")
+    .replace(/Ｊ/g, "J")
+    .replace(/Ｋ/g, "K")
+    .replace(/Ｌ/g, "L")
+    .replace(/Ｍ/g, "M")
+    .replace(/Ｎ/g, "N")
+    .replace(/Ｏ/g, "O")
+    .replace(/Ｐ/g, "P")
+    .replace(/Ｑ/g, "Q")
+    .replace(/Ｒ/g, "R")
+    .replace(/Ｓ/g, "S")
+    .replace(/Ｔ/g, "T")
+    .replace(/Ｕ/g, "U")
+    .replace(/Ｖ/g, "V")
+    .replace(/Ｗ/g, "W")
+    .replace(/Ｘ/g, "X")
+    .replace(/Ｙ/g, "Y")
+    .replace(/Ｚ/g, "Z");
+
+  if (/^[A-Z][12]\d{8}$/.test(pidInput)) {
+    bookingData.pid = pidInput;
+    currentStep = "phone";
+
+    addMsg(
+      `證號無誤。<br>👉 請問手機號碼？`,
+      "ai"
+    );
+  } else {
+    bookingData.pid = "";
+
+    addMsg(
+      "<span style='color:red;'>⚠ 身分證格式不對喔。</span><br>" +
+      "格式應為「1 個大寫英文字母 + 1 或 2 + 8 位數字」。",
+      "ai"
+    );
+  }
+
+  break;
+}
 
         case "phone":
           // ✅ 修復3：嚴格驗證台灣手機格式：09 開頭、共10碼，超過或不符都提醒
@@ -2576,16 +2829,28 @@ if (bookingMode === "self_pay") {
 
   setTimeout(() => {
 
-    // 停止語音並關閉聊天視窗
-    closeChat();
+  // 停止語音並關閉聊天視窗
+  closeChat();
 
-    // 開啟既有自費項目選擇畫面
-    openSelfPayBrowser();
+  // 將首頁自費流程已確認的基本資料暫存
+  sessionStorage.setItem(
+    "directSelfPayBasicData",
+    JSON.stringify({
+      name: bookingData.name || "",
+      pid: bookingData.pid || "",
+      phone: bookingData.phone || "",
+      birthday: bookingData.birthday || ""
+    })
+  );
 
-  }, 1200);
+  // 前往 appointment2.html，
+  // 下一步會讓它直接啟動 AI 自費聊天室
+  window.location.href =
+    "appointment2.html?p=SELF_PAY&directSelfPay=1";
 
-  return;
-}
+}, 1200);
+
+return;
             addMsg(
               "✅ 資料確認完成！正在進入預約頁面...",
               "ai"
@@ -2647,7 +2912,7 @@ if (bookingMode === "self_pay") {
       }
 
     }
-
+}
     document.getElementById('chat-input').onkeypress = async (e) => {
       if (e.key === 'Enter' && document.getElementById('chat-input').value) {
         const val = document.getElementById('chat-input').value; document.getElementById('chat-input').value = '';
@@ -2667,21 +2932,33 @@ if (bookingMode === "self_pay") {
   </script>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      const p = urlParams.get('p') || urlParams.get('plan');
-      const n = urlParams.get('name');
-      const id = urlParams.get('pid');
-      const ph = urlParams.get('phone');
-      const b = urlParams.get('birthday');
+  const urlParams = new URLSearchParams(window.location.search);
+  const p = urlParams.get('p') || urlParams.get('plan');
+  const n = urlParams.get('name');
+  const id = urlParams.get('pid');
+  const ph = urlParams.get('phone');
+  const b = urlParams.get('birthday');
 
-      if (p && document.getElementById('plan')) document.getElementById('plan').value = p;
-      if (n && document.getElementById('name')) document.getElementById('name').value = n;
-      if (id && document.getElementById('pid')) document.getElementById('pid').value = id;
-      if (ph && document.getElementById('phone')) document.getElementById('phone').value = ph;
-      if (b && document.getElementById('birthday')) document.getElementById('birthday').value = b;
-    });
-  </script>
+  if (p && document.getElementById('plan')) {
+    document.getElementById('plan').value = p;
+  }
+
+  if (n && document.getElementById('name')) {
+    document.getElementById('name').value = n;
+  }
+
+  if (id && document.getElementById('pid')) {
+    document.getElementById('pid').value = id;
+  }
+
+  if (ph && document.getElementById('phone')) {
+    document.getElementById('phone').value = ph;
+  }
+
+  if (b && document.getElementById('birthday')) {
+    document.getElementById('birthday').value = b;
+  }
+</script>
 
   <style>
     .self-pay-option {
@@ -3500,13 +3777,38 @@ if (bookingMode === "self_pay") {
           }`
 
         );
+const successBookingData = {
+  plan: "自費健康管理",
+  name: bookingData.name || "",
+  pid: bookingData.pid || "",
+  phone: bookingData.phone || "",
+  birthday: bookingData.birthday || "",
+  date: "",
+  time: "",
 
-      };
+  selfPayItems: Array.isArray(bookingData.selfPayItems)
+    ? bookingData.selfPayItems
+    : [],
 
+  selfPayTotal: Number(
+    bookingData.selfPayTotal ||
+    window.getSelfPaySelectedTotal() ||
+    0
+  )
+};
+
+sessionStorage.setItem(
+  "lastBooking",
+  JSON.stringify(successBookingData)
+);
+
+window.location.href = "booking_success.html";
+};
 
     /*
      * 頁面載入時初始化摘要框
      */
+    
     document.addEventListener(
       "DOMContentLoaded",
       function () {

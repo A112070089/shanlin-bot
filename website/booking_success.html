@@ -208,7 +208,40 @@
       </div>
 
     </div>
+<div id="selfPaySection" style="display:none; margin-top:25px;">
 
+  <div style="
+    font-size:18px;
+    font-weight:700;
+    text-align:left;
+    margin-bottom:12px;
+    color:#173b5c;
+  ">
+    自費加購項目
+  </div>
+
+  <div class="booking-card">
+
+    <div id="selfPayItems"></div>
+
+    <div class="row" style="
+      margin-top:8px;
+      border-top:2px solid #ddd;
+      border-bottom:none;
+      padding-top:16px;
+    ">
+      <span class="label" style="font-weight:700;">
+        自費項目合計
+      </span>
+
+      <span class="value" id="selfPayTotal" style="font-weight:700;">
+        NT$0
+      </span>
+    </div>
+
+  </div>
+
+</div>
     <div class="notice">
       請於健檢當天攜帶健保卡、身分證，並保持空腹 8 小時。
       若需要異動或取消預約，請於健檢前一日致電本診所櫃檯。
@@ -288,6 +321,55 @@ document.getElementById("birthday").textContent =
       (date || time)
         ? `${date} ${time}`.trim()
         : "—";
+        const selfPaySection = document.getElementById("selfPaySection");
+const selfPayItemsContainer = document.getElementById("selfPayItems");
+const selfPayTotalElement = document.getElementById("selfPayTotal");
+
+const selfPayItems = Array.isArray(booking.selfPayItems)
+  ? booking.selfPayItems
+  : [];
+
+if (selfPayItems.length > 0) {
+
+  selfPaySection.style.display = "block";
+
+  selfPayItemsContainer.innerHTML = "";
+
+  selfPayItems.forEach((item) => {
+
+    const itemName =
+      item.selected_item_name ||
+      item.name ||
+      "自費項目";
+
+    const itemPrice =
+      Number(item.price || 0);
+
+    const row = document.createElement("div");
+
+    row.className = "row";
+
+    row.innerHTML = `
+      <span class="label">${itemName}</span>
+      <span class="value">
+        NT$${itemPrice.toLocaleString("zh-TW")}
+      </span>
+    `;
+
+    selfPayItemsContainer.appendChild(row);
+  });
+
+  const total =
+    Number(booking.selfPayTotal || 0);
+
+  selfPayTotalElement.textContent =
+    `NT$${total.toLocaleString("zh-TW")}`;
+
+} else {
+
+  selfPaySection.style.display = "none";
+
+}
   </script>
 
 </body>

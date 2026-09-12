@@ -4644,6 +4644,26 @@ if (option.value === "done") {
               .selfPayTotal ??
             0
           );
+          const pendingSelfPay = JSON.parse(
+  sessionStorage.getItem("pendingSelfPayBooking") || "{}"
+);
+
+if (
+  (!Array.isArray(finalBookingData.selfPayItems) ||
+    finalBookingData.selfPayItems.length === 0) &&
+  Array.isArray(pendingSelfPay.selfPayItems)
+) {
+  finalBookingData.selfPayItems =
+    pendingSelfPay.selfPayItems;
+}
+
+if (
+  !finalBookingData.selfPayTotal &&
+  pendingSelfPay.selfPayTotal
+) {
+  finalBookingData.selfPayTotal =
+    Number(pendingSelfPay.selfPayTotal || 0);
+}
 const successBookingData = {
   plan: finalBookingData.planName || "",
   name: finalBookingData.name || "",
@@ -4651,7 +4671,13 @@ const successBookingData = {
   phone: finalBookingData.phone || "",
   birthday: finalBookingData.birthday || "",
   date: finalBookingData.date || "",
-  time: finalBookingData.time || ""
+  time: finalBookingData.time || "",
+
+  selfPayItems: Array.isArray(finalBookingData.selfPayItems)
+    ? finalBookingData.selfPayItems
+    : [],
+
+  selfPayTotal: Number(finalBookingData.selfPayTotal || 0)
 };
 
 sessionStorage.setItem(
@@ -5014,7 +5040,31 @@ function speakCaptcha() {
     document.addEventListener(
       "DOMContentLoaded",
       function () {
+const directParams = new URLSearchParams(window.location.search);
+const isDirectSelfPay = directParams.get("directSelfPay") === "1";
 
+if (isDirectSelfPay) {
+  const savedBasicData = JSON.parse(
+    sessionStorage.getItem("directSelfPayBasicData") || "{}"
+  );
+
+  appointmentData = {
+    plan: "SELF_PAY",
+    planName: "自費健康管理",
+    name: savedBasicData.name || "",
+    pid: savedBasicData.pid || "",
+    phone: savedBasicData.phone || "",
+    birthday: savedBasicData.birthday || "",
+    date: "",
+    time: "",
+    breakfast: "",
+    captcha: ""
+  };
+
+  setTimeout(() => {
+    openSelfPayChat();
+  }, 300);
+}
         generateCaptcha();
 
         const refreshCaptchaBtn =
