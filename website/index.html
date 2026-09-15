@@ -928,6 +928,17 @@
                   data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">首頁</a></li>
               <li class="nav-item"><a class="nav-link" href="appointment.html" data-bs-dismiss="offcanvas"
                   data-bs-target="#offcanvasNavbar">預約健檢</a></li>
+                  <li class="nav-item">
+  <a
+    class="nav-link"
+    href="#"
+    onclick="openSelfPayBrowser(); return false;"
+    data-bs-dismiss="offcanvas"
+    data-bs-target="#offcanvasNavbar"
+  >
+    自費項目
+  </a>
+</li>
               <li class="nav-item"><a class="nav-link" href="#scrollspyServices" data-bs-dismiss="offcanvas"
                   data-bs-target="#offcanvasNavbar">健檢資訊</a></li>
               <li class="nav-item"><a class="nav-link" href="search.html">預約資訊查詢</a></li>
@@ -2431,7 +2442,17 @@ if (bookingMode === "self_pay") {
           correctingField =
             null;
 
+window.location.href =
+  `./appointment.html` +
+  `?p=${encodeURIComponent(bookingData.plan)}` +
+  `&name=${encodeURIComponent(bookingData.name)}` +
+  `&pid=${encodeURIComponent(bookingData.pid)}` +
+  `&phone=${encodeURIComponent(bookingData.phone)}` +
+  `&birthday=${encodeURIComponent(bookingData.birthday)}` +
+  `&date=${encodeURIComponent(bookingData.date)}` +
+  `&time=${encodeURIComponent(bookingData.time)}`;
 
+return;
           const birthdayText =
             formatRocBirthday(
               bookingData.birthday
@@ -2851,46 +2872,42 @@ if (bookingMode === "self_pay") {
 }, 1200);
 
 return;
-            addMsg(
-              "✅ 資料確認完成！正在進入預約頁面...",
-              "ai"
-            );
+            if (bookingMode === "self_pay") {
 
+  addMsg(
+    "✅ 基本資料確認完成！<br>" +
+    "接下來請選擇您想加購的自費檢查項目。",
+    "ai"
+  );
 
-            setTimeout(
-              () => {
+  setTimeout(
+    () => {
+      window.location.href =
+        `./appointment.html` +
+        `?p=${encodeURIComponent(bookingData.plan)}` +
+        `&name=${encodeURIComponent(bookingData.name)}` +
+        `&pid=${encodeURIComponent(bookingData.pid)}` +
+        `&phone=${encodeURIComponent(bookingData.phone)}` +
+        `&birthday=${encodeURIComponent(bookingData.birthday)}`;
+    },
+    1500
+  );
 
-                window.location.href =
-                  `./appointment.html` +
-                  `?p=${encodeURIComponent(
-                    bookingData.plan
-                  )}` +
-                  `&name=${encodeURIComponent(
-                    bookingData.name
-                  )}` +
-                  `&pid=${encodeURIComponent(
-                    bookingData.pid
-                  )}` +
-                  `&phone=${encodeURIComponent(
-                    bookingData.phone
-                  )}` +
-                  `&birthday=${encodeURIComponent(
-                    bookingData.birthday
-                  )}` +
-                  `&date=${encodeURIComponent(
-                    bookingData.date || ""
-                  )}` +
-                  `&time=${encodeURIComponent(
-                    bookingData.time || ""
-                  )}`;
+} else if (bookingMode === "health_check") {
 
-              },
-              1500
-            );
+  bookingConfirmMode = "";
+  correctingField = null;
 
+  currentStep = "date";
 
-            break;
+  addMsg(
+    "✅ 資料確認完成。<br><br>" +
+    "👉 請問您想預約哪一天？",
+    "ai"
+  );
+}
 
+break;
           }
 
 
@@ -3777,7 +3794,21 @@ return;
           }`
 
         );
-const successBookingData = {
+// ===== 自費預約：開始詢問預約日期 =====
+currentStep = "selfpay_date";
+
+chatWidget.style.display = "flex";
+chatBtn.style.display = "none";
+
+addMsg(
+  "好的，接下來為您安排預約時間。<br><br>" +
+  "👉 請問您想預約幾月幾號？<br>" +
+  "例如：5月20日 或 5/20",
+  "ai"
+);
+
+return;
+        const successBookingData = {
   plan: "自費健康管理",
   name: bookingData.name || "",
   pid: bookingData.pid || "",

@@ -1079,7 +1079,9 @@
 
     let selfPayChatMode =
       "ask";
-
+let selfPayStep = "";
+let selfPaySelectedDate = "";
+let selfPaySelectedSession = "";
 
     let selfPayCategories =
       [];
@@ -2033,8 +2035,24 @@
           button.addEventListener(
             "click",
             async function () {
-if (option.value === "done") {
-  window.location.href = "booking_success.html";
+if (option.value === "finish") {
+
+  selfPayStep = "date";
+
+  const optionsContainer =
+    document.getElementById("self-pay-options");
+
+  if (optionsContainer) {
+    optionsContainer.innerHTML = "";
+  }
+
+  addSelfPayAIMessage(
+    "好的，接下來為您安排預約時間。<br><br>" +
+    "👉 請問您想預約幾月幾號？<br>" +
+    "例如：5月20日 或 5/20",
+    false
+  );
+
   return;
 }
               await handleSelfPayAnswer(
@@ -3252,32 +3270,26 @@ if (option.value === "done") {
     ========================================= */
 
     function confirmSelfPaySelection() {
+  syncSelfPayDataToAppointment();
 
-      syncSelfPayDataToAppointment();
+  const total =
+    appointmentData
+      .selfPayTotal;
 
-      const total =
-        appointmentData
-          .selfPayTotal;
+  addSelfPayAIMessage(
+    `好的，自費項目已整理完成。<br><br>` +
+    `您共選擇 <strong>${selfPaySelectedItems.length}</strong>` +
+    ` 項自費檢查。<br>` +
+    `自費合計：` +
+    `<strong>NT$${total.toLocaleString("zh-TW")}</strong><br><br>` +
+    `接下來為您安排預約時間。<br>` +
+    `👉 請問您想預約幾月幾號？<br>` +
+    `例如：5月20日 或 5/20`,
+    true
+  );
 
-      addSelfPayAIMessage(
-        `好的，自費項目已整理完成。<br><br>` +
-
-        `您共選擇 ` +
-        `<strong>${selfPaySelectedItems.length}</strong>` +
-        ` 項自費檢查。<br>` +
-
-        `自費合計：` +
-        `<strong>NT$${total.toLocaleString(
-          "zh-TW"
-        )}</strong><br><br>` +
-
-        `請問是否確認送出老人健檢與自費加購資料？`,
-        true
-      );
-
-      showFinalConfirmOptions();
-
-    }
+  selfPayStep = "date";
+}
 
 
     /* =========================================
@@ -3508,7 +3520,340 @@ if (option.value === "done") {
           displayText ??
           rawValue
         );
+// ========================================
+// 自費預約：處理日期
+// ========================================
+console.log(
+  "handleSelfPayAnswer:",
+  {
+    selfPayStep,
+    selfPayChatMode,
+    value,
+    displayText
+  }
+);
+console.log(
+  "FINAL CHECK:",
+  selfPayStep,
+  value,
+  selfPayStep === "finalConfirm",
+  value === "confirm-final"
+);
+if (
+  selfPayStep === "finalConfirm" &&
+  value === "confirm-final"
+) {
+  console.log("進入 confirm-final");
 
+  clearSelfPayOptions();
+
+  addSelfPayUserMessage("確認預約");
+
+  appointmentData.date = selfPaySelectedDate;
+  appointmentData.time = selfPaySelectedSession;
+
+  const successBookingData = {
+    plan: appointmentData.plan || "SELF_PAY",
+    planName: appointmentData.planName || "自費健康管理",
+    name: appointmentData.name || "",
+    pid: appointmentData.pid || "",
+    phone: appointmentData.phone || "",
+    birthday: appointmentData.birthday || "",
+    date: appointmentData.date || "",
+    time: appointmentData.time || "",
+
+    selfPayItems: Array.isArray(selfPaySelectedItems)
+      ? selfPaySelectedItems
+      : [],
+
+    selfPayTotal: Array.isArray(selfPaySelectedItems)
+  ? selfPaySelectedItems.reduce((total, item) => {
+
+      const rawPrice =
+        item?.price ??
+        item?.amount ??
+        item?.fee ??
+        item?.cost ??
+        item?.billable?.price ??
+        item?.billable?.amount ??
+        item?.billable?.fee ??
+        item?.billable?.cost ??
+        item?.item?.price ??
+        item?.item?.amount ??
+        0;
+
+      const price = Number(
+        String(rawPrice).replace(/[^\d.-]/g, "")
+      );
+
+      return total + (
+        Number.isNaN(price)
+          ? 0
+          : price
+      );
+
+    }, 0)
+  : 0
+  };
+
+  console.log("successBookingData:", successBookingData);
+
+  sessionStorage.setItem(
+    "lastBooking",
+    JSON.stringify(successBookingData)
+  );
+
+  console.log("準備跳轉 booking_success.html");
+
+  setTimeout(() => {
+    console.log("開始跳轉");
+    window.location.href = "booking_success.html";
+  }, 800);
+
+  return;
+}
+if (selfPayStep === "date") {
+
+  // 不接受相對日期
+  if (
+    /明天|後天|今天|下週|下星期|下禮拜|星期|禮拜/.test(text)
+  ) {
+    addSelfPayAIMessage(
+      "為了避免預約日期產生誤差，請直接告訴我幾月幾號。<br><br>" +
+      "例如：5月20日 或 5/20",
+      true
+    );
+    return;
+  }
+  function getSelfPayItemPrice(item) {
+  if (!item) return 0;
+
+  const candidates = [
+    item.price,
+    item.amount,
+    item.fee,
+    item.cost,
+
+    item.billable?.price,
+    item.billable?.amount,
+    item.billable?.fee,
+    item.billable?.cost,
+
+    item.item?.price,
+    item.item?.amount
+  ];
+
+  for (const value of candidates) {
+    if (value !== undefined && value !== null && value !== "") {
+      const number = Number(
+        String(value).replace(/[^\d.-]/g, "")
+      );
+
+      if (!Number.isNaN(number)) {
+        return number;
+      }
+    }
+  }
+
+  return 0;
+}
+  if (value === "confirm-final") {
+    console.log("進入 confirm-final");
+  clearSelfPayOptions();
+
+  addSelfPayUserMessage("確認預約");
+
+  // 把自費預約日期、時段同步回 appointmentData
+  appointmentData.date = selfPaySelectedDate;
+  appointmentData.time = selfPaySelectedSession;
+
+  const successBookingData = {
+    plan: appointmentData.plan || "SELF_PAY",
+    planName: appointmentData.planName || "自費健康管理",
+
+    name: appointmentData.name || "",
+    pid: appointmentData.pid || "",
+    phone: appointmentData.phone || "",
+    birthday: appointmentData.birthday || "",
+
+    date: appointmentData.date || "",
+    time: appointmentData.time || "",
+
+    selfPayItems: Array.isArray(selfPaySelectedItems)
+      ? selfPaySelectedItems
+      : [],
+
+    selfPayTotal:
+      typeof window.getSelfPaySelectedTotal === "function"
+        ? Number(window.getSelfPaySelectedTotal() || 0)
+        : 0
+  };
+
+  sessionStorage.setItem(
+    "lastBooking",
+    JSON.stringify(successBookingData)
+  );
+
+  addSelfPayAIMessage(
+    `✅ 預約資料確認完成。<br><br>` +
+    `預約日期：${selfPaySelectedDate}<br>` +
+    `預約時段：${selfPaySelectedSession}<br><br>` +
+    `正在為您完成預約...`,
+    true
+  );
+console.log("準備跳轉 booking_success.html");
+  setTimeout(() => {
+    window.location.href = "booking_success.html";
+  }, 800);
+
+  return;
+}
+
+  // 接受：5/20、05/20、5月20日
+  const match = text.match(
+    /(?:^|\D)(\d{1,2})\s*(?:\/|月)\s*(\d{1,2})\s*(?:日)?(?:$|\D)/
+  );
+
+  if (!match) {
+    addSelfPayAIMessage(
+      "我沒有辨識到日期。<br><br>" +
+      "👉 請直接輸入幾月幾號，例如：5月20日 或 5/20",
+      true
+    );
+    return;
+  }
+
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+
+  // 基本日期檢查
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    addSelfPayAIMessage(
+      "這個日期看起來不正確，請重新告訴我幾月幾號。",
+      true
+    );
+    return;
+  }
+
+  selfPaySelectedDate = `${month}/${day}`;
+
+  selfPayStep = "session";
+
+  addSelfPayAIMessage(
+    `好的，${month}/${day}。<br><br>` +
+    "👉 請問比較方便上午診還是下午診？<br><br>" +
+    "上午診：08:30–12:30<br>" +
+    "下午診：13:30–17:30",
+    true
+  );
+
+  showSelfPayOptions([
+    {
+      label: "上午診（08:30–12:30）",
+      value: "morning"
+    },
+    {
+      label: "下午診（13:30–17:30）",
+      value: "afternoon"
+    }
+  ]);
+
+  return;
+}
+if (selfPayStep === "session") {
+
+  if (
+    value === "morning" ||
+    text.includes("上午")
+  ) {
+    selfPaySelectedSession = "上午診（08:30–12:30）";
+  } 
+  else if (
+    value === "afternoon" ||
+    text.includes("下午")
+  ) {
+    selfPaySelectedSession = "下午診（13:30–17:30）";
+  } 
+  else {
+    addSelfPayAIMessage(
+      "請選擇上午診或下午診。",
+      true
+    );
+
+    showSelfPayOptions([
+      {
+        label: "上午診（08:30–12:30）",
+        value: "morning"
+      },
+      {
+        label: "下午診（13:30–17:30）",
+        value: "afternoon"
+      }
+    ]);
+
+    return;
+  }
+  if (selfPayStep === "finalConfirm") {
+
+  if (value === "change-session") {
+    selfPayStep = "session";
+
+    addSelfPayAIMessage(
+      "好的，請重新選擇方便的時段。",
+      true
+    );
+
+    showSelfPayOptions([
+      {
+        label: "上午診（08:30–12:30）",
+        value: "morning"
+      },
+      {
+        label: "下午診（13:30–17:30）",
+        value: "afternoon"
+      }
+    ]);
+
+    return;
+  }
+
+  
+
+  return;
+}
+
+  clearSelfPayOptions();
+
+  addSelfPayUserMessage(
+    selfPaySelectedSession
+  );
+
+  addSelfPayAIMessage(
+    `好的，已為您選擇 ${selfPaySelectedDate} 的 ${selfPaySelectedSession}。<br><br>` +
+    "請確認以上預約資訊是否正確？",
+    true
+  );
+
+  selfPayStep = "finalConfirm";
+
+  showSelfPayOptions([
+    {
+      label: "確認預約",
+      value: "confirm-final"
+    },
+    {
+      label: "重新選擇時間",
+      value: "change-session"
+    }
+  ]);
+
+  return;
+}
       addSelfPayUserMessage(
         shownText
       );
