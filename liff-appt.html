@@ -310,6 +310,14 @@ select.fi{cursor:pointer}
       </div>
       <div style="font-size:11px;color:var(--sub);margin-top:6px">灰色時段已額滿</div>
     </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">早餐葷素選擇<span class="req">*</span></div>
+      <div class="qualify-opts" style="margin-top:8px">
+        <label class="qualify-opt"><input type="radio" name="veg" value="葷" onchange="chkS2()"> 葷食</label>
+        <label class="qualify-opt"><input type="radio" name="veg" value="素" onchange="chkS2()"> 素食</label>
+      </div>
+    </div>
   </div>
 
   <button class="btn btn-blue" id="btnS2" onclick="goConfirm()" disabled>下一步：確認預約</button>
@@ -335,6 +343,7 @@ select.fi{cursor:pointer}
       <tr><td>手機號碼</td><td id="cfPhone">—</td></tr>
       <tr><td>預約日期</td><td id="cfDate">—</td></tr>
       <tr><td>預約時段</td><td id="cfSlot">—</td></tr>
+      <tr><td>早餐葷素</td><td id="cfVeg">—</td></tr>
     </table>
   </div>
 
@@ -481,7 +490,8 @@ function chkS2() {
   const id    = document.getElementById('iID').value.trim();
   const phone = document.getElementById('iPhone').value.trim();
   const date  = document.getElementById('iDate').value;
-  const ok = name && /^\d{6,7}$/.test(birth) && /^[A-Z][12]\d{8}$/.test(id) && /^09\d{8}$/.test(phone) && date && curSlot;
+  const veg   = document.querySelector('input[name=veg]:checked');
+  const ok = name && /^\d{6,7}$/.test(birth) && /^[A-Z][12]\d{8}$/.test(id) && /^09\d{8}$/.test(phone) && date && curSlot && veg;
   document.getElementById('btnS2').disabled = !ok;
 }
 
@@ -494,6 +504,7 @@ function goConfirm() {
   if (err) return;
 
   const d = document.getElementById('iDate').value;
+  const vegChecked = document.querySelector('input[name=veg]:checked');
   document.getElementById('cfPlan').textContent  = pNames[curPlan] || '—';
   document.getElementById('cfName').textContent  = document.getElementById('iName').value.trim();
   document.getElementById('cfBirth').textContent = document.getElementById('iBirth').value.trim();
@@ -501,6 +512,7 @@ function goConfirm() {
   document.getElementById('cfPhone').textContent = phone;
   document.getElementById('cfDate').textContent  = d ? new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) : '—';
   document.getElementById('cfSlot').textContent  = curSlot || '—';
+  document.getElementById('cfVeg').textContent   = vegChecked ? vegChecked.value + '食' : '—';
   goS('s3');
 }
 
@@ -508,6 +520,7 @@ async function doConfirm() {
   document.getElementById('btnConfirm').disabled = true;
   goS('s4');
   const d = document.getElementById('iDate').value;
+  const vegChecked = document.querySelector('input[name=veg]:checked');
   try {
     await fetch(`${API_BASE}/api/appointment/book`, {
       method: 'POST',
@@ -520,6 +533,7 @@ async function doConfirm() {
         plan:         curPlan,
         date:         d,
         time_slot:    curSlot,
+        veg:          vegChecked ? vegChecked.value : '',
         line_user_id: lineUserId
       })
     });
