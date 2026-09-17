@@ -570,6 +570,8 @@ async def admin_delete_appointment(key: str, x_admin_password: Optional[str] = H
 
 # ══════════════════════════════════════
 #  Excel 批次匯入 API
+#  欄位順序對應範本：姓名、手機號碼、身分證字號、出生年月日(民國)、
+#  健檢方案(A/B/C)、葷素(葷/素)、預約日期、預約時段、來源、備註
 # ══════════════════════════════════════
 @app.post("/api/admin/import")
 async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Optional[str] = Header(None)):
@@ -601,15 +603,24 @@ async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Opt
             id_number = str(row[2]).strip().upper() if len(row) > 2 and row[2] else ""
             birth     = str(row[3]).strip() if len(row) > 3 and row[3] else ""
             plan      = str(row[4]).strip().upper() if len(row) > 4 and row[4] else ""
-            date_val  = row[5] if len(row) > 5 else None
-            time_val  = row[6] if len(row) > 6 else None
-            source    = str(row[7]).strip() if len(row) > 7 and row[7] else "Excel匯入"
-            note      = str(row[8]).strip() if len(row) > 8 and row[8] else ""
+            veg       = str(row[5]).strip() if len(row) > 5 and row[5] else "葷"
+            date_val  = row[6] if len(row) > 6 else None
+            time_val  = row[7] if len(row) > 7 else None
+            source    = str(row[8]).strip() if len(row) > 8 and row[8] else "Excel匯入"
+            note      = str(row[9]).strip() if len(row) > 9 and row[9] else ""
 
             if not name or not phone or plan not in ("A", "B", "C"):
                 skipped += 1
                 errors.append(f"第 {idx} 列：缺少必填欄位或方案格式錯誤")
                 continue
+
+            # 葷素欄位標準化，避免 Excel 填寫時多打字或格式不一致
+            if "葷" in veg:
+                veg = "葷"
+            elif "素" in veg:
+                veg = "素"
+            else:
+                veg = "葷"
 
             # 處理日期格式（可能是 datetime 物件或字串）
             if hasattr(date_val, "strftime"):
@@ -631,6 +642,7 @@ async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Opt
                 "plan":     plan,
                 "date":     date_str,
                 "time":     time_str,
+                "veg":      veg,
                 "source":   source,
                 "bookedAt": datetime.now().isoformat(),
             }
