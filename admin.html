@@ -6,6 +6,7 @@
 <title>山林診所 預約管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --ink:#1C2B33;--ink-soft:#4A5D68;--paper:#F6F4EF;--paper-deep:#ECE8DF;
@@ -59,6 +60,18 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--i
 .btn-primary:hover{opacity:.9}
 .btn-secondary{background:var(--white);color:var(--ink);border:1.5px solid var(--border);border-radius:3px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:8px}
 .btn-secondary:hover{background:var(--paper)}
+
+/* EXPORT DROPDOWN */
+.export-wrap{position:relative}
+.export-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(28,43,51,.14);min-width:190px;overflow:hidden;z-index:60}
+.export-menu.open{display:block}
+.export-item{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:none;border:none;text-align:left;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.export-item:hover{background:var(--paper)}
+.export-item i{font-size:15px;width:16px;text-align:center}
+.export-item.xlsx i{color:#1D7044}
+.export-item.csv i{color:#2E6EA6}
+.export-item.xml i{color:#B5562C}
+.export-divider{border-top:1px solid var(--paper-deep)}
 
 /* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:24px}
@@ -189,6 +202,14 @@ tbody tr:last-child td{border-bottom:none}
         <div class="page-title">預約總覽</div>
       </div>
       <div class="head-btns">
+        <div class="export-wrap">
+          <button class="btn-secondary" onclick="toggleExportMenu(event)"><i class="ti ti-download"></i>匯出<i class="ti ti-chevron-down" style="font-size:12px"></i></button>
+          <div class="export-menu" id="exportMenu">
+            <button class="export-item xlsx" onclick="exportData('xlsx')"><i class="ti ti-file-type-xls"></i>匯出 Excel（.xlsx）</button>
+            <button class="export-item csv" onclick="exportData('csv')"><i class="ti ti-file-type-csv"></i>匯出 CSV（.csv）</button>
+            <button class="export-item xml" onclick="exportData('xml')"><i class="ti ti-file-code"></i>匯出 XML（.xml）</button>
+          </div>
+        </div>
         <button class="btn-secondary" onclick="openImportModal()"><i class="ti ti-file-spreadsheet"></i>匯入 Excel</button>
         <button class="btn-primary" onclick="openCreateModal()"><i class="ti ti-plus"></i>手動新增</button>
       </div>
@@ -514,7 +535,7 @@ function resetSearch() {
   renderTable();
 }
 
-function renderTable() {
+function getFilteredAppts() {
   const sID    = document.getElementById('sID').value.trim().toUpperCase();
   const sName  = document.getElementById('sName').value.trim().toLowerCase();
   const sPhone = document.getElementById('sPhone').value.trim();
@@ -523,7 +544,7 @@ function renderTable() {
   const sBound = document.getElementById('sBound').value;
   const sVeg   = document.getElementById('sVeg').value;
 
-  let filtered = allAppts.filter(a => {
+  return allAppts.filter(a => {
     if (sID && !(a.idNumber||'').toUpperCase().includes(sID)) return false;
     if (sName && !(a.name||'').toLowerCase().includes(sName)) return false;
     if (sPhone && !(a.phone||'').includes(sPhone)) return false;
@@ -534,6 +555,10 @@ function renderTable() {
     if (sVeg && a.veg !== sVeg) return false;
     return true;
   });
+}
+
+function renderTable() {
+  let filtered = getFilteredAppts();
 
   document.getElementById('displayCount').textContent = filtered.length;
 
@@ -594,6 +619,103 @@ function formatDate(d) {
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══ 匯出（Excel / CSV / XML）══ */
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.export-wrap');
+  const menu = document.getElementById('exportMenu');
+  if (wrap && !wrap.contains(e.target)) menu.classList.remove('open');
+});
+
+function toggleExportMenu(e) {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('open');
+}
+
+const EXPORT_HEADERS = ['編號','身分證號','姓名','生日','電話','手機號碼','地址','檢查日期','體檢方案','預約人','長者身分別','行政區'];
+
+function buildExportRows() {
+  const filtered = getFilteredAppts();
+  return filtered.map((a, idx) => ({
+    '編號':     idx + 1,
+    '身分證號': a.idNumber || '',
+    '姓名':     a.name || '',
+    '生日':     a.birth || '',
+    '電話':     '',
+    '手機號碼': a.phone || '',
+    '地址':     '',
+    '檢查日期': a.date || '',
+    '體檢方案': a.plan ? `${a.plan}方案` : '',
+    '預約人':   '本人',
+    '長者身分別': '一般老人',
+    '行政區':   '文山區',
+  }));
+}
+
+function exportFileName(ext) {
+  const d = new Date();
+  const stamp = d.toISOString().split('T')[0].replace(/-/g,'');
+  return `山林診所_老人健檢批量匯入清冊_${stamp}.${ext}`;
+}
+
+function exportData(format) {
+  const rows = buildExportRows();
+  if (rows.length === 0) { showToast('目前查詢結果沒有資料可以匯出', true); document.getElementById('exportMenu').classList.remove('open'); return; }
+
+  if (format === 'xlsx') exportXlsx(rows);
+  else if (format === 'csv') exportCsv(rows);
+  else if (format === 'xml') exportXml(rows);
+
+  document.getElementById('exportMenu').classList.remove('open');
+  showToast(`已匯出 ${rows.length} 筆資料`);
+}
+
+function exportXlsx(rows) {
+  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_HEADERS });
+  ws['!cols'] = EXPORT_HEADERS.map(h => ({ wch: Math.max(10, h.length * 2 + 2) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '受檢者作業清冊');
+  XLSX.writeFile(wb, exportFileName('xlsx'));
+}
+
+function exportCsv(rows) {
+  const lines = [EXPORT_HEADERS.join(',')];
+  rows.forEach(r => {
+    lines.push(EXPORT_HEADERS.map(h => csvCell(r[h])).join(','));
+  });
+  const csvContent = '\uFEFF' + lines.join('\r\n'); // 加 BOM 避免 Excel 開啟中文亂碼
+  downloadBlob(csvContent, exportFileName('csv'), 'text/csv;charset=utf-8;');
+}
+
+function csvCell(v) {
+  const s = String(v ?? '');
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+
+function exportXml(rows) {
+  const esc_xml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<受檢者作業清冊>\n';
+  rows.forEach(r => {
+    xml += '  <受檢者>\n';
+    EXPORT_HEADERS.forEach(h => {
+      const tag = h.replace(/\//g, '');
+      xml += `    <${tag}>${esc_xml(r[h])}</${tag}>\n`;
+    });
+    xml += '  </受檢者>\n';
+  });
+  xml += '</受檢者作業清冊>';
+  downloadBlob(xml, exportFileName('xml'), 'application/xml;charset=utf-8;');
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ══ 新增 / 編輯 ══ */
