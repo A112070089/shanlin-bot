@@ -2482,7 +2482,39 @@
 
       selfPayStep =
         "";
+/* =========================================
+   純 SELF_PAY：
+   不再詢問是否需要自費，
+   直接進入預算設定與項目選擇
+========================================= */
 
+if (currentPlan === "SELF_PAY") {
+
+  selfPayChatMode =
+    "budget";
+
+  addSelfPayAIMessage(
+
+    `您好，${escapeHtml(
+      appointmentData.name
+    )}。<br><br>` +
+
+    `您的基本資料已經確認完成。<br><br>` +
+
+    `接下來請設定您的自費健檢參考預算，` +
+
+    `我會依照您的需求協助選擇檢查項目。<br><br>` +
+
+    `💰 請輸入預算金額，例如：3000`,
+
+    true
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+}
 
       addSelfPayAIMessage(
 
@@ -2730,7 +2762,15 @@
           }
         );
 
+options.push({
 
+  label:
+    "← 修改預算",
+
+  value:
+    "change-budget"
+
+});
       options.push({
 
         label:
@@ -4753,7 +4793,14 @@
 
       input.placeholder =
         "請輸入預算，例如 3000";
+if (
+  selfPayBudget > 0
+) {
 
+  input.value =
+    selfPayBudget;
+
+}
 
       input.style.flex =
         "1";
@@ -4778,7 +4825,9 @@
 
 
       button.textContent =
-        "確認預算";
+  selfPayBudget > 0
+    ? "更新預算"
+    : "確認預算";
 
 
       button.style.padding =
@@ -4829,15 +4878,14 @@
 
 
           selfPayBudget =
-            budget;
+  budget;
 
+selfPaySelectedTotal =
+  calculateSelfPayTotal();
 
-          selfPayRemainingBudget =
-            budget;
-
-
-          selfPaySelectedTotal =
-            calculateSelfPayTotal();
+selfPayRemainingBudget =
+  selfPayBudget -
+  selfPaySelectedTotal;
 
 
           addSelfPayUserMessage(
@@ -4925,7 +4973,42 @@
           rawValue
         );
 
+/* =====================================
+   修改預算
+===================================== */
 
+if (
+  rawValue ===
+  "change-budget"
+) {
+
+  clearSelfPayOptions();
+
+  selfPayChatMode =
+    "budget";
+
+  addSelfPayUserMessage(
+    "修改預算"
+  );
+
+  addSelfPayAIMessage(
+
+    `目前的自費健檢參考預算為 ` +
+    `<strong>NT$${selfPayBudget.toLocaleString(
+      "zh-TW"
+    )}</strong>。<br><br>` +
+
+    `請重新輸入您希望調整的預算金額。`,
+
+    false
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+
+}
       /* =====================================
          預約最終確認
       ===================================== */
@@ -5503,17 +5586,47 @@
 
         addSelfPayAIMessage(
 
-          `好的，已為您選擇 ` +
+  `好的，已為您選擇 ` +
+  `${selfPaySelectedDate} 的 ` +
+  `${selfPaySelectedSession}。<br><br>` +
 
-          `${selfPaySelectedDate} 的 ` +
+  `<strong>請確認以上預約資訊是否正確？</strong><br><br>` +
 
-          `${selfPaySelectedSession}。<br><br>` +
+  `<div style="
+    background:#fff8e1;
+    border:1px solid #f0d98c;
+    border-radius:12px;
+    padding:14px 16px;
+    line-height:1.8;
+    color:#5c4a1f;
+  ">` +
 
-          `請確認以上預約資訊是否正確？`,
+    `<strong>📌 預約提醒</strong><br>` +
 
-          true
+    `因診所每日看診及健檢人力安排不同，` +
+    `您目前選擇的時段將作為預約安排依據。` +
+    `診所會依當日人力與預約狀況，確認最終合適的報到與檢查時間。<br><br>` +
 
-        );
+    `如時間需要調整，診所將主動致電與您聯繫。` +
+    `若您希望進一步確認或變更預約，也可直接撥打診所電話：<br>` +
+
+    `<a href="tel:0229332010"
+       style="
+         display:inline-block;
+         margin-top:8px;
+         color:#0d6efd;
+         font-weight:700;
+         text-decoration:none;
+         font-size:1.05em;
+       ">` +
+      `📞 02-2933-2010` +
+    `</a>` +
+
+  `</div>`,
+
+  true
+
+);
 
 
         selfPayStep =
@@ -5837,65 +5950,35 @@
           );
 
 
+ 
+
+
         /* 不需要自費 */
 
-        if (wantsSkip) {
+if (wantsSkip) {
 
-          selfPaySelectedItems =
-            [];
+  selfPaySelectedItems = [];
 
-
-          syncSelfPayDataToAppointment();
+  syncSelfPayDataToAppointment();
 
 
-          addSelfPayAIMessage(
+  addSelfPayAIMessage(
 
-            `好的，本次不加購自費健康檢查。<br><br>` +
+    `好的，本次不加購自費健康檢查。<br><br>` +
 
-            `接下來為您安排預約日期。`,
+    `將直接使用您前面已選擇的健檢日期與時段完成預約。`,
 
-            true
+    true
 
-          );
-
-
-          selfPayStep =
-            "date";
+  );
 
 
-          showSelfPayCalendar();
+  await submitFinalBooking();
 
 
-          return;
+  return;
 
-        }
-
-
-        /* 要看自費項目 */
-
-        if (wantsStart) {
-
-          selfPayChatMode =
-            "budget";
-
-
-          addSelfPayAIMessage(
-
-            `好的，請先設定您的自費健檢參考預算。<br><br>` +
-
-            `💰 請輸入預算金額，例如：3000`,
-
-            false
-
-          );
-
-
-          showSelfPayBudgetInput();
-
-
-          return;
-
-        }
+}
 
 
         addSelfPayAIMessage(
@@ -7061,17 +7144,18 @@
       syncSelfPayDataToAppointment();
 
 
-      appointmentData.date =
-        selfPaySelectedDate ||
-        appointmentData.date ||
-        "";
+      if (currentPlan === "SELF_PAY") {
 
+  appointmentData.date =
+    selfPaySelectedDate ||
+    appointmentData.date ||
+    "";
 
-      appointmentData.time =
-        selfPaySelectedSession ||
-        appointmentData.time ||
-        "";
-
+  appointmentData.time =
+    selfPaySelectedSession ||
+    appointmentData.time ||
+    "";
+}
 
       const finalBookingData = {
 
