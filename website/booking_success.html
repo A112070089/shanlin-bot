@@ -221,7 +221,18 @@
   </div>
 
   <div class="booking-card">
+<div class="row">
+    <span class="label">
+        自費健檢預約時段
+    </span>
 
+    <span
+        class="value"
+        id="selfPayDatetime"
+    >
+        —
+    </span>
+</div>
     <div id="selfPayItems"></div>
 
     <div class="row" style="
@@ -321,6 +332,27 @@ document.getElementById("birthday").textContent =
       (date || time)
         ? `${date} ${time}`.trim()
         : "—";
+        const selfPayDate =
+  booking.selfPayDate || "";
+
+const selfPayTime =
+  booking.selfPayTime || "";
+
+const selfPayDatetimeElement =
+  document.getElementById(
+    "selfPayDatetime"
+  );
+
+if (selfPayDatetimeElement) {
+
+  selfPayDatetimeElement.textContent =
+    (selfPayDate || selfPayTime)
+
+      ? `${selfPayDate} ${selfPayTime}`.trim()
+
+      : "—";
+
+}
         const selfPaySection = document.getElementById("selfPaySection");
 const selfPayItemsContainer = document.getElementById("selfPayItems");
 const selfPayTotalElement = document.getElementById("selfPayTotal");

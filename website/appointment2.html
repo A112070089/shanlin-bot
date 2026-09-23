@@ -3973,46 +3973,87 @@ options.push({
 
     function confirmSelfPaySelection() {
 
-      syncSelfPayDataToAppointment();
+  syncSelfPayDataToAppointment();
+
+  const total =
+    appointmentData.selfPayTotal;
 
 
-      const total =
-        appointmentData
-          .selfPayTotal;
+  const isDirectSelfPayFlow =
+    currentPlan === "SELF_PAY" &&
+    new URLSearchParams(
+      window.location.search
+    ).get("directSelfPay") === "1";
 
 
-      addSelfPayAIMessage(
+  /* =========================================
+     純自費
+  ========================================= */
 
-        `好的，自費項目已整理完成。<br><br>` +
+  if (isDirectSelfPayFlow) {
 
-        `您共選擇 ` +
+    addSelfPayAIMessage(
 
-        `<strong>${selfPaySelectedItems.length}</strong>` +
+      `好的，自費項目已整理完成。<br><br>` +
 
-        ` 項自費檢查。<br>` +
+      `您共選擇 ` +
+      `<strong>${selfPaySelectedItems.length}</strong>` +
+      ` 項自費檢查。<br>` +
 
-        `自費合計：` +
+      `自費合計：` +
+      `<strong>NT$${total.toLocaleString(
+        "zh-TW"
+      )}</strong><br><br>` +
 
-        `<strong>NT$${total.toLocaleString(
-          "zh-TW"
-        )}</strong><br><br>` +
+      `接下來請選擇自費健檢的預約日期。<br><br>` +
 
-        `接下來為您安排預約時間。<br><br>` +
+      `📅 請直接從下方日曆選擇日期。`,
 
-        `📅 請直接從下方日曆選擇預約日期。`,
+      true
 
-        true
+    );
 
-      );
+  } else {
+
+    /* =========================================
+       老人健檢 + 自費加購
+    ========================================= */
+
+    addSelfPayAIMessage(
+
+      `好的，自費加購項目已整理完成。<br><br>` +
+
+      `您共加購 ` +
+      `<strong>${selfPaySelectedItems.length}</strong>` +
+      ` 項自費檢查。<br>` +
+
+      `自費合計：` +
+      `<strong>NT$${total.toLocaleString(
+        "zh-TW"
+      )}</strong><br><br>` +
+
+      `您原本的老人健檢預約為：<br>` +
+
+      `<strong>${appointmentData.date || ""} ` +
+      `${appointmentData.time || ""}</strong><br><br>` +
+
+      `📌 自費健檢的檢查時間需另外安排。<br><br>` +
+
+      `接下來請另外選擇自費健檢日期。`,
+
+      true
+
+    );
+
+  }
 
 
-      selfPayStep =
-        "date";
+  selfPayStep =
+    "date";
 
+  showSelfPayCalendar();
 
-      showSelfPayCalendar();
-
-    }
+}
 
 
     /* =========================================
@@ -5099,15 +5140,25 @@ if (
           );
 
 
-          appointmentData.date =
-            selfPaySelectedDate;
+          const isDirectSelfPayFlow =
+  currentPlan === "SELF_PAY" &&
+  new URLSearchParams(
+    window.location.search
+  ).get("directSelfPay") === "1";
 
 
-          appointmentData.time =
-            selfPaySelectedSession;
+if (isDirectSelfPayFlow) {
+
+  appointmentData.date =
+    selfPaySelectedDate;
+
+  appointmentData.time =
+    selfPaySelectedSession;
+
+}
 
 
-          await submitFinalBooking();
+await submitFinalBooking();
 
 
           return;
@@ -5576,19 +5627,53 @@ if (
         );
 
 
-        appointmentData.date =
-          selfPaySelectedDate;
+        appointmentData.selfPayDate =
+  selfPaySelectedDate;
+
+appointmentData.selfPayTime =
+  selfPaySelectedSession;
 
 
-        appointmentData.time =
-          selfPaySelectedSession;
+/* 純自費時，主預約時間就是自費時間 */
+
+if (currentPlan === "SELF_PAY") {
+
+  appointmentData.date =
+    selfPaySelectedDate;
+
+  appointmentData.time =
+    selfPaySelectedSession;
+
+}
 
 
-        addSelfPayAIMessage(
+        const bookingSummary =
+  currentPlan === "SELF_PAY"
 
-  `好的，已為您選擇 ` +
-  `${selfPaySelectedDate} 的 ` +
-  `${selfPaySelectedSession}。<br><br>` +
+    ? (
+        `自費健檢預約：<br>` +
+        `<strong>${selfPaySelectedDate} ` +
+        `${selfPaySelectedSession}</strong>`
+      )
+
+    : (
+        `老人健檢預約：<br>` +
+        `<strong>${appointmentData.date || ""} ` +
+        `${appointmentData.time || ""}</strong><br><br>` +
+
+        `自費健檢預約：<br>` +
+        `<strong>${appointmentData.selfPayDate || ""} ` +
+        `${appointmentData.selfPayTime || ""}</strong>`
+      );
+
+
+addSelfPayAIMessage(
+
+  `好的，預約時間已完成選擇。<br><br>` +
+
+  bookingSummary +
+
+  `<br><br>` +
 
   `<strong>請確認以上預約資訊是否正確？</strong><br><br>` +
 
@@ -5603,9 +5688,8 @@ if (
 
     `<strong>📌 預約提醒</strong><br>` +
 
-    `因診所每日看診及健檢人力安排不同，` +
-    `您目前選擇的時段將作為預約安排依據。` +
-    `診所會依當日人力與預約狀況，確認最終合適的報到與檢查時間。<br><br>` +
+    `老人健檢與自費健檢為不同的預約時段。` +
+    `實際報到與檢查時間仍會依診所當日人力與預約狀況安排。<br><br>` +
 
     `如時間需要調整，診所將主動致電與您聯繫。` +
     `若您希望進一步確認或變更預約，也可直接撥打診所電話：<br>` +
@@ -5619,7 +5703,9 @@ if (
          text-decoration:none;
          font-size:1.05em;
        ">` +
+
       `📞 02-2933-2010` +
+
     `</a>` +
 
   `</div>`,
@@ -5902,52 +5988,66 @@ if (
         "ask"
       ) {
 
-        const wantsSkip =
-
-          rawValue ===
-            "skip" ||
-
-          text.includes(
-            "不需要"
-          ) ||
-
-          text.includes(
-            "不用"
-          ) ||
-
-          text.includes(
-            "不要"
-          ) ||
-
-          text.includes(
-            "直接完成"
-          );
+        const decisionText =
+  `${rawValue} ${shownText}`
+    .trim()
+    .toLowerCase();
 
 
-        const wantsStart =
+const wantsSkip =
 
-          rawValue ===
-            "start" ||
+  rawValue ===
+    "skip" ||
 
-          text.includes(
-            "需要"
-          ) ||
+  decisionText.includes(
+    "不需要"
+  ) ||
 
-          text.includes(
-            "想看"
-          ) ||
+  decisionText.includes(
+    "不用"
+  ) ||
 
-          text.includes(
-            "看看"
-          ) ||
+  decisionText.includes(
+    "不要"
+  ) ||
 
-          text.includes(
-            "自費"
-          ) ||
+  decisionText.includes(
+    "直接完成"
+  ) ||
 
-          text.includes(
-            "加購"
-          );
+  decisionText.includes(
+    "直接安排預約"
+  );
+
+
+const wantsStart =
+
+  !wantsSkip && (
+
+    rawValue ===
+      "start" ||
+
+    decisionText.includes(
+      "想看看"
+    ) ||
+
+    decisionText.includes(
+      "想看"
+    ) ||
+
+    decisionText.includes(
+      "了解自費"
+    ) ||
+
+    decisionText.includes(
+      "查看自費"
+    ) ||
+
+    decisionText.includes(
+      "加購"
+    )
+
+  );
 
 
  
@@ -5979,7 +6079,28 @@ if (wantsSkip) {
   return;
 
 }
+/* 要看自費項目 */
 
+if (wantsStart) {
+
+  selfPayChatMode =
+    "budget";
+
+  addSelfPayAIMessage(
+
+    `好的，請先設定您的自費健檢參考預算。<br><br>` +
+
+    `💰 請輸入預算金額，例如：3000`,
+
+    false
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+
+}
 
         addSelfPayAIMessage(
 
@@ -7191,6 +7312,16 @@ if (wantsSkip) {
           appointmentData.time ||
           "",
 
+          selfPayDate:
+  appointmentData.selfPayDate ||
+  selfPaySelectedDate ||
+  "",
+
+selfPayTime:
+  appointmentData.selfPayTime ||
+  selfPaySelectedSession ||
+  "",
+
         breakfast:
           appointmentData.breakfast ||
           "",
@@ -7339,6 +7470,12 @@ if (wantsSkip) {
 
           time:
             finalBookingData.time,
+
+            selfPayDate:
+  finalBookingData.selfPayDate,
+
+selfPayTime:
+  finalBookingData.selfPayTime,
 
           breakfast:
             finalBookingData.breakfast,

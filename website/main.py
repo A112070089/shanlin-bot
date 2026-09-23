@@ -1616,6 +1616,10 @@ class BookingConfirmRequest(
 
     time: str = ""
 
+    selfPayDate: str = ""
+
+    selfPayTime: str = ""
+
     breakfast: (
         str
         | int
@@ -1799,6 +1803,12 @@ async def confirm_booking(
             "time":
                 req.time,
 
+            "self_pay_date":
+                req.selfPayDate,
+
+            "self_pay_time":
+                req.selfPayTime,
+
             "breakfast":
                 req.breakfast,
 
@@ -1861,6 +1871,27 @@ async def confirm_booking(
                     "idNumber": req.pid,
                     "veg": req.breakfast,
                 }
+                if (
+                    cleaned_self_pay_items
+                    or req.selfPayDate.strip()
+                    or req.selfPayTime.strip()
+                ):
+                    firebase_record.update({
+                        "selfPayDate": req.selfPayDate,
+                        "selfPayTime": req.selfPayTime,
+                        "selfPayItems": cleaned_self_pay_items,
+                        "selfPayCount": len(cleaned_self_pay_items),
+                        "selfPayTotal": server_total,
+                    })
+
+                else:
+                    firebase_record.update({
+                        "selfPayDate": None,
+                        "selfPayTime": None,
+                        "selfPayItems": None,
+                        "selfPayCount": None,
+                        "selfPayTotal": None,
+                    })
                 db.reference(f"appointments/{firebase_key}").update(firebase_record)
                 print(f"Firebase 寫入成功：appointments/{firebase_key}")
             else:
