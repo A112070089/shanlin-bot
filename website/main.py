@@ -1858,32 +1858,101 @@ async def confirm_booking(
         # --------------------------------------------------
         try:
             if init_firebase():
-                firebase_key = req.pid.strip() if req.pid.strip() else f"WEB_{req.phone.strip()}"
+
+                firebase_key = (
+                    req.pid.strip().upper()
+                    if req.pid.strip()
+                    else f"WEB_{req.phone.strip()}"
+                )
+
+                # ==========================================
+                # 純自費預約
+                # ==========================================
+                if req.plan == "SELF_PAY":
+
+                    firebase_record = {
+                        "name": req.name.strip(),
+                        "phone": req.phone.strip(),
+                        "birth": req.birthday.strip(),
+                        "idNumber": req.pid.strip().upper(),
+                        "selfPayDate": req.selfPayDate.strip(),
+                        "selfPayTime": req.selfPayTime.strip(),
+                        "selfPayItems": cleaned_self_pay_items,
+                        "selfPayCount": len(cleaned_self_pay_items),
+                        "selfPayTotal": server_total,
+                        "bookedAt": datetime.now().isoformat(),
+                        "source": "SELF_PAY_BOOKING",
+                    }
+
+                    db.reference(
+                        f"self_pay_booking/{firebase_key}"
+                    ).update(firebase_record)
+
+                    print(
+                        f"Firebase 寫入成功：self_pay_booking/{firebase_key}"
+                    )
+
+                    return {
+                        "status": "success",
+                        "message": "自費健檢預約已成功接收",
+                        "booking": firebase_record,
+                        "selfPayCount": len(cleaned_self_pay_items),
+                        "selfPayTotal": server_total,
+                    }
+
+                # ==========================================
+                # 老人健檢 A / B / C
+                # ==========================================
+                plan_value = str(
+                    req.plan or ""
+                ).strip().upper()
+
+                if plan_value not in ("A", "B", "C"):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="老人健檢方案只能是 A、B 或 C",
+                    )
+
+                veg_value = str(
+                    req.breakfast or ""
+                ).strip()
+
+                if veg_value == "1":
+                    veg_value = "葷"
+                elif veg_value == "2":
+                    veg_value = "素"
+                elif veg_value in ("葷", "葷食"):
+                    veg_value = "葷"
+                elif veg_value in ("素", "素食"):
+                    veg_value = "素"
+
                 firebase_record = {
-                    "name": req.name,
-                    "phone": req.phone,
-                    "plan": req.plan,
-                    "date": req.date,
-                    "time": req.time,
+                    "name": req.name.strip(),
+                    "phone": req.phone.strip(),
+                    "plan": plan_value,
+                    "date": req.date.strip(),
+                    "time": req.time.strip(),
                     "bookedAt": datetime.now().isoformat(),
                     "source": "WEB_BOOKING",
-                    "birth": req.birthday,
-                    "idNumber": req.pid,
-                    "veg": req.breakfast,
+                    "birth": req.birthday.strip(),
+                    "idNumber": req.pid.strip().upper(),
+                    "veg": veg_value,
                 }
+                # 老人健檢 + 自費加購
                 if (
                     cleaned_self_pay_items
                     or req.selfPayDate.strip()
                     or req.selfPayTime.strip()
                 ):
                     firebase_record.update({
-                        "selfPayDate": req.selfPayDate,
-                        "selfPayTime": req.selfPayTime,
+                        "selfPayDate": req.selfPayDate.strip(),
+                        "selfPayTime": req.selfPayTime.strip(),
                         "selfPayItems": cleaned_self_pay_items,
                         "selfPayCount": len(cleaned_self_pay_items),
                         "selfPayTotal": server_total,
                     })
 
+                # 沒有自費時，清除同一身分證舊的自費欄位
                 else:
                     firebase_record.update({
                         "selfPayDate": None,
@@ -1892,12 +1961,36 @@ async def confirm_booking(
                         "selfPayCount": None,
                         "selfPayTotal": None,
                     })
-                db.reference(f"appointments/{firebase_key}").update(firebase_record)
-                print(f"Firebase 寫入成功：appointments/{firebase_key}")
+
+                print(
+                    f"準備寫入 Firebase：appointments/{firebase_key}"
+                )
+
+                db.reference(
+                    f"appointments/{firebase_key}"
+                ).update(firebase_record)
+
+                print(
+                    f"Firebase 寫入成功：appointments/{firebase_key}"
+                )
+
             else:
-                print("Firebase 未初始化，跳過寫入。")
+                print(
+                    "Firebase 未初始化，跳過寫入。"
+                )
+
+        except HTTPException:
+            raise
+
         except Exception as fe:
-            print("Firebase 寫入失敗：", repr(fe))
+            print(
+                "Firebase 寫入失敗：",
+                repr(fe)
+            )
+            raise HTTPException(
+                status_code=500,
+                detail="Firebase 寫入失敗",
+            )
         # --------------------------------------------------
         # 成功
         # --------------------------------------------------

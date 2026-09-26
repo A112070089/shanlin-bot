@@ -4544,8 +4544,17 @@ options.push({
                 30;
 
 
-              selfPaySelectedDate =
-                `${month}/${day}`;
+              const year =
+  selectedDate.getFullYear();
+
+const monthText =
+  String(month).padStart(2, "0");
+
+const dayText =
+  String(day).padStart(2, "0");
+
+selfPaySelectedDate =
+  `${year}-${monthText}-${dayText}`;
 
 
               addSelfPayUserMessage(
@@ -5325,8 +5334,14 @@ await submitFinalBooking();
         }
 
 
-        selfPaySelectedDate =
-          `${month}/${day}`;
+        const monthText =
+  String(month).padStart(2, "0");
+
+const dayText =
+  String(day).padStart(2, "0");
+
+selfPaySelectedDate =
+  `${year}-${monthText}-${dayText}`;
 
 
         selfPayStep =
