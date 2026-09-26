@@ -23,7 +23,7 @@
      ===================================================== */
 
   const SELF_PAY_API_BASE =
-    "http://127.0.0.1:8000/api/self_pay";
+    "https://booking-api-production-9c34.up.railway.app/api/self_pay";
 
 
   /* =====================================================
@@ -259,7 +259,7 @@
 
                 <br>
 
-                http://127.0.0.1:8000/docs
+                https://booking-api-production-9c34.up.railway.app/docs
 
                 <br><br>
 

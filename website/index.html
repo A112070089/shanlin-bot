@@ -1786,7 +1786,7 @@ if (micBtn) {
         fd.append('current_name', bookingData.name || "");
 
         try {
-          const r = await fetch('http://127.0.0.1:8000/api/whisper_booking', { method: 'POST', body: fd });
+          const r = await fetch('https://booking-api-production-9c34.up.railway.app/api/whisper_booking', { method: 'POST', body: fd });
           const res = await r.json(); loadingStatus.style.display = 'none';
           if (res.status === 'error') {
             const message = res.message || res.debug || "語音辨識暫時無法使用。";
@@ -2936,7 +2936,7 @@ break;
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         document.getElementById('loading').style.display = 'block';
         try {
-          const res = await fetch('http://127.0.0.1:8000/api/smart_parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: val, current_name: bookingData.name || "" }) });
+          const res = await fetch('https://booking-api-production-9c34.up.railway.app/api/smart_parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: val, current_name: bookingData.name || "" }) });
           const result = await res.json(); document.getElementById('loading').style.display = 'none';
           if (result.status === 'error') { addMsg("<span style='color:red;'>⚠️ 伺服器發生錯誤。</span>", "ai"); return; }
           processLogic(val, result.result);
@@ -3017,7 +3017,7 @@ break;
        ===================================================== */
 
     const SELF_PAY_CART_API =
-      "http://127.0.0.1:8000/api/self_pay";
+      "https://booking-api-production-9c34.up.railway.app/api/self_pay";
 
     window.selectedSelfPayItems =
       window.selectedSelfPayItems || [];
