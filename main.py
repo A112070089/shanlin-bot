@@ -529,20 +529,40 @@ async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)
         item["_bound"] = bool(data.get("lineUserId"))
         item["_pureSelfPay"] = False
 
-        sp_key = _find_selfpay_key(key, data)
-        sp = all_selfpay.get(sp_key) if sp_key and isinstance(all_selfpay, dict) else None
-        if isinstance(sp, dict):
-            matched_selfpay_keys.add(sp_key)
-            sp_items = _extract_self_pay_items(sp)
-            item["selfPayItems"] = sp_items
-            item["selfPayTotal"] = sp.get("selfPayTotal")
-            item["selfPayCount"] = sp.get("selfPayCount")
-            item["selfPayDate"]  = sp.get("selfPayDate")
-            item["selfPayTime"]  = sp.get("selfPayTime")
-            item["_hasSelfPay"]  = bool(sp_items)
+        # 有些預約是「健檢＋自費」合在同一筆 appointments 資料裡，自費欄位
+        # （selfPayItems / selfPayDate / ...）直接內嵌在這筆資料本身，根本不需要
+        # 也不會出現在 self_pay_booking 節點裡。這種情況要優先採用，
+        # 不然下面「去 self_pay_booking 找不到就清空」的邏輯會把它已經有的自費資料蓋掉。
+        own_sp_items = _extract_self_pay_items(data)
+        has_own_selfpay = bool(own_sp_items) or bool(data.get("selfPayDate")) or bool(data.get("selfPayTotal"))
+
+        if has_own_selfpay:
+            item["selfPayItems"] = own_sp_items
+            item["selfPayTotal"] = data.get("selfPayTotal")
+            item["selfPayCount"] = data.get("selfPayCount")
+            item["selfPayDate"]  = data.get("selfPayDate")
+            item["selfPayTime"]  = data.get("selfPayTime")
+            item["_hasSelfPay"]  = bool(own_sp_items)
+            # 如果剛好也能對應到 self_pay_booking 裡的一筆，順便標記掉，
+            # 避免它又被當成一筆獨立的「純自費」重複出現
+            sp_key = _find_selfpay_key(key, data)
+            if sp_key:
+                matched_selfpay_keys.add(sp_key)
         else:
-            item["selfPayItems"] = []
-            item["_hasSelfPay"] = False
+            sp_key = _find_selfpay_key(key, data)
+            sp = all_selfpay.get(sp_key) if sp_key and isinstance(all_selfpay, dict) else None
+            if isinstance(sp, dict):
+                matched_selfpay_keys.add(sp_key)
+                sp_items = _extract_self_pay_items(sp)
+                item["selfPayItems"] = sp_items
+                item["selfPayTotal"] = sp.get("selfPayTotal")
+                item["selfPayCount"] = sp.get("selfPayCount")
+                item["selfPayDate"]  = sp.get("selfPayDate")
+                item["selfPayTime"]  = sp.get("selfPayTime")
+                item["_hasSelfPay"]  = bool(sp_items)
+            else:
+                item["selfPayItems"] = []
+                item["_hasSelfPay"] = False
 
         result.append(item)
 
