@@ -540,10 +540,16 @@ async function loadAppointments() {
     });
     if (res.status === 401) { doLogout(); return; }
     const data = await res.json();
-    allAppts = data.appointments || [];
+    if (!res.ok) {
+      console.error('載入預約失敗', res.status, data);
+      showToast(`載入失敗（${res.status}）：${data.detail || '伺服器發生錯誤，請查看 Railway logs'}`, true);
+      allAppts = [];
+    } else {
+      allAppts = data.appointments || [];
+    }
     updateStats();
     renderTable();
-  } catch(e) { showToast('載入失敗，請檢查網路連線', true); }
+  } catch(e) { console.error(e); showToast('載入失敗，請檢查網路連線', true); }
   document.getElementById('loadingWrap').style.display = 'none';
 }
 
