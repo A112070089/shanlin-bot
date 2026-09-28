@@ -59,9 +59,14 @@
       padding: 12px 20px;
     }
 
+    #chat-widget.large-mode .send-btn-chat,
+
     #chat-widget.large-mode .mic-btn-chat {
       width: 60px;
       height: 60px;
+      min-width: 60px;
+      min-height: 60px;
+      flex: 0 0 60px;
       font-size: 1.8rem;
     }
 
@@ -179,18 +184,56 @@
       outline: none;
     }
 
+    .send-btn-chat {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 50%;
+
+      width: 45px;
+      height: 45px;
+      min-width: 45px;
+      min-height: 45px;
+
+      flex: 0 0 45px;
+      aspect-ratio: 1 / 1;
+      box-sizing: border-box;
+      padding: 0;
+
+      margin-left: 8px;
+      cursor: pointer;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 1.35rem;
+      font-weight: bold;
+    }
+
     .mic-btn-chat {
       background: #0d6efd;
       color: white;
       border: none;
       border-radius: 50%;
+
       width: 45px;
       height: 45px;
+      min-width: 45px;
+      min-height: 45px;
+
+      flex: 0 0 45px;
+      aspect-ratio: 1 / 1;
+      box-sizing: border-box;
+      padding: 0;
+
       margin-left: 8px;
       cursor: pointer;
+
       display: flex;
       align-items: center;
       justify-content: center;
+
       font-size: 1.4rem;
       user-select: none;
       -webkit-user-select: none;
@@ -1265,16 +1308,32 @@
     🔁 重新播放
   </button>
 </div>
-    <div id="chat-footer">
-      <input
-  type="text"
-  id="chat-input"
-  placeholder="打字，或按住說話..."
-  style="min-height:72px; font-size:20px; padding:14px 22px; border-radius:22px; flex:1;"
->
-      <button id="chatMicBtn" class="mic-btn-chat" onmousedown="startRec()" onmouseup="stopRec()"
-        onmouseleave="stopRec()" ontouchstart="startRec()" ontouchend="stopRec()">🎤</button>
-    </div>
+<div id="chat-footer">
+  <input type="text" id="chat-input" placeholder="打字，或按住說話...">
+
+  <button
+    type="button"
+    id="chatSendBtn"
+    class="send-btn-chat"
+    title="傳送"
+    aria-label="傳送訊息"
+    onclick="document.getElementById('chat-input').dispatchEvent(
+      new KeyboardEvent('keypress', {
+        key: 'Enter',
+        code: 'Enter',
+        bubbles: true
+      })
+    )">
+    ➤
+  </button>
+
+  <button id="chatMicBtn" class="mic-btn-chat"
+    onmousedown="startRec()"
+    onmouseup="stopRec()"
+    onmouseleave="stopRec()"
+    ontouchstart="startRec()"
+    ontouchend="stopRec()">🎤</button>
+</div>
   </div>
 
   <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
@@ -3007,6 +3066,14 @@ break;
       background: #e9ecef;
       color: #333;
     }
+
+    @media (max-width: 380px) {
+  #chat-widget {
+    width: calc(100vw - 16px);
+    right: 8px;
+    left: auto;
+  }
+}
   </style>
 
   <script src="self_pay_chat.js"></script>
