@@ -3068,12 +3068,32 @@ break;
     }
 
     @media (max-width: 380px) {
-  #chat-widget {
-    width: calc(100vw - 16px);
-    right: 8px;
-    left: auto;
-  }
-}
+      #chat-widget {
+        width: calc(100vw - 16px);
+        right: 8px;
+        left: auto;
+      }
+
+      #chat-footer {
+        padding: 10px 8px;
+        gap: 6px;
+        box-sizing: border-box;
+      }
+
+      #chat-input {
+        min-width: 0;
+      }
+
+      .send-btn-chat,
+      .mic-btn-chat {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        min-height: 42px;
+        flex: 0 0 42px;
+        margin-left: 0;
+      }
+    }
   </style>
 
   <script src="self_pay_chat.js"></script>
