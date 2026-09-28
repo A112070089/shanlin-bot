@@ -80,6 +80,7 @@
       color: white;
       padding: 15px;
       font-weight: bold;
+      font-size: 1.1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -103,10 +104,10 @@
     .msg {
       margin-bottom: 12px;
       max-width: 85%;
-      padding: 10px 15px;
+      padding: 12px 16px;
       border-radius: 15px;
-      font-size: 0.95rem;
-      line-height: 1.5;
+      font-size: 1.15rem;
+      line-height: 1.65;
     }
 
     .ai-msg {
@@ -159,7 +160,7 @@
       border: 1px solid #ccc;
       border-radius: 20px;
       padding: 5px 12px;
-      font-size: 0.85rem;
+      font-size: 1rem;
       cursor: pointer;
       color: #333;
       transition: background 0.2s;
@@ -182,6 +183,7 @@
       border-radius: 20px;
       padding: 8px 15px;
       outline: none;
+      font-size: 1.1rem;
     }
 
     .send-btn-chat {
@@ -1274,9 +1276,9 @@
 
   <div id="chat-widget">
     <div id="chat-header">
-      <span>🏥 老人健檢語音智慧助理</span>
+      <span id="chat-title">🏥 老人健檢語音智慧助理</span>
       <div class="header-icons">
-        <span style="cursor:pointer; font-size: 20px;" onclick="toggleSize()" title="放大字體">🔍放大</span>
+
         <span style="cursor:pointer; font-size: 28px;" onclick="closeChat()">×</span>
       </div>
     </div>
@@ -1311,6 +1313,13 @@
 <div id="chat-footer">
   <input type="text" id="chat-input" placeholder="打字，或按住說話...">
 
+  <button id="chatMicBtn" class="mic-btn-chat"
+    onmousedown="startRec()"
+    onmouseup="stopRec()"
+    onmouseleave="stopRec()"
+    ontouchstart="startRec()"
+    ontouchend="stopRec()">🎤</button>
+
   <button
     type="button"
     id="chatSendBtn"
@@ -1327,12 +1336,6 @@
     ➤
   </button>
 
-  <button id="chatMicBtn" class="mic-btn-chat"
-    onmousedown="startRec()"
-    onmouseup="stopRec()"
-    onmouseleave="stopRec()"
-    ontouchstart="startRec()"
-    ontouchend="stopRec()">🎤</button>
 </div>
   </div>
 
@@ -1683,6 +1686,8 @@ if (pauseBtn) {
   }
 }
     async function openSelfPayChat() {
+      document.getElementById('chat-title').textContent =
+  '🏥 老人健檢語音智慧助理';
 
   // 切換成自費健檢模式
   bookingMode = "self_pay";
@@ -1728,6 +1733,8 @@ if (pauseBtn) {
 }
     async function openSelfPayChat(preserveSelfPay = false) {
 
+      document.getElementById('chat-title').textContent =
+  '🧾 自費加購語音智慧助理';
   // 切換成「純自費健檢」模式
   bookingMode = "self_pay";
 
@@ -1780,12 +1787,17 @@ if (micBtn) {
 
   addMsg(welcomeMessage, "ai");
 
-  // 啟用麥克風
-  if (!globalStream) {
-    globalStream = await navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .catch(e => null);
-  }
+// 啟用麥克風
+if (!globalStream) {
+  globalStream = await navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .catch(e => null);
+}
+
+requestAnimationFrame(() => {
+  chatBody.scrollTop = 0;
+});
+
 }
 
     function goBack() {
