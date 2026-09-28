@@ -483,10 +483,44 @@ async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)
     except Exception:
         all_selfpay = {}
 
+    def _norm_phone(p):
+        p = str(p or "").strip()
+        if p and not p.startswith("0"):
+            p = "0" + p
+        return p
+
+    # self_pay_booking 的 key 有時候是身分證字號、有時候是手機號碼，不固定，
+    # 所以除了直接用 key 對應之外，再額外用「身分證字號」「手機號碼」欄位本身
+    # 建立索引，兩邊都對不到才算真的沒有自費資料，避免同一個人被拆成
+    # 「appointments 裡沒有自費項目」+「另一筆獨立的純自費」兩筆紀錄
+    selfpay_by_idnumber = {}
+    selfpay_by_phone = {}
+    if isinstance(all_selfpay, dict):
+        for sp_key, sp_val in all_selfpay.items():
+            if not isinstance(sp_val, dict):
+                continue
+            sp_id = str(sp_val.get("idNumber") or "").strip().upper()
+            sp_phone = _norm_phone(sp_val.get("phone"))
+            if sp_id and sp_id not in selfpay_by_idnumber:
+                selfpay_by_idnumber[sp_id] = sp_key
+            if sp_phone and sp_phone not in selfpay_by_phone:
+                selfpay_by_phone[sp_phone] = sp_key
+
+    def _find_selfpay_key(appt_key, appt_data):
+        if isinstance(all_selfpay, dict) and isinstance(all_selfpay.get(appt_key), dict):
+            return appt_key
+        appt_id = str(appt_data.get("idNumber") or "").strip().upper()
+        if appt_id and appt_id in selfpay_by_idnumber:
+            return selfpay_by_idnumber[appt_id]
+        appt_phone = _norm_phone(appt_data.get("phone"))
+        if appt_phone and appt_phone in selfpay_by_phone:
+            return selfpay_by_phone[appt_phone]
+        return None
+
     result = []
     matched_selfpay_keys = set()
 
-    # 一般健檢預約（有些人同時也有自費項目，用身分證字號對應 self_pay_booking）
+    # 一般健檢預約（有些人同時也有自費項目，用身分證字號／手機號碼對應 self_pay_booking）
     for key, data in all_appts.items():
         if not isinstance(data, dict):
             continue
@@ -495,9 +529,10 @@ async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)
         item["_bound"] = bool(data.get("lineUserId"))
         item["_pureSelfPay"] = False
 
-        sp = all_selfpay.get(key) if isinstance(all_selfpay, dict) else None
+        sp_key = _find_selfpay_key(key, data)
+        sp = all_selfpay.get(sp_key) if sp_key and isinstance(all_selfpay, dict) else None
         if isinstance(sp, dict):
-            matched_selfpay_keys.add(key)
+            matched_selfpay_keys.add(sp_key)
             sp_items = _extract_self_pay_items(sp)
             item["selfPayItems"] = sp_items
             item["selfPayTotal"] = sp.get("selfPayTotal")
