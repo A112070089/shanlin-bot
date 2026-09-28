@@ -1685,52 +1685,7 @@ if (pauseBtn) {
       .catch(() => null);
   }
 }
-    async function openSelfPayChat() {
-      document.getElementById('chat-title').textContent =
-  '🏥 老人健檢語音智慧助理';
-
-  // 切換成自費健檢模式
-  bookingMode = "self_pay";
-
-  // 清除上一輪資料
-  bookingData = {
-    plan: "",
-    name: "",
-    pid: "",
-    phone: "",
-    birthday: "",
-    date: "",
-    time: ""
-  };
-
-  // 跳過 A / B / C，直接從姓名開始
-  currentStep = "name";
-
-  bookingConfirmMode = "";
-  correctingField = null;
-
-  // 開啟原本的 AI 對話視窗
-  chatWidget.style.display = "flex";
-  chatBtn.style.display = "none";
-
-  // 清除上一輪對話
-  chatBody.querySelectorAll(".msg").forEach(msg => msg.remove());
-
-  // 自費流程開場
-  addMsg(
-    "您好！我是健檢小幫手。<br>" +
-    "在選擇自費檢查項目前，我先協助您建立基本資料。<br><br>" +
-    "👉 請問您的姓名是？",
-    "ai"
-  );
-
-  // 啟用麥克風
-  if (!globalStream) {
-    globalStream = await navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .catch(e => null);
-  }
-}
+    
     async function openSelfPayChat(preserveSelfPay = false) {
 
       document.getElementById('chat-title').textContent =
