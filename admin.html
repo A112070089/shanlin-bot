@@ -275,6 +275,40 @@ tbody tr:last-child td{border-bottom:none}
             <option value="素">素</option>
           </select>
         </div>
+        <div class="search-field">
+          <div class="search-label">有無自費</div>
+          <select class="search-select" id="sHasSelfPay" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="yes">有自費</option>
+            <option value="no">無自費</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--paper-deep)">
+        <div class="search-field">
+          <div class="search-label">預約日期（起）</div>
+          <input class="search-input" id="sDateFrom" type="date" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約日期（迄）</div>
+          <input class="search-input" id="sDateTo" type="date" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約時段（起）</div>
+          <input class="search-input" id="sTimeFrom" type="time" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約時段（迄）</div>
+          <input class="search-input" id="sTimeTo" type="time" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約成功時間（起）</div>
+          <input class="search-input" id="sBookedFrom" type="datetime-local" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約成功時間（迄）</div>
+          <input class="search-input" id="sBookedTo" type="datetime-local" oninput="renderTable()"/>
+        </div>
         <div class="search-field" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:6px">
           <button class="btn-reset" onclick="resetSearch()">清除</button>
           <button class="btn-search" onclick="renderTable()"><i class="ti ti-search"></i>查詢</button>
@@ -303,6 +337,8 @@ tbody tr:last-child td{border-bottom:none}
             <th>手機號碼</th>
             <th>預約日期</th>
             <th>葷/素</th>
+            <th>自費項目</th>
+            <th>預約成功時間</th>
             <th>LINE</th>
             <th>來源</th>
             <th style="text-align:right">操作</th>
@@ -531,8 +567,32 @@ function updateStats() {
 /* ══ 搜尋與渲染 ══ */
 function resetSearch() {
   ['sID','sName','sPhone'].forEach(id => document.getElementById(id).value = '');
-  ['sPlan','sSource','sBound','sVeg'].forEach(id => document.getElementById(id).value = '');
+  ['sPlan','sSource','sBound','sVeg','sHasSelfPay'].forEach(id => document.getElementById(id).value = '');
+  ['sDateFrom','sDateTo','sTimeFrom','sTimeTo','sBookedFrom','sBookedTo'].forEach(id => document.getElementById(id).value = '');
   renderTable();
+}
+
+/* 台北時間（UTC+8）輔助函式 */
+// 後端 bookedAt 是「沒有時區資訊的 UTC 時間字串」，補上 Z 讓瀏覽器當作 UTC 解析
+function bookedAtToUtcDate(bookedAt) {
+  if (!bookedAt) return null;
+  let s = String(bookedAt);
+  if (!/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+// datetime-local 輸入框的值代表「台北當地時間」，補上 +08:00 轉成正確的 UTC 時間點
+function taipeiLocalToUtcDate(localStr) {
+  if (!localStr) return null;
+  const d = new Date(localStr + ':00+08:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+function formatBookedAt(bookedAt) {
+  const d = bookedAtToUtcDate(bookedAt);
+  if (!d) return '—';
+  try {
+    return d.toLocaleString('zh-TW', { timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+  } catch(e) { return d.toISOString(); }
 }
 
 function getFilteredAppts() {
@@ -543,6 +603,13 @@ function getFilteredAppts() {
   const sSrc   = document.getElementById('sSource').value;
   const sBound = document.getElementById('sBound').value;
   const sVeg   = document.getElementById('sVeg').value;
+  const sHasSelfPay = document.getElementById('sHasSelfPay').value;
+  const sDateFrom = document.getElementById('sDateFrom').value;
+  const sDateTo   = document.getElementById('sDateTo').value;
+  const sTimeFrom = document.getElementById('sTimeFrom').value;
+  const sTimeTo   = document.getElementById('sTimeTo').value;
+  const sBookedFrom = taipeiLocalToUtcDate(document.getElementById('sBookedFrom').value);
+  const sBookedTo   = taipeiLocalToUtcDate(document.getElementById('sBookedTo').value);
 
   return allAppts.filter(a => {
     if (sID && !(a.idNumber||'').toUpperCase().includes(sID)) return false;
@@ -553,6 +620,18 @@ function getFilteredAppts() {
     if (sBound === 'bound' && !a._bound) return false;
     if (sBound === 'unbound' && a._bound) return false;
     if (sVeg && a.veg !== sVeg) return false;
+    if (sHasSelfPay === 'yes' && !a._hasSelfPay) return false;
+    if (sHasSelfPay === 'no' && a._hasSelfPay) return false;
+    if (sDateFrom && (!a.date || a.date < sDateFrom)) return false;
+    if (sDateTo && (!a.date || a.date > sDateTo)) return false;
+    if (sTimeFrom && (!a.time || a.time < sTimeFrom)) return false;
+    if (sTimeTo && (!a.time || a.time > sTimeTo)) return false;
+    if (sBookedFrom || sBookedTo) {
+      const bd = bookedAtToUtcDate(a.bookedAt);
+      if (!bd) return false;
+      if (sBookedFrom && bd < sBookedFrom) return false;
+      if (sBookedTo && bd > sBookedTo) return false;
+    }
     return true;
   });
 }
@@ -576,17 +655,34 @@ function renderTable() {
 
   filtered.forEach((a, idx) => {
     const tr = document.createElement('tr');
-    const dateStr = a.date ? formatDate(a.date) + (a.time ? ' ' + a.time : '') : '—';
-    const vegBadge = a.veg === '素'
+    const isPure = !!a._pureSelfPay;
+    const dateStr = isPure
+      ? (a.selfPayDate ? formatDate(a.selfPayDate) + (a.selfPayTime ? ' ' + a.selfPayTime : '') : '—')
+      : (a.date ? formatDate(a.date) + (a.time ? ' ' + a.time : '') : '—');
+    const vegBadge = isPure ? '—' : (a.veg === '素'
       ? `<span class="badge badge-veg">素</span>`
-      : `<span class="badge badge-nonveg">葷</span>`;
+      : `<span class="badge badge-nonveg">葷</span>`);
     const boundBadge = a._bound
       ? `<span class="badge badge-bound"><i class="ti ti-circle-check"></i>已綁</span>`
       : `<span class="badge badge-unbound">未綁</span>`;
+    const planCell = isPure
+      ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">純自費</span>`
+      : `<span class="badge badge-${a.plan||'A'}">${a.plan||'—'}</span>`;
+    const selfPayItems = Array.isArray(a.selfPayItems) ? a.selfPayItems : [];
+    const selfPayCell = selfPayItems.length
+      ? `<span style="white-space:pre-line;font-size:12px">${esc(selfPayItems.join('\n'))}</span>`
+      : '<span style="color:var(--ink-soft)">—</span>';
+    const bookedCell = formatBookedAt(a.bookedAt);
+    const keyEnc = encodeURIComponent(a._key);
+    const editBtn = isPure
+      ? ''
+      : `<button class="icon-btn" onclick='openEditModal(${JSON.stringify(a).replace(/'/g,"&apos;")})'>
+          <i class="ti ti-pencil"></i>修改
+        </button>`;
 
     tr.innerHTML = `
       <td class="no-col">${idx + 1}</td>
-      <td><span class="badge badge-${a.plan||'A'}">${a.plan||'—'}</span></td>
+      <td>${planCell}</td>
       <td>
         <div class="name-col">${esc(a.name||'—')}</div>
       </td>
@@ -595,14 +691,14 @@ function renderTable() {
       <td><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(a.phone||'—')}</span></td>
       <td style="white-space:nowrap">${esc(dateStr)}</td>
       <td>${vegBadge}</td>
+      <td>${selfPayCell}</td>
+      <td style="white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(bookedCell)}</td>
       <td>${boundBadge}</td>
       <td><span class="badge badge-src">${esc(a.source||'—')}</span></td>
       <td>
         <div class="row-actions">
-          <button class="icon-btn" onclick='openEditModal(${JSON.stringify(a).replace(/'/g,"&apos;")})'>
-            <i class="ti ti-pencil"></i>修改
-          </button>
-          <button class="icon-btn danger" onclick="openDeleteModal('${a._key}','${esc(a.name||'')}')">
+          ${editBtn}
+          <button class="icon-btn danger" onclick="openDeleteModal('${keyEnc}','${esc(a.name||'')}')">
             <i class="ti ti-trash"></i>刪除
           </button>
         </div>
@@ -636,7 +732,7 @@ function toggleExportMenu(e) {
 const EXPORT_HEADERS = ['編號','身分證號','姓名','生日','電話','手機號碼','地址','檢查日期','體檢方案','預約人','長者身分別','行政區'];
 
 function buildExportRows() {
-  const filtered = getFilteredAppts();
+  const filtered = getFilteredAppts().filter(a => !a._pureSelfPay);
   return filtered.map((a, idx) => ({
     '編號':     idx + 1,
     '身分證號': a.idNumber || '',
