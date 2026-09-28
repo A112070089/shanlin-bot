@@ -593,11 +593,11 @@ function taipeiLocalToUtcDate(localStr) {
   const d = new Date(localStr + ':00+08:00');
   return isNaN(d.getTime()) ? null : d;
 }
-// 判斷是不是「本質上只是自費、不是真正健檢預約」的紀錄：
-// 純自費（_pureSelfPay）或是方案不是 A/B/C 又沒有健檢日期的 appointments 紀錄
+// 判斷是不是「本質上只是自費、不是真正健檢預約」的紀錄（匯出健檢清冊時要排除）：
+// 純自費（_pureSelfPay），或是 appointments 裡 plan 直接存成 SELF_PAY 的紀錄
 function isSelfPayOnlyRecord(a) {
-  const knownPlan = ['A','B','C'].includes(a.plan);
-  return !!a._pureSelfPay || (!knownPlan && !a.date);
+  if (a._pureSelfPay) return true;
+  return typeof a.plan === 'string' && a.plan.toUpperCase() === 'SELF_PAY';
 }
 function formatBookedAt(bookedAt) {
   const d = bookedAtToUtcDate(bookedAt);
@@ -668,24 +668,38 @@ function renderTable() {
   filtered.forEach((a, idx) => {
     const tr = document.createElement('tr');
     const isPure = !!a._pureSelfPay;
-    // 有些自費預約網站會在 appointments 裡留一筆對應紀錄，但方案不是 A/B/C、也沒有真正的健檢日期
-    // （例如 plan="SELF_PAY"、date 是空的），這種本質上跟純自費一樣，顯示上比照純自費處理，
-    // 但 _key 是真實的 appointments key，後台仍然可以修改／刪除
-    const isSelfPayOnly = isSelfPayOnlyRecord(a);
-    const effDate = a.date || a.selfPayDate;
-    const effTime = a.time || a.selfPayTime;
-    const dateStr = effDate ? formatDate(effDate) + (effTime ? ' ' + effTime : '') : '—';
-    const vegBadge = a.veg === '素'
+
+    // 日期欄固定顯示兩行：健檢預約時間、自費檢查時間，哪個有資料就顯示哪個，都有就都顯示
+    const checkupLine = a.date ? '健檢：' + formatDate(a.date) + (a.time ? ' ' + a.time : '') : '';
+    const selfPayLine = a.selfPayDate ? '自費：' + formatDate(a.selfPayDate) + (a.selfPayTime ? ' ' + a.selfPayTime : '') : '';
+    const dateLines = [checkupLine, selfPayLine].filter(Boolean);
+    const dateStr = dateLines.length ? dateLines.join('\n') : '—';
+
+    // 葷/素：舊資料有些欄位存的是 "1"（早期系統的預設值，代表葷），不是只有 "葷"/"素" 兩種字串，
+    // 所以只要值包含「素」就顯示素、完全沒有值才顯示「—」，其他非空值（"葷"、"1"...）一律顯示葷
+    const vegRaw = String(a.veg || '').trim();
+    const vegBadge = vegRaw.includes('素')
       ? `<span class="badge badge-veg">素</span>`
-      : a.veg === '葷'
+      : vegRaw
         ? `<span class="badge badge-nonveg">葷</span>`
         : '—';
+
     const boundBadge = a._bound
       ? `<span class="badge badge-bound"><i class="ti ti-circle-check"></i>已綁</span>`
       : `<span class="badge badge-unbound">未綁</span>`;
-    const planCell = isSelfPayOnly
-      ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">${isPure ? '純自費' : '自費預約'}</span>`
-      : `<span class="badge badge-${a.plan}">${a.plan}</span>`;
+
+    // 方案：A/B/C 照常顯示；plan 是 SELF_PAY（不分大小寫）顯示「自費」；純自費顯示「純自費」；
+    // 其他沒有方案值的情況顯示「—」，不要整欄消失讓人以為是 bug
+    const knownPlan = ['A','B','C'].includes(a.plan);
+    const isSelfPayPlan = !isPure && typeof a.plan === 'string' && a.plan.toUpperCase() === 'SELF_PAY';
+    const planCell = isPure
+      ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">純自費</span>`
+      : isSelfPayPlan
+        ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">自費</span>`
+        : knownPlan
+          ? `<span class="badge badge-${a.plan}">${a.plan}</span>`
+          : `<span class="badge badge-src">${esc(a.plan || '—')}</span>`;
+
     const selfPayItems = Array.isArray(a.selfPayItems) ? a.selfPayItems : [];
     const selfPayCell = selfPayItems.length
       ? `<span style="white-space:pre-line;font-size:12px">${esc(selfPayItems.join('\n'))}</span>`
@@ -707,7 +721,7 @@ function renderTable() {
       <td><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(a.birth||'—')}</span></td>
       <td><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(a.idNumber||'—')}</span></td>
       <td><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(a.phone||'—')}</span></td>
-      <td style="white-space:nowrap">${esc(dateStr)}</td>
+      <td style="white-space:pre-line;font-size:12px;min-width:150px">${esc(dateStr)}</td>
       <td>${vegBadge}</td>
       <td>${selfPayCell}</td>
       <td style="white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:12px">${esc(bookedCell)}</td>
