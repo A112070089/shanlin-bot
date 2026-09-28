@@ -36,6 +36,8 @@ DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
 DIFY_API_URL         = "https://api.dify.ai/v1"
 LINE_API             = "https://api.line.me/v2/bot/message"
 
+SELFPAY_KEY_PREFIX = "SELFPAY::"
+
 firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
 try:
     if firebase_cred_json and firebase_cred_json != "{}" and not firebase_admin._apps:
@@ -448,23 +450,97 @@ async def admin_login(payload: dict):
     return {"status": "ok"}
 
 
+def _extract_self_pay_items(raw: dict) -> list:
+    """把 self_pay_booking 裡的 selfPayItems 整理成一個字串陣列（項目名稱）。
+    Firebase 有時會把陣列存成 {0: ..., 1: ...} 這種物件形式，這裡一併處理。"""
+    items = raw.get("selfPayItems")
+    if not items:
+        return []
+    if isinstance(items, dict):
+        try:
+            items = [items[k] for k in sorted(items.keys(), key=lambda x: str(x))]
+        except Exception:
+            items = list(items.values())
+    result = []
+    for it in items:
+        if isinstance(it, dict):
+            name = it.get("name") or it.get("item") or it.get("itemName") or it.get("title")
+            result.append(str(name) if name else json.dumps(it, ensure_ascii=False))
+        elif it is not None:
+            result.append(str(it))
+    return result
+
+
 @app.get("/api/admin/appointments")
 async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)):
     check_admin(x_admin_password)
     try:
         all_appts = db.reference("appointments").get() or {}
     except Exception:
-        return {"appointments": []}
+        all_appts = {}
+    try:
+        all_selfpay = db.reference("self_pay_booking").get() or {}
+    except Exception:
+        all_selfpay = {}
 
     result = []
+    matched_selfpay_keys = set()
+
+    # 一般健檢預約（有些人同時也有自費項目，用身分證字號對應 self_pay_booking）
     for key, data in all_appts.items():
-        if isinstance(data, dict):
-            item = dict(data)
-            item["_key"] = key
-            item["_bound"] = bool(data.get("lineUserId"))
+        if not isinstance(data, dict):
+            continue
+        item = dict(data)
+        item["_key"] = key
+        item["_bound"] = bool(data.get("lineUserId"))
+        item["_pureSelfPay"] = False
+
+        sp = all_selfpay.get(key) if isinstance(all_selfpay, dict) else None
+        if isinstance(sp, dict):
+            matched_selfpay_keys.add(key)
+            sp_items = _extract_self_pay_items(sp)
+            item["selfPayItems"] = sp_items
+            item["selfPayTotal"] = sp.get("selfPayTotal")
+            item["selfPayCount"] = sp.get("selfPayCount")
+            item["selfPayDate"]  = sp.get("selfPayDate")
+            item["selfPayTime"]  = sp.get("selfPayTime")
+            item["_hasSelfPay"]  = bool(sp_items)
+        else:
+            item["selfPayItems"] = []
+            item["_hasSelfPay"] = False
+
+        result.append(item)
+
+    # 純自費（沒有對應健檢預約）的紀錄，一樣顯示在同一張表，標記起來方便前端區分
+    if isinstance(all_selfpay, dict):
+        for key, sp in all_selfpay.items():
+            if key in matched_selfpay_keys or not isinstance(sp, dict):
+                continue
+            sp_items = _extract_self_pay_items(sp)
+            item = {
+                "_key":         f"{SELFPAY_KEY_PREFIX}{key}",
+                "_bound":       False,
+                "_pureSelfPay": True,
+                "_hasSelfPay":  bool(sp_items),
+                "name":         sp.get("name", ""),
+                "phone":        sp.get("phone", ""),
+                "idNumber":     sp.get("idNumber", key),
+                "birth":        sp.get("birth", ""),
+                "plan":         "",
+                "date":         "",
+                "time":         "",
+                "veg":          "",
+                "source":       sp.get("source", "SELF_PAY_BOOKING"),
+                "bookedAt":     sp.get("bookedAt", ""),
+                "selfPayItems": sp_items,
+                "selfPayTotal": sp.get("selfPayTotal"),
+                "selfPayCount": sp.get("selfPayCount"),
+                "selfPayDate":  sp.get("selfPayDate"),
+                "selfPayTime":  sp.get("selfPayTime"),
+            }
             result.append(item)
 
-    result.sort(key=lambda x: x.get("date", ""), reverse=True)
+    result.sort(key=lambda x: x.get("date") or x.get("selfPayDate") or "", reverse=True)
     return {"appointments": result}
 
 
@@ -510,7 +586,9 @@ async def admin_create_appointment(req: AdminCreateRequest, x_admin_password: Op
     key = req.id_number.upper().strip() if req.id_number else f"ADMIN_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     try:
-        db.reference(f"appointments/{key}").set(record)
+        # 用 update 而非 set：若這個身分證字號原本就有資料（例如之前 Excel 匯入過），
+        # update 只會覆蓋這次填寫的欄位，不會把其他既有欄位清空
+        db.reference(f"appointments/{key}").update(record)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -533,6 +611,9 @@ class AdminUpdateRequest(BaseModel):
 @app.put("/api/admin/appointments/{key}")
 async def admin_update_appointment(key: str, req: AdminUpdateRequest, x_admin_password: Optional[str] = Header(None)):
     check_admin(x_admin_password)
+
+    if key.startswith(SELFPAY_KEY_PREFIX):
+        raise HTTPException(status_code=400, detail="純自費紀錄目前不支援在後台編輯，請直接於 Firebase 修改")
 
     update_data = {}
     if req.name is not None: update_data["name"] = req.name
@@ -562,7 +643,11 @@ async def admin_update_appointment(key: str, req: AdminUpdateRequest, x_admin_pa
 async def admin_delete_appointment(key: str, x_admin_password: Optional[str] = Header(None)):
     check_admin(x_admin_password)
     try:
-        db.reference(f"appointments/{key}").delete()
+        if key.startswith(SELFPAY_KEY_PREFIX):
+            real_key = key[len(SELFPAY_KEY_PREFIX):]
+            db.reference(f"self_pay_booking/{real_key}").delete()
+        else:
+            db.reference(f"appointments/{key}").delete()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return {"status": "success"}
@@ -654,7 +739,9 @@ async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Opt
                 record["note"] = note
 
             key = id_number if id_number else f"IMPORT_{datetime.now().strftime('%Y%m%d%H%M%S')}_{idx}"
-            db.reference(f"appointments/{key}").set(record)
+            # 用 update 而非 set：同一位受檢者若被重複匯入（例如身分證字號相同），
+            # 只會覆蓋這次表格帶來的欄位，不會清空該筆資料原本其他欄位
+            db.reference(f"appointments/{key}").update(record)
             imported += 1
 
         except Exception as e:
