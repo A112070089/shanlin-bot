@@ -593,6 +593,12 @@ function taipeiLocalToUtcDate(localStr) {
   const d = new Date(localStr + ':00+08:00');
   return isNaN(d.getTime()) ? null : d;
 }
+// 判斷是不是「本質上只是自費、不是真正健檢預約」的紀錄：
+// 純自費（_pureSelfPay）或是方案不是 A/B/C 又沒有健檢日期的 appointments 紀錄
+function isSelfPayOnlyRecord(a) {
+  const knownPlan = ['A','B','C'].includes(a.plan);
+  return !!a._pureSelfPay || (!knownPlan && !a.date);
+}
 function formatBookedAt(bookedAt) {
   const d = bookedAtToUtcDate(bookedAt);
   if (!d) return '—';
@@ -662,18 +668,24 @@ function renderTable() {
   filtered.forEach((a, idx) => {
     const tr = document.createElement('tr');
     const isPure = !!a._pureSelfPay;
-    const dateStr = isPure
-      ? (a.selfPayDate ? formatDate(a.selfPayDate) + (a.selfPayTime ? ' ' + a.selfPayTime : '') : '—')
-      : (a.date ? formatDate(a.date) + (a.time ? ' ' + a.time : '') : '—');
-    const vegBadge = isPure ? '—' : (a.veg === '素'
+    // 有些自費預約網站會在 appointments 裡留一筆對應紀錄，但方案不是 A/B/C、也沒有真正的健檢日期
+    // （例如 plan="SELF_PAY"、date 是空的），這種本質上跟純自費一樣，顯示上比照純自費處理，
+    // 但 _key 是真實的 appointments key，後台仍然可以修改／刪除
+    const isSelfPayOnly = isSelfPayOnlyRecord(a);
+    const effDate = a.date || a.selfPayDate;
+    const effTime = a.time || a.selfPayTime;
+    const dateStr = effDate ? formatDate(effDate) + (effTime ? ' ' + effTime : '') : '—';
+    const vegBadge = a.veg === '素'
       ? `<span class="badge badge-veg">素</span>`
-      : `<span class="badge badge-nonveg">葷</span>`);
+      : a.veg === '葷'
+        ? `<span class="badge badge-nonveg">葷</span>`
+        : '—';
     const boundBadge = a._bound
       ? `<span class="badge badge-bound"><i class="ti ti-circle-check"></i>已綁</span>`
       : `<span class="badge badge-unbound">未綁</span>`;
-    const planCell = isPure
-      ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">純自費</span>`
-      : `<span class="badge badge-${a.plan||'A'}">${a.plan||'—'}</span>`;
+    const planCell = isSelfPayOnly
+      ? `<span class="badge" style="background:var(--rust-l);color:var(--rust)">${isPure ? '純自費' : '自費預約'}</span>`
+      : `<span class="badge badge-${a.plan}">${a.plan}</span>`;
     const selfPayItems = Array.isArray(a.selfPayItems) ? a.selfPayItems : [];
     const selfPayCell = selfPayItems.length
       ? `<span style="white-space:pre-line;font-size:12px">${esc(selfPayItems.join('\n'))}</span>`
@@ -715,8 +727,12 @@ function renderTable() {
 }
 
 function formatDate(d) {
-  try { return new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-  catch(e) { return d; }
+  if (!d) return '';
+  try {
+    const dt = new Date(d + 'T00:00:00');
+    if (isNaN(dt.getTime())) return String(d); // 格式不是 YYYY-MM-DD 就照原樣顯示，不要顯示 Invalid Date
+    return dt.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  } catch(e) { return String(d); }
 }
 
 function esc(s) {
@@ -738,7 +754,8 @@ function toggleExportMenu(e) {
 const EXPORT_HEADERS = ['編號','身分證號','姓名','生日','電話','手機號碼','地址','檢查日期','體檢方案','預約人','長者身分別','行政區'];
 
 function buildExportRows() {
-  const filtered = getFilteredAppts().filter(a => !a._pureSelfPay);
+  // 純自費、或本質上只是自費（沒有真正健檢方案與日期）的紀錄，一律不匯出到健檢批量匯入清冊
+  const filtered = getFilteredAppts().filter(a => !isSelfPayOnlyRecord(a));
   return filtered.map((a, idx) => ({
     '編號':     idx + 1,
     '身分證號': a.idNumber || '',
