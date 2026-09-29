@@ -717,6 +717,9 @@ def extract_intelligent_logic(
 
     try:
 
+        pid = ""
+        phone = ""
+
         text_trad = unicodedata.normalize(
             "NFKC",
             force_traditional(text)
@@ -1028,48 +1031,72 @@ def extract_intelligent_logic(
         # 身分證
         # --------------------------------------------------
 
-            pid = ""
+        pid = ""
 
-            # 先以使用者原始輸入為最高優先
-            raw_pid_match = re.search(
-                r"[A-Z][12]\d{8}",
-                id_phone_clean,
+        # 優先使用使用者原始輸入，不讓 AI 改掉第一個英文字母
+        raw_pid_match = re.search(
+            r"[A-Z][12]\d{8}",
+            id_phone_clean,
+        )
+
+        if raw_pid_match:
+            pid = raw_pid_match.group(0)
+
+        else:
+            # 原始文字抓不到時，才使用 AI 結果作為備援
+            ai_pid = unicodedata.normalize(
+                "NFKC",
+                str(res.get("extracted_pid", ""))
+            ).upper()
+
+            ai_pid = re.sub(
+                r"[^A-Z0-9]",
+                "",
+                ai_pid,
             )
 
-            if raw_pid_match:
-                pid = raw_pid_match.group(0)
+            if re.fullmatch(
+                r"[A-Z][12]\d{8}",
+                ai_pid,
+            ):
+                pid = ai_pid
 
-            else:
-                # 原始文字抓不到時，才使用 AI 結果作為備援
-                ai_pid = unicodedata.normalize(
-                    "NFKC",
-                    str(res.get("extracted_pid", ""))
-                ).upper()
 
-                ai_pid = re.sub(
-                    r"[^A-Z0-9]",
-                    "",
-                    ai_pid,
-                )
+        if pid:
+            text_trad = re.sub(
+                r"[A-Za-z1]?\d{9}",
+                pid,
+                text_trad,
+                count=1,
+                flags=re.IGNORECASE,
+            )
 
-                if re.fullmatch(
-                    r"[A-Z][12]\d{8}",
-                    ai_pid,
-                ):
-                    pid = ai_pid
 
+        # --------------------------------------------------
+        # 手機號碼
+        # --------------------------------------------------
+
+        phone = ""
+
+        phone_source = re.sub(
+            r"[\s\-]",
+            "",
+            text_trad,
+        )
+
+        pm = re.search(
+            r"09\d{8}",
+            phone_source,
+        )
+
+        if pm:
+            candidate = pm.group(0)
 
             if (
-                len(candidate)
-                == 10
-                and candidate.startswith(
-                    "09"
-                )
+                len(candidate) == 10
+                and candidate.startswith("09")
             ):
-
                 phone = candidate
-
-
         # --------------------------------------------------
         # 姓名
         # --------------------------------------------------
@@ -1236,15 +1263,9 @@ def extract_intelligent_logic(
     except Exception as e:
 
         return {
-
-            "status":
-                "error",
-
-            "result":
-                {},
-
-            "debug":
-                str(e),
+            "status": "error",
+            "result": {},
+            "debug": str(e),
         }
 
 
