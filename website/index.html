@@ -1844,8 +1844,11 @@ requestAnimationFrame(() => {
         displayUserText = aiResult.translated_text;
       }
       // 若當前步驟是身分證，且AI解析出正確格式，直接用正確格式顯示在藍色氣泡
-      if (currentStep === "pid" && data.pid && data.pid.match(/^[A-Z]\d{9}$/)) {
-        displayUserText = data.pid;
+      if (currentStep === "pid") {
+        displayUserText = String(rawText || "")
+          .normalize("NFKC")
+          .replace(/\s+/g, "")
+          .toUpperCase();
       }
       // 若當前步驟是手機，且AI解析出號碼，直接顯示解析結果
       if (currentStep === "phone" && data.phone) {
@@ -1999,38 +2002,12 @@ if (micBtn) {
           break;
 
         case "pid": {
-  const pidInput = String(rawText || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "")
-    .replace(/Ａ/g, "A")
-    .replace(/Ｂ/g, "B")
-    .replace(/Ｃ/g, "C")
-    .replace(/Ｄ/g, "D")
-    .replace(/Ｅ/g, "E")
-    .replace(/Ｆ/g, "F")
-    .replace(/Ｇ/g, "G")
-    .replace(/Ｈ/g, "H")
-    .replace(/Ｉ/g, "I")
-    .replace(/Ｊ/g, "J")
-    .replace(/Ｋ/g, "K")
-    .replace(/Ｌ/g, "L")
-    .replace(/Ｍ/g, "M")
-    .replace(/Ｎ/g, "N")
-    .replace(/Ｏ/g, "O")
-    .replace(/Ｐ/g, "P")
-    .replace(/Ｑ/g, "Q")
-    .replace(/Ｒ/g, "R")
-    .replace(/Ｓ/g, "S")
-    .replace(/Ｔ/g, "T")
-    .replace(/Ｕ/g, "U")
-    .replace(/Ｖ/g, "V")
-    .replace(/Ｗ/g, "W")
-    .replace(/Ｘ/g, "X")
-    .replace(/Ｙ/g, "Y")
-    .replace(/Ｚ/g, "Z");
+const pidInput = String(rawText || "")
+  .normalize("NFKC")
+  .replace(/\s+/g, "")
+  .toUpperCase();
 
-  if (/^[A-Z][12]\d{8}$/.test(pidInput)) {
+    if (/^[A-Z][12][0-9]{8}$/.test(pidInput)) {
     bookingData.pid = pidInput;
     currentStep = "phone";
 

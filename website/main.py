@@ -3,6 +3,7 @@ import uvicorn
 import json
 import os
 import re
+import unicodedata
 from datetime import datetime
 
 try:
@@ -685,42 +686,24 @@ def force_traditional(
 # 身分證模糊修正
 # ==========================================================
 
-def solve_id_ambiguity(
-    raw_pid: str,
-) -> str:
+    def solve_id_ambiguity(
+        raw_pid: str,
+    ) -> str:
 
-    raw_pid = re.sub(
-        r"[^A-Z0-9]",
-        "",
-        raw_pid.upper(),
-    )
+        raw_pid = unicodedata.normalize(
+            "NFKC",
+            str(raw_pid)
+        ).upper()
 
-
-    if (
-        len(raw_pid) == 10
-        and raw_pid[0].isdigit()
-    ):
-
-        if raw_pid[0] == "1":
-
-            raw_pid = (
-                "E"
-                + raw_pid[1:]
-            )
-
-
-    elif (
-        len(raw_pid) == 9
-        and raw_pid[0].isdigit()
-    ):
-
-        raw_pid = (
-            "E"
-            + raw_pid
+        raw_pid = re.sub(
+            r"[^A-Z0-9]",
+            "",
+            raw_pid,
         )
 
+        return raw_pid
 
-    return raw_pid
+
 
 
 # ==========================================================
@@ -734,10 +717,9 @@ def extract_intelligent_logic(
 
     try:
 
-        text_trad = (
-            force_traditional(
-                text
-            )
+        text_trad = unicodedata.normalize(
+            "NFKC",
+            force_traditional(text)
         )
 
 
@@ -1046,103 +1028,35 @@ def extract_intelligent_logic(
         # 身分證
         # --------------------------------------------------
 
-        pid = ""
+            pid = ""
 
-
-        ai_pid = re.sub(
-            r"[^A-Z0-9]",
-            "",
-            res
-            .get(
-                "extracted_pid",
-                "",
-            )
-            .upper(),
-        )
-
-
-        ai_digits = re.sub(
-            r"\D",
-            "",
-            ai_pid,
-        )
-
-
-        raw_digits = re.sub(
-            r"\D",
-            "",
-            id_phone_clean,
-        )
-
-
-        if (
-            ai_digits
-            and (
-                ai_digits
-                in raw_digits
-            )
-        ):
-
-            pid = (
-                solve_id_ambiguity(
-                    ai_pid
-                )
-            )
-
-
-        else:
-
-            m = re.search(
-                r"[A-Z]?\d{8,10}",
+            # 先以使用者原始輸入為最高優先
+            raw_pid_match = re.search(
+                r"[A-Z][12]\d{8}",
                 id_phone_clean,
             )
 
+            if raw_pid_match:
+                pid = raw_pid_match.group(0)
 
-            if m:
+            else:
+                # 原始文字抓不到時，才使用 AI 結果作為備援
+                ai_pid = unicodedata.normalize(
+                    "NFKC",
+                    str(res.get("extracted_pid", ""))
+                ).upper()
 
-                pid = (
-                    solve_id_ambiguity(
-                        m.group(0)
-                    )
+                ai_pid = re.sub(
+                    r"[^A-Z0-9]",
+                    "",
+                    ai_pid,
                 )
 
-
-        if pid:
-
-            text_trad = re.sub(
-                r"[A-Za-z1]?\d{9}",
-                pid,
-                text_trad,
-                count=1,
-                flags=re.IGNORECASE,
-            )
-
-
-        # --------------------------------------------------
-        # 手機號碼
-        # --------------------------------------------------
-
-        phone = ""
-
-
-        phone_source = re.sub(
-            r"[\s\-]",
-            "",
-            text_trad,
-        )
-
-
-        pm = re.search(
-            r"09\d{8}",
-            phone_source,
-        )
-
-
-        if pm:
-
-            candidate = (
-                pm.group(0)
-            )
+                if re.fullmatch(
+                    r"[A-Z][12]\d{8}",
+                    ai_pid,
+                ):
+                    pid = ai_pid
 
 
             if (
@@ -1680,6 +1594,16 @@ async def confirm_booking(
                 detail="身分證字號不可空白",
             )
 
+        normalized_pid = unicodedata.normalize(
+            "NFKC",
+            req.pid
+        ).strip().upper()
+
+        if not re.fullmatch(r"[A-Z]\d{9}", normalized_pid):
+            raise HTTPException(
+                status_code=400,
+                detail="身分證字號格式錯誤，請確認第一碼為英文字母，後面為 9 位數字。",
+            )
 
         if not req.phone.strip():
 
@@ -1792,7 +1716,7 @@ async def confirm_booking(
                 req.birthday,
 
             "pid":
-                req.pid,
+                normalized_pid,
 
             "phone":
                 req.phone,
@@ -1859,11 +1783,7 @@ async def confirm_booking(
         try:
             if init_firebase():
 
-                firebase_key = (
-                    req.pid.strip().upper()
-                    if req.pid.strip()
-                    else f"WEB_{req.phone.strip()}"
-                )
+                firebase_key = normalized_pid
 
                 # ==========================================
                 # 純自費預約
@@ -1874,7 +1794,7 @@ async def confirm_booking(
                         "name": req.name.strip(),
                         "phone": req.phone.strip(),
                         "birth": req.birthday.strip(),
-                        "idNumber": req.pid.strip().upper(),
+                        "idNumber": normalized_pid,
                         "selfPayDate": req.selfPayDate.strip(),
                         "selfPayTime": req.selfPayTime.strip(),
                         "selfPayItems": cleaned_self_pay_items,
@@ -1935,7 +1855,7 @@ async def confirm_booking(
                     "bookedAt": datetime.now().isoformat(),
                     "source": "WEB_BOOKING",
                     "birth": req.birthday.strip(),
-                    "idNumber": req.pid.strip().upper(),
+                    "idNumber": normalized_pid,
                     "veg": veg_value,
                 }
                 # 老人健檢 + 自費加購
