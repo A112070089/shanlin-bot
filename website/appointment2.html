@@ -6718,15 +6718,21 @@ if (wantsStart) {
               result.item.name
             )}」。<br><br>` +
 
-            `本項價格：${escapeHtml(
+            `本項價格：<strong>${escapeHtml(
               priceText
-            )}<br>` +
+            )}</strong><br>` +
 
             `目前共選擇 ` +
 
             `<strong>${selfPaySelectedItems.length}</strong>` +
 
             ` 項。<br>` +
+
+            `原定預算：` +
+
+            `<strong>NT$${selfPayBudget.toLocaleString(
+              "zh-TW"
+            )}</strong><br>` +
 
             `目前合計：` +
 

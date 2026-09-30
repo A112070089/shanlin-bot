@@ -1647,6 +1647,8 @@ if (pauseBtn) {
   chatBtn.style.display = 'block';
 }
     async function openChat() {
+      document.getElementById('chat-title').textContent =
+  '🏥 老人健檢語音智慧助理';
       bookingMode = "health_check";
   // 顯示聊天視窗
   chatWidget.style.display = "flex";
@@ -1770,6 +1772,11 @@ requestAnimationFrame(() => {
         case "time": bookingData.date = ""; currentStep = "date"; msg += "👉 請問您想預約哪一天？（5/1 或 5/4）"; break;
         case "confirm": bookingData.time = ""; currentStep = "time"; msg += "👉 請問預約幾點？（8點 或 9點）"; break;
       }
+
+      if (chatMicBtn) {
+        chatMicBtn.style.display =
+          currentStep === "name" ? "none" : "";
+      }      
       addMsg(msg, "ai");
     }
 
@@ -1856,6 +1863,46 @@ requestAnimationFrame(() => {
       }
 
       addMsg(displayUserText, 'user');
+      // 自費基本資料最後確認：無法辨識時給予回應
+      if (
+        bookingMode === "self_pay" &&
+        currentStep === "confirm"
+      ) {
+        const confirmText = String(displayUserText || "")
+          .trim()
+          .replace(/\s+/g, "");
+
+        const isPositiveConfirm =
+          /^(對|對的|是|是的|好|好的|正確|沒錯|可以|可以的|沒問題)$/.test(
+            confirmText
+          );
+
+        const isNegativeConfirm =
+          /^(不對|不正確|錯了|有錯|要改|修改)$/.test(
+            confirmText
+          );
+
+        const isCorrectionRequest =
+          /(姓名|名字|身分證|證號|電話|手機|生日)/.test(confirmText) &&
+          /(錯|不對|修改|要改)/.test(confirmText);
+
+        const isValidConfirmAnswer =
+          isPositiveConfirm ||
+          isNegativeConfirm ||
+          isCorrectionRequest;
+
+          if (!isValidConfirmAnswer) {
+            addMsg(
+              `不好意思，我剛剛沒有聽清楚。<br>` +
+              `👉 請再說一次「正確」或「不正確」。<br><br>` +
+              `如果有資料需要修改，也可以直接說：` +
+              `「電話錯了」、「生日要修改」或「姓名不對」。`,
+              "ai"
+            );
+
+            return;
+          }
+        }
 
       // 自費項目優先交由資料庫處理；命中後不進入 A/B/C 公費方案流程。
       if (window.selfPayHandleText && await window.selfPayHandleText(displayUserText, true)) {
@@ -2839,8 +2886,8 @@ return;
           ===================================== */
 
           if (
-            checkText.match(
-              /對|是|好|正確|沒錯|可以/
+            /^(對|對的|是|是的|好|好的|正確|沒錯|可以|可以的|沒問題)$/.test(
+              checkText
             )
           ) {
 if (bookingMode === "self_pay") {
@@ -2919,7 +2966,8 @@ break;
           ===================================== */
 
           addMsg(
-            `請問以上資料是否正確？<br>` +
+            `不好意思，我剛剛沒有聽清楚。<br>` +
+            `👉 請再說一次「正確」或「不正確」。<br><br>` +
             `如果有地方需要修改，也可以直接說：` +
             `「電話錯了」、「生日要修改」或「姓名不對」。`,
             "ai"
@@ -3036,6 +3084,23 @@ break;
         min-height: 42px;
         flex: 0 0 42px;
         margin-left: 0;
+      }
+      /* 長輩友善：手機版字體放大 */
+      #chat-header {
+        font-size: 1.2rem;
+      }
+
+      .msg {
+        font-size: 1.25rem;
+        line-height: 1.7;
+      }
+
+      .action-btn {
+        font-size: 1.1rem;
+      }
+
+      #chat-input {
+        font-size: 1.15rem;
       }
     }
   </style>
