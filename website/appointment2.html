@@ -601,6 +601,22 @@
 
     }
 
+
+      .selfpay-delete-btn {
+        background: #ffffff;
+        color: #d93025;
+        border: 1.5px solid #d93025;
+        border-radius: 18px;
+        padding: 4px 12px;
+        margin-left: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .selfpay-delete-btn:hover {
+        background: #fff4f4;
+      }
   </style>
 
 </head>
@@ -1222,6 +1238,10 @@
 
     let selfPaySelectedItems =
       [];
+
+
+    let pendingDeleteSelfPayIndex =
+      null;
 
 
     let selfPayMediaRecorder =
@@ -2774,7 +2794,7 @@ options.push({
       options.push({
 
         label:
-          "查看已選項目",
+          "查看與修改已選項目",
 
         value:
           "view-selected"
@@ -3016,7 +3036,7 @@ options.push({
       options.push({
 
         label:
-          "查看已選項目",
+          "查看與修改已選項目",
 
         value:
           "view-selected"
@@ -3302,7 +3322,7 @@ options.push({
 
           {
             label:
-              "查看已選項目",
+              "查看與修改已選項目",
 
             value:
               "view-selected"
@@ -3728,14 +3748,18 @@ options.push({
 
 
             return (
-              `${index + 1}. ` +
-              `${escapeHtml(
-                item.name
-              )}` +
-              `｜` +
-              `${escapeHtml(
-                priceText
-              )}`
+              `<div style="margin-bottom:12px;">` +
+                `${index + 1}. ` +
+                `${escapeHtml(item.name)}` +
+                `｜` +
+                `${escapeHtml(priceText)}` +
+                ` ` +
+                `<button type="button"` +
+                ` class="selfpay-delete-btn"` +
+                ` onclick="requestDeleteSelfPayItem(${index})">` +
+                `刪除` +
+                `</button>` +
+              `</div>`
             );
 
           }
@@ -3811,7 +3835,7 @@ options.push({
 
             <br><br>
 
-            ${rows.join("<br>")}
+            ${rows.join("")}
 
             <div class="selfpay-summary-total">
 
@@ -3832,6 +3856,42 @@ options.push({
 
     }
 
+    function requestDeleteSelfPayItem(index) {
+
+      const item =
+        selfPaySelectedItems[index];
+
+      if (!item) {
+        return;
+      }
+
+      pendingDeleteSelfPayIndex =
+        index;
+
+      clearSelfPayOptions();
+
+      addSelfPayAIMessage(
+        `⚠️ 是否確定要刪除此項目？<br><br>` +
+        `<strong>${escapeHtml(item.name)}</strong>`,
+        false
+      );
+
+      showSelfPayOptions([
+        {
+          label:
+            "確定刪除",
+          value:
+            "confirm-delete-selected"
+        },
+        {
+          label:
+            "取消",
+          value:
+            "cancel-delete-selected"
+        }
+      ]);
+
+    }
 
     /* =========================================
        加入後選項
@@ -3855,7 +3915,7 @@ options.push({
 
         {
           label:
-            "查看已選項目",
+            "查看與修改已選項目",
 
           value:
             "view-selected"
@@ -3904,7 +3964,7 @@ options.push({
 
         {
           label:
-            "查看已選項目",
+            "查看與修改已選項目",
 
           value:
             "view-selected"
@@ -5022,6 +5082,107 @@ selfPayRemainingBudget =
           displayText ??
           rawValue
         );
+
+    /* =====================================
+      已選自費項目：確認刪除
+    ===================================== */
+
+    if (
+      rawValue ===
+      "confirm-delete-selected"
+    ) {
+
+      clearSelfPayOptions();
+
+      const index =
+        pendingDeleteSelfPayIndex;
+
+      const item =
+        Number.isInteger(index)
+          ? selfPaySelectedItems[index]
+          : null;
+
+      if (!item) {
+
+        pendingDeleteSelfPayIndex =
+          null;
+
+        addSelfPayAIMessage(
+          "找不到要刪除的項目，請重新查看已選項目。",
+          false
+        );
+
+        showAfterAddOptions();
+
+        return;
+      }
+
+      const removedItem =
+        selfPaySelectedItems.splice(
+          index,
+          1
+        )[0];
+
+      pendingDeleteSelfPayIndex =
+        null;
+
+      selfPaySelectedTotal =
+        calculateSelfPayTotal();
+
+      selfPayRemainingBudget =
+        selfPayBudget -
+        selfPaySelectedTotal;
+
+      syncSelfPayDataToAppointment();
+
+      addSelfPayUserMessage(
+        "確定刪除"
+      );
+
+      addSelfPayAIMessage(
+        `✅ 已刪除「${escapeHtml(
+          removedItem.name
+        )}」。`,
+        false
+      );
+
+      showSelectedSelfPayItems();
+
+      showAfterAddOptions();
+
+      return;
+    }
+
+
+    /* =====================================
+      已選自費項目：取消刪除
+    ===================================== */
+
+    if (
+      rawValue ===
+      "cancel-delete-selected"
+    ) {
+
+      clearSelfPayOptions();
+
+      pendingDeleteSelfPayIndex =
+        null;
+
+      addSelfPayUserMessage(
+        "取消"
+      );
+
+      addSelfPayAIMessage(
+        "好的，已取消刪除。",
+        false
+      );
+
+      showSelectedSelfPayItems();
+
+      showAfterAddOptions();
+
+      return;
+    }
 
 /* =====================================
    修改預算

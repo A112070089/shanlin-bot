@@ -1880,6 +1880,27 @@ requestAnimationFrame(() => {
 }
 
     function goBack() {
+
+      // 自費基本資料確認：回上一題直接回到生日
+      if (
+        bookingMode === "self_pay" &&
+        currentStep === "confirm"
+      ) {
+        bookingData.birthday = "";
+        currentStep = "birthday";
+        correctingField = null;
+
+        addMsg(
+          "好的，沒問題！為您退回上一題。<br>" +
+          "👉 請問出生年月日（例如 450101）？",
+          "ai"
+        );
+
+        return;
+      }
+
+      // 原本的 goBack() 程式繼續放下面
+      
       if (currentStep === "plan") {
         addMsg("目前已經是第一步囉！👉 請問您想預約哪個方案？（或告訴我哪裡不舒服）", "ai");
         return;
@@ -1969,7 +1990,13 @@ requestAnimationFrame(() => {
 
       // ✅ 修復2：語音辨識顯示時，身分證優先顯示AI修正後的正確格式
       let displayUserText = rawText;
-      if (aiResult && aiResult.translated_text) {
+
+      // 姓名步驟一定保留使用者原始輸入，避免「一、二、三」被轉成 1、2、3
+      if (
+        currentStep !== "name" &&
+        aiResult &&
+        aiResult.translated_text
+      ) {
         displayUserText = aiResult.translated_text;
       }
       // 若當前步驟是身分證，且AI解析出正確格式，直接用正確格式顯示在藍色氣泡
@@ -2044,6 +2071,18 @@ requestAnimationFrame(() => {
       }
       if (checkText.match(/下一[步部]|下一[題提]|跳過/)) {
         addMsg("⚠️ 目前資料還沒填寫完整，請先完成這一步才能往下走喔！<br><br>" + lastAiMessage, "ai"); return;
+      }
+
+      // 姓名步驟優先使用原始輸入，保留中文數字姓名
+      if (currentStep === "name") {
+        const rawName = String(rawText || "")
+          .trim()
+          .replace(/^(我叫|我是|名字是|姓名是|我的名字是)/, "")
+          .replace(/[^\u4e00-\u9fa5]/g, "");
+
+        if (rawName.length >= 2 && rawName.length <= 3) {
+          data.name = rawName;
+        }
       }
 
       if (data.name) {
