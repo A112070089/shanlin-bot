@@ -598,7 +598,16 @@
 
         border-radius: 0;
       }
+      
 
+      .selfpay-message {
+        font-size: 18px;
+      }      
+
+
+      .selfpay-option-btn {
+        font-size: 17px;
+      }
     }
 
 
@@ -4915,6 +4924,9 @@ if (
       input.style.flex =
         "1";
 
+      input.style.minWidth = 
+        "0";
+
       input.style.padding =
         "12px";
 
@@ -4955,11 +4967,20 @@ if (
       button.style.color =
         "#fff";
 
-      button.style.fontSize =
-        "16px";
+      button.style.fontSize = 
+        "18px";
 
-      button.style.cursor =
+      button.style.cursor = 
         "pointer";
+
+      button.style.whiteSpace = 
+         "nowrap";
+      
+      button.style.flex = 
+         "0 0 auto";
+
+      button.style.minWidth = 
+         "110px";
 
 
       button.addEventListener(
