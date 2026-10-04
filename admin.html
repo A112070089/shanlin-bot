@@ -9,11 +9,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --ink:#1C2B33;--ink-soft:#4A5D68;--paper:#F6F4EF;--paper-deep:#ECE8DF;
-  --pine:#2F4F44;--pine-d:#203A32;--pine-l:#E4ECE6;
-  --rust:#B5562C;--rust-l:#FBE8DE;
-  --white:#fff;--border:#DCD6C8;
-  --danger:#B5302C;--danger-l:#FBE5E3;
+  /* 跟官網（淺藍 + 白 + 深藍字）同一套配色 */
+  --ink:#1C2B38;--ink-soft:#56697B;--paper:#F4F9FD;--paper-deep:#E6F1FB;
+  --pine:#2F94E6;--pine-d:#1C74BE;--pine-l:#DCEFFD;
+  --rust:#C2672E;--rust-l:#FBEBDD;
+  --white:#fff;--border:#D7E6F4;
+  --danger:#C23B36;--danger-l:#FCE7E5;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
@@ -23,7 +24,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--i
 .login-card{width:100%;max-width:380px;background:var(--white);border:1px solid var(--border);border-radius:4px;padding:48px 36px;box-shadow:0 1px 3px rgba(28,43,51,.06)}
 .login-mark{width:48px;height:48px;background:var(--pine);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
 .login-mark i{font-size:22px;color:#fff}
-.login-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--rust);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.login-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--pine);text-transform:uppercase;font-weight:700;margin-bottom:6px}
 .login-title{font-size:24px;font-weight:900;color:var(--ink);margin-bottom:6px}
 .login-sub{font-size:13px;color:var(--ink-soft);margin-bottom:32px;line-height:1.6}
 .login-label{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;display:block}
@@ -53,10 +54,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--i
 
 /* PAGE HEAD */
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px}
-.page-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--rust);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.page-eyebrow{font-size:11px;letter-spacing:.16em;color:var(--pine);text-transform:uppercase;font-weight:700;margin-bottom:6px}
 .page-title{font-size:28px;font-weight:900;color:var(--ink)}
 .head-btns{display:flex;gap:10px}
-.btn-primary{background:var(--rust);color:#fff;border:none;border-radius:3px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:8px}
+.btn-primary{background:var(--pine);color:#fff;border:none;border-radius:3px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:8px}
 .btn-primary:hover{opacity:.9}
 .btn-secondary{background:var(--white);color:var(--ink);border:1.5px solid var(--border);border-radius:3px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;display:flex;align-items:center;gap:8px}
 .btn-secondary:hover{background:var(--paper)}
@@ -109,7 +110,7 @@ tbody tr:last-child td{border-bottom:none}
 
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
 .badge-A{background:#E6EEFA;color:#2E5BA8}
-.badge-B{background:var(--pine-l);color:var(--pine-d)}
+.badge-B{background:#E1F5F0;color:#1A7A66}
 .badge-C{background:#F5E9D8;color:#8A6219}
 .badge-veg{background:#E8F5E9;color:#2E7D32}
 .badge-nonveg{background:#FBE8DE;color:#8B3A1A}
@@ -320,7 +321,13 @@ tbody tr:last-child td{border-bottom:none}
     <div class="table-wrap">
       <div class="table-toolbar">
         <div class="table-count">顯示 <b id="displayCount">0</b> 筆 / 共 <b id="totalCount">0</b> 筆</div>
-        <button class="btn-reset" style="font-size:12px" onclick="loadAppointments()"><i class="ti ti-refresh" style="font-size:13px;margin-right:4px"></i>重新整理</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select class="search-select" id="sortOrder" style="height:32px;font-size:12px;min-width:0" onchange="renderTable()">
+            <option value="desc">預約成功時間：最新到最舊</option>
+            <option value="asc">預約成功時間：最舊到最新</option>
+          </select>
+          <button class="btn-reset" style="font-size:12px" onclick="loadAppointments()"><i class="ti ti-refresh" style="font-size:13px;margin-right:4px"></i>重新整理</button>
+        </div>
       </div>
       <div id="loadingWrap" class="loading-wrap">
         <div class="spinner-sm"></div>
@@ -623,7 +630,7 @@ function getFilteredAppts() {
   const sBookedFrom = taipeiLocalToUtcDate(document.getElementById('sBookedFrom').value);
   const sBookedTo   = taipeiLocalToUtcDate(document.getElementById('sBookedTo').value);
 
-  return allAppts.filter(a => {
+  const filtered = allAppts.filter(a => {
     if (sID && !(a.idNumber||'').toUpperCase().includes(sID)) return false;
     if (sName && !(a.name||'').toLowerCase().includes(sName)) return false;
     if (sPhone && !(a.phone||'').includes(sPhone)) return false;
@@ -646,6 +653,20 @@ function getFilteredAppts() {
     }
     return true;
   });
+
+  // 右上角的排序按鈕：依「預約成功時間」排最新到最舊，或最舊到最新
+  const sortEl = document.getElementById('sortOrder');
+  const sortDir = sortEl ? sortEl.value : 'desc';
+  const missingSentinel = sortDir === 'asc' ? Infinity : -Infinity; // 沒有預約成功時間的資料，不管哪個方向都排到最後面
+  filtered.sort((a, b) => {
+    const da = bookedAtToUtcDate(a.bookedAt);
+    const db = bookedAtToUtcDate(b.bookedAt);
+    const ta = da ? da.getTime() : missingSentinel;
+    const tb = db ? db.getTime() : missingSentinel;
+    return sortDir === 'asc' ? ta - tb : tb - ta;
+  });
+
+  return filtered;
 }
 
 function renderTable() {
