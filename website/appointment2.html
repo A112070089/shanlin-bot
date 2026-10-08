@@ -608,6 +608,11 @@
       .selfpay-option-btn {
         font-size: 17px;
       }
+
+
+      .selfpay-category-btn {
+        width: calc(50% - 5px);
+      }
     }
 
 
@@ -2416,6 +2421,14 @@
 
           button.className =
             "selfpay-option-btn";
+
+          if (
+            String(option.value).startsWith("category:")
+          ) {
+            button.classList.add(
+              "selfpay-category-btn"
+            );
+          }
 
           button.textContent =
             option.label;
