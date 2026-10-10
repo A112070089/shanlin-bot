@@ -5015,6 +5015,22 @@ if (
         "click",
         async function () {
 
+      if ("speechSynthesis" in window) {
+
+        window.speechSynthesis.cancel();
+
+        const unlockUtterance =
+          new SpeechSynthesisUtterance(" ");
+
+        unlockUtterance.lang = "zh-TW";
+        unlockUtterance.volume = 0;
+
+        window.speechSynthesis.speak(
+          unlockUtterance
+        );
+
+      }
+
           const budget =
             Number(
               input.value
