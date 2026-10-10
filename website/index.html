@@ -1917,6 +1917,7 @@ requestAnimationFrame(() => {
         case "pid": bookingData.name = ""; currentStep = "name"; msg += "👉 請問您的大名是？"; break;
         case "phone": bookingData.pid = ""; currentStep = "pid"; msg += "👉 請問您的身分證字號？"; break;
         case "birthday": bookingData.phone = ""; currentStep = "phone"; msg += "👉 請問手機號碼？"; break;
+        case "date": bookingData.birthday = ""; currentStep = "birthday"; msg += "👉 請問出生年月日（例如 450101）？"; break;
         case "time": bookingData.date = ""; currentStep = "date"; msg += "👉 請問您想預約哪一天？（11/2、11/4 或 11/9）"; break;
         case "confirm": bookingData.time = ""; currentStep = "time"; msg += "👉 請問預約幾點？（8點、9點 或 10點）"; break;
       }
@@ -2561,11 +2562,10 @@ if (bookingMode === "self_pay") {
           // 無法辨識
           if (!selectedDate) {
 
-            addMsg(
-              "⚠️ 我沒有辨識到預約日期。<br>" +
-              "👉 請說「5月1號」或「5月4號」。",
-              "ai"
-            );
+          addMsg(
+            `⚠️ 我沒有辨識到預約日期。<br>👉 請說「11月2號」、「11月4號」或「11月9號」。`,
+            "ai"
+          );
 
             break;
 
