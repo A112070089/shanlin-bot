@@ -2387,11 +2387,19 @@
         1;
 
 
-      window
-        .speechSynthesis
-        .speak(
-          utterance
-        );
+      setTimeout(function () {
+
+        window
+          .speechSynthesis
+          .resume();
+
+        window
+          .speechSynthesis
+          .speak(
+            utterance
+          );
+
+      }, 120);
 
     }
 
