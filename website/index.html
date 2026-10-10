@@ -1689,15 +1689,6 @@ const speechText = normalizeTextForSpeech(text);
   );
   utterance.lang = "zh-TW";
 
-  const voices = window.speechSynthesis.getVoices();
-  const bestVoice =
-    voices.find(v => v.lang === "zh-TW") ||
-    voices.find(v => v.lang.startsWith("zh"));
-
-  if (bestVoice) {
-    utterance.voice = bestVoice;
-  }
-
   utterance.rate = 1.05;
 
   window.speechSynthesis.speak(utterance);
