@@ -5114,6 +5114,51 @@ selfPayRemainingBudget =
         wrapper
       );
 
+      /* iOS：第一次碰預算輸入框時補播開場語音 */
+      input.addEventListener(
+        "pointerdown",
+        function () {
+
+          const isIOS =
+            /iPhone|iPad|iPod/i.test(
+              navigator.userAgent
+            ) ||
+            (
+              navigator.platform === "MacIntel" &&
+              navigator.maxTouchPoints > 1
+            );
+
+          if (
+            !isIOS ||
+            currentPlan !== "SELF_PAY" ||
+            selfPayBudget > 0 ||
+            !("speechSynthesis" in window)
+          ) {
+            return;
+          }
+
+          const introSpeech =
+            new SpeechSynthesisUtterance(
+              `您好，${appointmentData.name}。` +
+              `您的基本資料已經確認完成。` +
+              `接下來請設定您的自費健檢參考預算，` +
+              `我會依照您的需求協助選擇檢查項目。` +
+              `請輸入預算金額，例如三千元。`
+            );
+
+          introSpeech.lang = "zh-TW";
+          introSpeech.rate = 1;
+          introSpeech.pitch = 1;
+
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+          window.speechSynthesis.speak(
+            introSpeech
+          );
+
+        },
+        { once: true }
+      );
 
       input.focus();
 
