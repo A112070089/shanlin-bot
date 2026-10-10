@@ -2439,6 +2439,35 @@
             "selfpay-option-btn";
 
           if (
+            option.value ===
+            "start-direct-selfpay"
+          ) {
+
+            button.style.display =
+              "block";
+
+            button.style.margin =
+              "24px auto";
+
+            button.style.padding =
+              "18px 28px";
+
+            button.style.fontSize =
+              "24px";
+
+            button.style.fontWeight =
+              "700";
+
+            button.style.borderRadius =
+              "16px";
+
+            button.style.minWidth =
+              "280px";
+
+            button.style.textAlign =
+              "center";
+          }
+          if (
             String(option.value).startsWith("category:")
           ) {
             button.classList.add(
