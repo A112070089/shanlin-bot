@@ -986,11 +986,17 @@
 </li>
               <li class="nav-item"><a class="nav-link" href="#scrollspyServices" data-bs-dismiss="offcanvas"
                   data-bs-target="#offcanvasNavbar">健檢資訊</a></li>
-              <li class="nav-item"><a class="nav-link" href="search.html">預約資訊查詢</a></li>
+              <!--
+<li class="nav-item"><a class="nav-link" href="search.html">預約資訊查詢</a></li>
+-->
               <li class="nav-item"><a class="nav-link" href="#scrollspyFooter" data-bs-dismiss="offcanvas"
                   data-bs-target="#offcanvasNavbar">聯絡資訊</a></li>
-              <li class="nav-item"><a class="nav-link" href="" data-bs-toggle="modal"
-                  data-bs-target="#staticBackdrop">登入</a></li>
+              <li class="nav-item">
+                <a class="nav-link"
+                  href="https://a112070089.github.io/shanlin-bot/admin.html">
+                  登入
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -1911,9 +1917,8 @@ requestAnimationFrame(() => {
         case "pid": bookingData.name = ""; currentStep = "name"; msg += "👉 請問您的大名是？"; break;
         case "phone": bookingData.pid = ""; currentStep = "pid"; msg += "👉 請問您的身分證字號？"; break;
         case "birthday": bookingData.phone = ""; currentStep = "phone"; msg += "👉 請問手機號碼？"; break;
-        case "date": bookingData.birthday = ""; currentStep = "birthday"; msg += "👉 請問出生年月日（例如 450101）？"; break;
-        case "time": bookingData.date = ""; currentStep = "date"; msg += "👉 請問您想預約哪一天？（5/1 或 5/4）"; break;
-        case "confirm": bookingData.time = ""; currentStep = "time"; msg += "👉 請問預約幾點？（8點 或 9點）"; break;
+        case "time": bookingData.date = ""; currentStep = "date"; msg += "👉 請問您想預約哪一天？（11/2、11/4 或 11/9）"; break;
+        case "confirm": bookingData.time = ""; currentStep = "time"; msg += "👉 請問預約幾點？（8點、9點 或 10點）"; break;
       }
 
       if (chatMicBtn) {
@@ -2019,7 +2024,8 @@ requestAnimationFrame(() => {
       ) {
         const confirmText = String(displayUserText || "")
           .trim()
-          .replace(/\s+/g, "");
+          .replace(/\s+/g, "")
+          .replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, "");
 
         const isPositiveConfirm =
           /^(對|對的|是|是的|好|好的|正確|沒錯|可以|可以的|沒問題)$/.test(
@@ -2468,7 +2474,7 @@ if (bookingMode === "self_pay") {
 
   addMsg(
     `✅ 出生年月日已記錄。<br>` +
-    `👉 請問您想預約哪一天？（5/1 或 5/4）`,
+    `👉 請問您想預約哪一天？（11/2、11/4 或 11/9）`,
     "ai"
   );
 
@@ -2506,34 +2512,48 @@ if (bookingMode === "self_pay") {
             "";
 
 
-          // 5 月 1 日
+          // 11 月 2 日
           if (
-            dateText.includes("5月1") ||
-            dateText.includes("五月一") ||
-            dateText.includes("5/1") ||
-            dateText.includes("5-1") ||
-            dateText.includes("1號") ||
-            dateText.includes("一號")
+            dateText.includes("11月2") ||
+            dateText.includes("十一月二") ||
+            dateText.includes("11/2") ||
+            dateText.includes("11-2") ||
+            dateText.includes("2號") ||
+            dateText.includes("二號")
           ) {
 
             selectedDate =
-              "2026-05-01";
+              "2026-11-02";
 
           }
 
-
-          // 5 月 4 日
+          // 11 月 4 日
           else if (
-            dateText.includes("5月4") ||
-            dateText.includes("五月四") ||
-            dateText.includes("5/4") ||
-            dateText.includes("5-4") ||
+            dateText.includes("11月4") ||
+            dateText.includes("十一月四") ||
+            dateText.includes("11/4") ||
+            dateText.includes("11-4") ||
             dateText.includes("4號") ||
             dateText.includes("四號")
           ) {
 
             selectedDate =
-              "2026-05-04";
+              "2026-11-04";
+
+          }
+
+          // 11 月 9 日
+          else if (
+            dateText.includes("11月9") ||
+            dateText.includes("十一月九") ||
+            dateText.includes("11/9") ||
+            dateText.includes("11-9") ||
+            dateText.includes("9號") ||
+            dateText.includes("九號")
+          ) {
+
+            selectedDate =
+              "2026-11-09";
 
           }
 
@@ -2561,14 +2581,16 @@ if (bookingMode === "self_pay") {
 
 
           const displayDate =
-            selectedDate === "2026-05-01"
-              ? "5月1日"
-              : "5月4日";
+            selectedDate === "2026-11-02"
+              ? "11月2日"
+              : selectedDate === "2026-11-04"
+                ? "11月4日"
+                : "11月9日";
 
 
           addMsg(
             `✅ 已選擇 ${displayDate}。<br>` +
-            `👉 請問您想預約幾點？（8點 或 9點）`,
+            `👉 請問您想預約幾點？（8點、9點 或 10點）`,
             "ai"
           );
 
@@ -2622,13 +2644,26 @@ if (bookingMode === "self_pay") {
 
           }
 
+          
+          // 上午 10 點
+          else if (
+            timeText.includes("10點") ||
+            timeText.includes("十點") ||
+            timeText.includes("10時") ||
+            timeText === "10" ||
+            timeText.includes("10:00")
+          ) {
 
+            selectedTime =
+              "10:00";
+
+          }
           // 無法辨識
           if (!selectedTime) {
 
             addMsg(
               "⚠️ 我沒有辨識到預約時間。<br>" +
-              "👉 請說「8點」或「9點」。",
+              "👉 請說「8點」、「9點」或「10點」。",
               "ai"
             );
 
@@ -2671,15 +2706,19 @@ return;
 
 
           const dateTextDisplay =
-            bookingData.date === "2026-05-01"
-              ? "2026年5月1日"
-              : "2026年5月4日";
+            bookingData.date === "2026-11-02"
+              ? "2026年11月2日"
+              : bookingData.date === "2026-11-04"
+                ? "2026年11月4日"
+                : "2026年11月9日";
 
 
           const timeTextDisplay =
             bookingData.time === "08:00"
               ? "上午8點"
-              : "上午9點";
+              : bookingData.time === "09:00"
+                ? "上午9點"
+                : "上午10點";
 
 
           addMsg(

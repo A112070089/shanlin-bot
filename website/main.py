@@ -4,7 +4,7 @@ import json
 import os
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from dotenv import load_dotenv
@@ -1821,7 +1821,7 @@ async def confirm_booking(
                         "selfPayItems": cleaned_self_pay_items,
                         "selfPayCount": len(cleaned_self_pay_items),
                         "selfPayTotal": server_total,
-                        "bookedAt": datetime.now().isoformat(),
+                        "bookedAt": datetime.now(timezone.utc).isoformat(),
                         "source": "SELF_PAY_BOOKING",
                     }
 
@@ -1873,7 +1873,7 @@ async def confirm_booking(
                     "plan": plan_value,
                     "date": req.date.strip(),
                     "time": req.time.strip(),
-                    "bookedAt": datetime.now().isoformat(),
+                   "bookedAt": datetime.now(timezone.utc).isoformat(),
                     "source": "WEB_BOOKING",
                     "birth": req.birthday.strip(),
                     "idNumber": normalized_pid,
