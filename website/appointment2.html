@@ -2550,6 +2550,15 @@ if (currentPlan === "SELF_PAY") {
   selfPayChatMode =
     "budget";
 
+    const isIOS =
+      /iPhone|iPad|iPod/i.test(
+        navigator.userAgent
+      ) ||
+      (
+        navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1
+      );
+
   addSelfPayAIMessage(
 
     `您好，${escapeHtml(
@@ -2564,7 +2573,7 @@ if (currentPlan === "SELF_PAY") {
 
     `💰 請輸入預算金額，例如：3000`,
 
-    true
+    !isIOS
 
   );
 
