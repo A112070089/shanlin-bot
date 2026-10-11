@@ -580,7 +580,22 @@
       font-weight: 800;
     }
 
+    /* =========================================
+      電腦版：自費項目過多時保留底部輸入列
+    ========================================= */
 
+    @media (min-width: 601px) {
+
+      .selfpay-chat-options {
+        flex-shrink: 1;
+        min-height: 0;
+      }
+
+      .selfpay-chat-input-area {
+        flex-shrink: 0;
+      }
+
+    }
     /* =========================================
        手機版
     ========================================= */
@@ -4703,6 +4718,18 @@ const monthText =
 const dayText =
   String(day).padStart(2, "0");
 
+const confirmDate =
+  window.confirm(
+    `您選擇的是 ${month}/${day}，確定要預約這一天嗎？`
+  );
+
+if (!confirmDate) {
+
+  input._flatpickr.clear();
+
+  return;
+}
+
 selfPaySelectedDate =
   `${year}-${monthText}-${dayText}`;
 
@@ -4917,6 +4944,14 @@ selfPaySelectedDate =
 
                   value:
                     "afternoon"
+                },
+                
+                {
+                  label:
+                    "重新選擇日期",
+
+                  value:
+                    "change-date"
                 }
 
               ]);
@@ -4935,7 +4970,15 @@ selfPaySelectedDate =
     function showSelfPayBudgetInput() {
 
       clearSelfPayOptions();
+      const chatInputArea =
+        document.querySelector(
+          ".selfpay-chat-input-area"
+        );
 
+    if (chatInputArea) {
+      chatInputArea.style.display =
+        "none";
+    }
 
       const optionsContainer =
         document.getElementById(
@@ -5092,13 +5135,22 @@ if (
           selfPayBudget =
   budget;
 
-selfPaySelectedTotal =
-  calculateSelfPayTotal();
+          selfPaySelectedTotal =
+            calculateSelfPayTotal();
 
-selfPayRemainingBudget =
-  selfPayBudget -
-  selfPaySelectedTotal;
+          selfPayRemainingBudget =
+            selfPayBudget -
+            selfPaySelectedTotal;
 
+            const chatInputArea =
+            document.querySelector(
+              ".selfpay-chat-input-area"
+            );
+
+          if (chatInputArea) {
+            chatInputArea.style.display =
+              "flex";
+          }
 
           addSelfPayUserMessage(
 
@@ -5400,48 +5452,47 @@ if (
            重新選擇時間
         ------------------------------------- */
 
-        if (
-          rawValue ===
-          "change-session"
-        ) {
+      if (
+        rawValue ===
+        "change-session"
+      ) {
 
-          selfPayStep =
-            "session";
+        selfPayStep =
+          "date";
 
+        selfPaySelectedDate =
+          "";
 
-          clearSelfPayOptions();
+        selfPaySelectedSession =
+          "";
 
+        appointmentData.selfPayDate =
+          "";
 
-          addSelfPayAIMessage(
-            "好的，請重新選擇方便的時段。",
-            true
-          );
+        appointmentData.selfPayTime =
+          "";
 
+        if (currentPlan === "SELF_PAY") {
 
-          showSelfPayOptions([
+          appointmentData.date =
+            "";
 
-            {
-              label:
-                "上午診（08:30–12:30）",
-
-              value:
-                "morning"
-            },
-
-            {
-              label:
-                "下午診（13:30–17:30）",
-
-              value:
-                "afternoon"
-            }
-
-          ]);
-
-
-          return;
+          appointmentData.time =
+            "";
 
         }
+
+        clearSelfPayOptions();
+
+        addSelfPayAIMessage(
+          "好的，請重新選擇預約日期。",
+          true
+        );
+
+        showSelfPayCalendar();
+
+        return;
+      }
 
 
         /* -------------------------------------
@@ -5916,6 +5967,48 @@ selfPaySelectedDate =
         selfPayStep ===
         "session"
       ) {
+
+      if (
+        rawValue ===
+        "change-date"
+      ) {
+
+        selfPayStep =
+          "date";
+
+        selfPaySelectedDate =
+          "";
+
+        selfPaySelectedSession =
+          "";
+
+        appointmentData.selfPayDate =
+          "";
+
+        appointmentData.selfPayTime =
+          "";
+
+        if (currentPlan === "SELF_PAY") {
+
+          appointmentData.date =
+            "";
+
+          appointmentData.time =
+            "";
+
+        }
+
+        clearSelfPayOptions();
+
+        addSelfPayAIMessage(
+          "好的，請重新選擇預約日期。",
+          true
+        );
+
+        showSelfPayCalendar();
+
+        return;
+      }
 
         if (
 

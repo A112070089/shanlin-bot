@@ -2008,6 +2008,11 @@ requestAnimationFrame(() => {
         displayUserText = data.phone;
       }
 
+        displayUserText =
+          displayUserText.replace(
+            /1下/g,
+            "一下"
+          );
       addMsg(displayUserText, 'user');
       // 自費基本資料最後確認：無法辨識時給予回應
       if (
@@ -2137,6 +2142,29 @@ requestAnimationFrame(() => {
 
       switch (currentStep) {
         case "plan":
+      const wantsPlanIntro =
+        /介紹.*方案|方案.*介紹|有哪些方案|有什麼方案|方案差別|方案有什麼不同|(?:幫我)?介紹(?:一下|1下)?/.test(
+          String(rawText || "")
+        );
+
+      if (wantsPlanIntro) {
+
+        bookingData.plan = "";
+
+        addMsg(
+          `可以的，我簡單介紹三個方案：<br><br>` +
+          `<span style="color:#e53935;font-weight:700;">A</span> <strong>方案－腦肺方案</strong><br>` +
+          `主要著重腦部與肺部相關的健康檢查。<br><br>` +
+          `<span style="color:#e53935;font-weight:700;">B</span> <strong>方案－腹部方案</strong><br>` +
+          `主要著重腹部、肝膽腸胃及相關健康評估。<br><br>` +
+          `<span style="color:#e53935;font-weight:700;">C</span> <strong>方案－骨密肌力方案</strong><br>` +
+          `主要著重骨質密度、肌力與跌倒風險相關評估。<br><br>` +
+          `👉 請問您想選 A方案、B方案，還是 C方案？`,
+          "ai"
+        );
+
+        return;
+      }
           const normalizedPlanInput = String(rawText || "")
   .trim()
   .toUpperCase()
