@@ -1319,12 +1319,14 @@
 <div id="chat-footer">
   <input type="text" id="chat-input" placeholder="打字，或按住說話...">
 
-  <button id="chatMicBtn" class="mic-btn-chat"
-    onmousedown="startRec()"
-    onmouseup="stopRec()"
-    onmouseleave="stopRec()"
-    ontouchstart="startRec()"
-    ontouchend="stopRec()">🎤</button>
+  <button
+    id="chatMicBtn"
+    class="mic-btn-chat"
+    onpointerdown="startRec()"
+    onpointerup="stopRec()"
+    onpointerleave="stopRec()"
+    onpointercancel="stopRec()"
+  >🎤</button>
 
   <button
     type="button"
