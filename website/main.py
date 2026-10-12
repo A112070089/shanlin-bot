@@ -763,7 +763,37 @@ def extract_intelligent_logic(
                 )
             )
 
+        # 修正中文「十」在日期中的數字轉換
+        text_trad = re.sub(
+            r"(\d)十(\d)(?=[年月日號])",
+            lambda m: str(
+                int(m.group(1)) * 10 +
+                int(m.group(2))
+            ),
+            text_trad,
+        )
 
+        text_trad = re.sub(
+            r"(\d)十(?=[年月日號])",
+            lambda m: str(
+                int(m.group(1)) * 10
+            ),
+            text_trad,
+        )
+
+        text_trad = re.sub(
+            r"十(\d)(?=[年月日號])",
+            lambda m: str(
+                10 + int(m.group(1))
+            ),
+            text_trad,
+        )
+
+        text_trad = re.sub(
+            r"十(?=[年月日號])",
+            "10",
+            text_trad,
+        )
         text_trad = (
             text_trad
             .replace(
