@@ -45,7 +45,7 @@
     }
 
     #chat-widget.large-mode .msg {
-      font-size: 1.3rem;
+      font-size: 1.45rem;
       padding: 15px 20px;
     }
 
@@ -80,7 +80,7 @@
       color: white;
       padding: 15px;
       font-weight: bold;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -106,7 +106,7 @@
       max-width: 85%;
       padding: 12px 16px;
       border-radius: 15px;
-      font-size: 1.15rem;
+      font-size: 1.35rem;
       line-height: 1.65;
     }
 
@@ -942,7 +942,34 @@
       .self-pay-footer-close {
         width: 100%;
       }
+
+      @media (min-width: 601px) {
+        #scrollspyHero .bsb-btn-2xl {
+          font-size: 2.1rem !important;
+          font-weight: 700 !important;
+        }
+      }
+
+      @media (max-width: 600px) {
+        #scrollspyHero .bsb-btn-2xl {
+          font-size: 1.4rem !important;
+          font-weight: 700 !important;
+          line-height: 1.3;
+        }
+      }
     }
+
+      #scrollspyHero .bsb-btn-2xl {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+      }
+
+      @media (max-width: 600px) {
+        #scrollspyHero .bsb-btn-2xl {
+          font-size: 1.6rem !important;
+          line-height: 1.3;
+        }
+      }
   </style>
 </head>
 
@@ -1042,13 +1069,13 @@
               <button type="button" onclick="openChat()"
                 class="btn btn-outline-primary bsb-btn-2xl rounded-pill d-flex align-items-center justify-content-center">
                 <span class="me-2">🎙️</span>
-                老人健檢語音智慧助理
+                老人健檢語音助理
               </button>
 
               <button type="button" onclick="openSelfPayChat()"
                 class="btn btn-outline-primary bsb-btn-2xl rounded-pill d-flex align-items-center justify-content-center">
                 <span class="me-2">🧾</span>
-                自費加購語音智慧助理
+                自費加購語音助理
               </button>
 
             </div>
@@ -1282,7 +1309,7 @@
 
   <div id="chat-widget">
     <div id="chat-header">
-      <span id="chat-title">🏥 老人健檢語音智慧助理</span>
+      <span id="chat-title">🏥 老人健檢語音助理</span>
       <div class="header-icons">
 
         <span style="cursor:pointer; font-size: 28px;" onclick="closeChat()">×</span>
@@ -1319,14 +1346,14 @@
 <div id="chat-footer">
   <input type="text" id="chat-input" placeholder="打字，或按住說話...">
 
-  <button
-    id="chatMicBtn"
-    class="mic-btn-chat"
-    onpointerdown="startRec()"
-    onpointerup="stopRec()"
-    onpointerleave="stopRec()"
-    onpointercancel="stopRec()"
-  >🎤</button>
+<button
+  id="chatMicBtn"
+  class="mic-btn-chat"
+  onpointerdown="startRec()"
+  onpointerup="stopRec()"
+  onpointerleave="stopRec()"
+  onpointercancel="stopRec()"
+>🎤</button>
 
   <button
     type="button"
@@ -1769,7 +1796,7 @@ if (pauseBtn) {
 }
     async function openChat() {
       document.getElementById('chat-title').textContent =
-  '🏥 老人健檢語音智慧助理';
+  '🏥 老人健檢語音助理';
       bookingMode = "health_check";
   // 顯示聊天視窗
   chatWidget.style.display = "flex";
@@ -1798,6 +1825,9 @@ if (pauseBtn) {
 
   // 顯示訊息
   addMsg(welcomeMessage, "ai");
+  requestAnimationFrame(() => {
+  body.scrollTop = 0;
+});
 
   
 
@@ -1812,7 +1842,7 @@ if (pauseBtn) {
     async function openSelfPayChat(preserveSelfPay = false) {
 
       document.getElementById('chat-title').textContent =
-  '🧾 自費加購語音智慧助理';
+  '🧾 自費加購語音助理';
   // 切換成「純自費健檢」模式
   bookingMode = "self_pay";
 
@@ -3312,7 +3342,7 @@ break;
       }
 
       .msg {
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         line-height: 1.7;
       }
 
@@ -3322,6 +3352,17 @@ break;
 
       #chat-input {
         font-size: 1.15rem;
+      }
+
+      #scrollspyHero .btn {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+      }
+
+      @media (max-width: 600px) {
+        #scrollspyHero .btn {
+          font-size: 1.6rem !important;
+        }
       }
     }
   </style>
