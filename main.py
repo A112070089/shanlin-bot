@@ -31,7 +31,7 @@ CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
 FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
 LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
-ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "shanlin2025")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
 DIFY_API_URL         = "https://api.dify.ai/v1"
 LINE_API             = "https://api.line.me/v2/bot/message"
@@ -92,8 +92,188 @@ def make_liff_button(label: str, url: str) -> dict:
 
 
 def check_admin(x_admin_password: Optional[str]):
-    if x_admin_password != ADMIN_PASSWORD:
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="管理密碼尚未設定")
+    if not isinstance(x_admin_password, str) or not hmac.compare_digest(x_admin_password, ADMIN_PASSWORD):
         raise HTTPException(status_code=401, detail="密碼錯誤")
+
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 山林診所基本資料：供舊後台與頤典公版讀取的單一資料來源
+# 僅操作 Shanlin Firebase 的 booking_config/clinic，不碰病患資料。
+# 未設定前，管理 API 不會假裝已設定，也不會自動寫入預設值。
+# ═══════════════════════════════════════════════════════════════════
+from urllib.parse import urlparse as _clinic_urlparse
+from datetime import date as _clinic_date, timezone as _clinic_timezone
+import re as _clinic_re
+
+SHANLIN_CLINIC_NAME = "山林診所"
+# This value is the Shanlin Firebase RTDB host, NOT a credential.
+SHANLIN_FIREBASE_HOST = "shanlin-clinic-default-rtdb.firebaseio.com"
+CLINIC_DEFAULTS = {
+    "name": SHANLIN_CLINIC_NAME,
+    "phone": "02-2933-2010",
+    "address": "臺北市文山區羅斯福路六段407號2樓",
+    "addressNote": "由車前路門口上樓",
+    "hours": "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
+             "週六 早上 8:30-12:30\n週日公休\n國定假日門診半天",
+    # No date/time is invented. Clinic staff can enter confirmed appointment slots.
+    "elderlyDates": [],
+    "elderlyTimes": [],
+}
+_CLINIC_PUBLIC_FIELDS = tuple(CLINIC_DEFAULTS)
+
+
+def _shanlin_config_ref():
+    """Fail closed rather than read/write another clinic's Firebase project."""
+    parsed = _clinic_urlparse(FIREBASE_URL)
+    if (parsed.scheme != "https" or parsed.hostname != SHANLIN_FIREBASE_HOST
+            or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in ("", "/")):
+        raise HTTPException(
+            status_code=503,
+            detail="山林診所 Firebase 來源尚未確認；已停止診所設定存取",
+        )
+    try:
+        return db.reference("booking_config/clinic")
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所 Firebase 尚無法使用") from None
+
+
+def _check_shanlin_clinic_admin(password):
+    # New writes must not inherit the legacy code's hard-coded fallback password.
+    if not os.environ.get("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=503, detail="請先於 Railway 安全設定 ADMIN_PASSWORD")
+    check_admin(password)
+
+
+def _stored_shanlin_config():
+    ref = _shanlin_config_ref()
+    try:
+        saved = ref.get()
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所設定讀取失敗") from None
+    if saved is None:
+        return ref, None
+    if (not isinstance(saved, dict)
+            or saved.get("clinicId") not in (None, "shanlin")
+            or str(saved.get("name", "")).strip() != SHANLIN_CLINIC_NAME):
+        raise HTTPException(
+            status_code=409,
+            detail="Firebase 已有無法確認歸屬的診所設定；為避免資料混用，已停止存取",
+        )
+    return ref, saved
+
+
+def _clinic_public_view(saved):
+    public = dict(CLINIC_DEFAULTS)
+    if saved:
+        for key in _CLINIC_PUBLIC_FIELDS:
+            if key in saved and saved[key] is not None:
+                public[key] = saved[key]
+    return public
+
+
+class ShanlinClinicSettings(BaseModel):
+    name: str = SHANLIN_CLINIC_NAME
+    phone: str
+    address: str
+    addressNote: str = ""
+    hours: str = ""
+    elderlyDates: list[str] = []
+    elderlyTimes: list[str] = []
+
+
+@app.get("/api/clinic-config")
+async def public_shanlin_clinic_config():
+    """Public business-only fields, never passwords or patient records."""
+    _, saved = _stored_shanlin_config()
+    return {
+        "status": "success",
+        "clinic": _clinic_public_view(saved),
+        "configured": saved is not None,
+    }
+
+
+@app.get("/api/admin/clinic-config")
+async def admin_get_shanlin_clinic_config(x_admin_password: Optional[str] = Header(None)):
+    _check_shanlin_clinic_admin(x_admin_password)
+    _, saved = _stored_shanlin_config()
+    return {
+        # Empty until FIRST verified save, so a tenant bridge cannot mistake
+        # a default template for an actual saved Shanlin clinic configuration.
+        "clinic": _clinic_public_view(saved) if saved is not None else {},
+        "defaults": dict(CLINIC_DEFAULTS),
+        "configured": saved is not None,
+    }
+
+
+@app.put("/api/admin/clinic-config")
+async def admin_save_shanlin_clinic_config(
+        settings: ShanlinClinicSettings,
+        x_admin_password: Optional[str] = Header(None)):
+    _check_shanlin_clinic_admin(x_admin_password)
+    body = settings.model_dump() if hasattr(settings, "model_dump") else settings.dict()
+    name = body["name"].strip()
+    if name != SHANLIN_CLINIC_NAME:
+        raise HTTPException(status_code=400, detail="此後台只允許設定山林診所")
+    phone = body["phone"].strip()
+    address = body["address"].strip()
+    address_note = body["addressNote"].strip()
+    hours = body["hours"].strip()
+    if not _clinic_re.fullmatch(r"[0-9+()\-\s]{6,40}", phone):
+        raise HTTPException(status_code=400, detail="診所電話格式不正確")
+    if not address or len(address) > 250:
+        raise HTTPException(status_code=400, detail="診所地址須填寫，且不可超過 250 字")
+    if len(address_note) > 500 or len(hours) > 1000:
+        raise HTTPException(status_code=400, detail="地址補充或門診時間文字過長")
+    dates = body["elderlyDates"]
+    times = body["elderlyTimes"]
+    if len(dates) > 100 or len(times) > 30:
+        raise HTTPException(status_code=400, detail="日期或時段數量超過上限")
+    clean_dates = set()
+    for d in dates:
+        d = d.strip()
+        if not _clinic_re.fullmatch(r"\d{4}-\d{2}-\d{2}", d):
+            raise HTTPException(status_code=400, detail="日期須為 YYYY-MM-DD")
+        try:
+            _clinic_date.fromisoformat(d)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="存在無效的預約日期") from None
+        clean_dates.add(d)
+    clean_times = set()
+    for t in times:
+        t = t.strip()
+        if not _clinic_re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", t):
+            raise HTTPException(status_code=400, detail="時段須為 HH:MM")
+        clean_times.add(t)
+
+    # Require the expected Firebase instance and prevent overwriting an
+    # existing record belonging to a different or unverified tenant.
+    ref, _ = _stored_shanlin_config()
+    updates = {
+        "clinicId": "shanlin",
+        "name": SHANLIN_CLINIC_NAME,
+        "phone": phone,
+        "address": address,
+        "addressNote": address_note,
+        "hours": hours,
+        "elderlyDates": sorted(clean_dates),
+        "elderlyTimes": sorted(clean_times),
+        "updatedAt": datetime.now(_clinic_timezone.utc).isoformat(timespec="seconds"),
+    }
+    try:
+        # Update only these clinic fields; never set the database root or
+        # overwrite appointments, booking_config/questions or other subtrees.
+        ref.update(updates)
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所設定儲存失敗") from None
+    return {
+        "status": "success",
+        "clinic": _clinic_public_view(updates),
+        "configured": True,
+    }
 
 
 # ══════════════════════════════════════
@@ -442,11 +622,19 @@ async def send_reminders():
 # ══════════════════════════════════════
 #  後台管理 API
 # ══════════════════════════════════════
+@app.get("/admin.html", include_in_schema=False)
+async def serve_shanlin_admin_page():
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    admin_file = Path(__file__).resolve().parent / "admin.html"
+    if not admin_file.is_file():
+        raise HTTPException(status_code=404, detail="後台頁面不存在")
+    return FileResponse(admin_file, media_type="text/html")
+
+
 @app.post("/api/admin/login")
 async def admin_login(payload: dict):
-    password = payload.get("password", "")
-    if password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="密碼錯誤")
+    check_admin(payload.get("password"))
     return {"status": "ok"}
 
 

@@ -203,6 +203,7 @@ tbody tr:last-child td{border-bottom:none}
         <div class="page-title">預約總覽</div>
       </div>
       <div class="head-btns">
+        <button class="btn-secondary" onclick="openClinicModal()"><i class="ti ti-building-hospital"></i>診所設定</button>
         <div class="export-wrap">
           <button class="btn-secondary" onclick="toggleExportMenu(event)"><i class="ti ti-download"></i>匯出<i class="ti ti-chevron-down" style="font-size:12px"></i></button>
           <div class="export-menu" id="exportMenu">
@@ -486,11 +487,71 @@ tbody tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<!-- SHANLIN CLINIC SETTINGS MODAL (clinic data only; no patient records) -->
+<div class="modal-ov" id="clinicModal" role="dialog" aria-modal="true" aria-labelledby="clinicModalTitle">
+  <div class="modal-box" style="max-width:660px">
+    <div class="modal-head">
+      <div class="modal-title" id="clinicModalTitle">山林診所｜基本資料設定</div>
+      <button class="modal-close" onclick="closeClinicModal()" aria-label="關閉">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="clinicStatus" style="font-size:13px;line-height:1.7;padding:12px 14px;background:var(--paper-deep);margin-bottom:18px;border-radius:4px" role="status">
+        檢查診所資料來源中…
+      </p>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label" for="clinicName">診所名稱（固定）</label>
+          <input class="form-input" id="clinicName" value="山林診所" readonly aria-readonly="true"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="clinicPhone">診所電話 *</label>
+          <input class="form-input" id="clinicPhone" placeholder="02-0000-0000" maxlength="40"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="clinicAddress">診所地址 *</label>
+        <input class="form-input" id="clinicAddress" maxlength="250"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="clinicAddressNote">地址補充／交通說明</label>
+        <input class="form-input" id="clinicAddressNote" maxlength="500"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="clinicHours">門診時間</label>
+        <textarea class="form-textarea" id="clinicHours" rows="4" maxlength="1000" style="min-height:105px"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label" for="clinicDates">老人健檢開放日期（選填）</label>
+          <textarea class="form-textarea" id="clinicDates" rows="3" placeholder="每行一個日期，例如 2026-11-02" style="min-height:78px"></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="clinicTimes">老人健檢開放時段（選填）</label>
+          <textarea class="form-textarea" id="clinicTimes" rows="3" placeholder="每行一個時段，例如 08:00" style="min-height:78px"></textarea>
+        </div>
+      </div>
+      <p id="clinicTargetNote" style="color:var(--ink-soft);font-size:12px;line-height:1.7">
+        只有按下儲存，才會更新山林 Firebase 的 booking_config/clinic。
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeClinicModal()">取消</button>
+      <button class="btn-modal-p" id="clinicSaveBtn" onclick="saveClinicSettings()" disabled>儲存山林診所設定</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><i class="ti ti-circle-check"></i><span id="toastMsg">已儲存</span></div>
 
 <script>
-const API_BASE = 'https://shanlin-bot-production.up.railway.app';
+// A cloned file or local Live Server goes to the isolated 8006 test service.
+// GitHub Pages / online admin continue using the original Railway service.
+const IS_LOCAL_ADMIN_PREVIEW = location.protocol === 'file:' ||
+    ['127.0.0.1', 'localhost'].includes(location.hostname);
+const API_BASE = IS_LOCAL_ADMIN_PREVIEW
+    ? 'http://127.0.0.1:8006'
+    : 'https://shanlin-bot-production.up.railway.app';
 const PLAN_NAMES = { A:'A方案（腦肺）', B:'B方案（腹部）', C:'C方案（骨密肌力）' };
 
 let adminPassword = '';
@@ -500,8 +561,7 @@ let deleteKey = null;
 
 /* ══ 登入 ══ */
 window.addEventListener('load', () => {
-  const saved = sessionStorage.getItem('shanlin_admin_pw');
-  if (saved) { adminPassword = saved; showShell(); loadAppointments(); }
+  try { sessionStorage.removeItem('shanlin_admin_pw'); } catch (_) {}
 });
 
 async function doLogin() {
@@ -514,7 +574,6 @@ async function doLogin() {
     });
     if (res.ok) {
       adminPassword = pw;
-      sessionStorage.setItem('shanlin_admin_pw', pw);
       document.getElementById('loginErr').classList.remove('show');
       showShell(); loadAppointments();
     } else { document.getElementById('loginErr').classList.add('show'); }
@@ -525,7 +584,7 @@ async function doLogin() {
 }
 
 function doLogout() {
-  sessionStorage.removeItem('shanlin_admin_pw'); adminPassword = '';
+  adminPassword = '';
   document.getElementById('shell').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
@@ -534,6 +593,102 @@ function doLogout() {
 function showShell() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('shell').classList.add('active');
+}
+
+/* ══ 山林診所基本資料 ══ */
+let clinicIsConfigured = false;
+
+function closeClinicModal() {
+  document.getElementById('clinicModal').classList.remove('open');
+}
+
+function clinicSplitValues(id) {
+  return document.getElementById(id).value.split(/[\s,，;；]+/)
+    .map(s => s.trim()).filter(Boolean);
+}
+
+function clinicStatus(message, isError=false) {
+  const el = document.getElementById('clinicStatus');
+  el.textContent = message;
+  el.style.background = isError ? 'var(--danger-l)' : 'var(--paper-deep)';
+  el.style.color = isError ? 'var(--danger)' : 'var(--ink)';
+}
+
+async function openClinicModal() {
+  document.getElementById('clinicModal').classList.add('open');
+  document.getElementById('clinicSaveBtn').disabled = true;
+  document.getElementById('clinicTargetNote').textContent = IS_LOCAL_ADMIN_PREVIEW
+    ? '本機測試模式：API 為 127.0.0.1:8006。未連線到正確的山林 Firebase 時，系統會拒絕儲存。'
+    : '正式模式：按下儲存才會寫入山林 Firebase 的 booking_config/clinic；不會更動預約紀錄。';
+  clinicStatus('正在確認山林診所設定與資料來源…');
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/clinic-config`, {
+      headers: {'X-Admin-Password': adminPassword},
+      cache: 'no-store'
+    });
+    if (res.status === 401) { closeClinicModal(); doLogout(); return; }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      clinicStatus(`無法讀取：${data.detail || `HTTP ${res.status}`}。已禁止儲存。`, true);
+      return;
+    }
+    clinicIsConfigured = data.configured === true;
+    const c = clinicIsConfigured ? data.clinic : data.defaults;
+    if (!c || c.name !== '山林診所') {
+      clinicStatus('資料來源的診所身分不符；已禁止儲存。', true);
+      return;
+    }
+    document.getElementById('clinicName').value = '山林診所';
+    document.getElementById('clinicPhone').value = c.phone || '';
+    document.getElementById('clinicAddress').value = c.address || '';
+    document.getElementById('clinicAddressNote').value = c.addressNote || '';
+    document.getElementById('clinicHours').value = c.hours || '';
+    document.getElementById('clinicDates').value = Array.isArray(c.elderlyDates) ? c.elderlyDates.join('\n') : '';
+    document.getElementById('clinicTimes').value = Array.isArray(c.elderlyTimes) ? c.elderlyTimes.join('\n') : '';
+    clinicStatus(clinicIsConfigured
+      ? '已從山林 Firebase 讀取先前儲存的資料。更動後需按「儲存」才會更新。'
+      : '第一次設定：下方是從原程式整理的預填值，尚未儲存至 Firebase。請先核對資料。');
+    document.getElementById('clinicSaveBtn').disabled = false;
+  } catch (e) {
+    clinicStatus('無法連接診所設定 API，已禁止儲存。請確認本機 8006 或 Railway 服務。', true);
+  }
+}
+
+async function saveClinicSettings() {
+  const phone = document.getElementById('clinicPhone').value.trim();
+  const address = document.getElementById('clinicAddress').value.trim();
+  if (!phone || !address) { clinicStatus('診所電話及地址為必填。', true); return; }
+  if (!clinicIsConfigured && !window.confirm('第一次儲存山林診所設定到山林 Firebase，是否已確認診所基本資料正確？')) return;
+  const payload = {
+    name: '山林診所', phone, address,
+    addressNote: document.getElementById('clinicAddressNote').value.trim(),
+    hours: document.getElementById('clinicHours').value.trim(),
+    elderlyDates: clinicSplitValues('clinicDates'),
+    elderlyTimes: clinicSplitValues('clinicTimes')
+  };
+  const button = document.getElementById('clinicSaveBtn');
+  button.disabled = true;
+  clinicStatus('儲存中…');
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/clinic-config`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json', 'X-Admin-Password': adminPassword},
+      body: JSON.stringify(payload)
+    });
+    if (res.status === 401) { closeClinicModal(); doLogout(); return; }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      clinicStatus(`儲存失敗：${data.detail || `HTTP ${res.status}`}`, true);
+      return;
+    }
+    clinicIsConfigured = true;
+    clinicStatus('已儲存山林診所基本資料。8005 公版可在確認來源後讀取此設定。');
+    showToast('山林診所基本資料已儲存');
+  } catch (e) {
+    clinicStatus('無法連接 API，本次沒有收到儲存成功確認。', true);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 /* ══ 載入資料 ══ */
