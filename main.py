@@ -31,7 +31,7 @@ CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
 FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
 LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
-ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "shanlin2025")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
 DIFY_API_URL         = "https://api.dify.ai/v1"
 LINE_API             = "https://api.line.me/v2/bot/message"
@@ -92,7 +92,9 @@ def make_liff_button(label: str, url: str) -> dict:
 
 
 def check_admin(x_admin_password: Optional[str]):
-    if x_admin_password != ADMIN_PASSWORD:
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="管理密碼尚未設定")
+    if not isinstance(x_admin_password, str) or not hmac.compare_digest(x_admin_password, ADMIN_PASSWORD):
         raise HTTPException(status_code=401, detail="密碼錯誤")
 
 
@@ -622,9 +624,7 @@ async def send_reminders():
 # ══════════════════════════════════════
 @app.post("/api/admin/login")
 async def admin_login(payload: dict):
-    password = payload.get("password", "")
-    if password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="密碼錯誤")
+    check_admin(payload.get("password"))
     return {"status": "ok"}
 
 
