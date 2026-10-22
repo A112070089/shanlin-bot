@@ -561,8 +561,7 @@ let deleteKey = null;
 
 /* ══ 登入 ══ */
 window.addEventListener('load', () => {
-  const saved = sessionStorage.getItem('shanlin_admin_pw');
-  if (saved) { adminPassword = saved; showShell(); loadAppointments(); }
+  try { sessionStorage.removeItem('shanlin_admin_pw'); } catch (_) {}
 });
 
 async function doLogin() {
@@ -575,7 +574,6 @@ async function doLogin() {
     });
     if (res.ok) {
       adminPassword = pw;
-      sessionStorage.setItem('shanlin_admin_pw', pw);
       document.getElementById('loginErr').classList.remove('show');
       showShell(); loadAppointments();
     } else { document.getElementById('loginErr').classList.add('show'); }
@@ -586,7 +584,7 @@ async function doLogin() {
 }
 
 function doLogout() {
-  sessionStorage.removeItem('shanlin_admin_pw'); adminPassword = '';
+  adminPassword = '';
   document.getElementById('shell').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
