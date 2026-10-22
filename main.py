@@ -622,6 +622,16 @@ async def send_reminders():
 # ══════════════════════════════════════
 #  後台管理 API
 # ══════════════════════════════════════
+@app.get("/admin.html", include_in_schema=False)
+async def serve_shanlin_admin_page():
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    admin_file = Path(__file__).resolve().parent / "admin.html"
+    if not admin_file.is_file():
+        raise HTTPException(status_code=404, detail="後台頁面不存在")
+    return FileResponse(admin_file, media_type="text/html")
+
+
 @app.post("/api/admin/login")
 async def admin_login(payload: dict):
     check_admin(payload.get("password"))
