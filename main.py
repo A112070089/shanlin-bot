@@ -838,3 +838,36 @@ async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Opt
 @app.get("/")
 async def root():
     return {"status": "ok", "service": "山林診所 LINE Bot API"}
+
+
+@app.get("/api/admin/clinic-config")
+async def admin_get_clinic_config(x_admin_password: Optional[str] = Header(None)):
+    """Read clinic metadata only; never read or write appointment records."""
+    check_admin(x_admin_password)
+    from urllib.parse import urlsplit
+
+    if urlsplit(FIREBASE_URL).hostname != "shanlin-clinic-default-rtdb.firebaseio.com":
+        raise HTTPException(status_code=503, detail="山林診所資料來源尚未核對")
+    try:
+        saved = db.reference("booking_config/clinic").get()
+    except Exception:
+        raise HTTPException(status_code=503, detail="無法讀取山林診所設定") from None
+    if saved is None:
+        saved = {}
+    if not isinstance(saved, dict):
+        raise HTTPException(status_code=503, detail="山林診所設定格式不正確")
+
+    # The service and database identify Shanlin; absent optional fields stay empty.
+    clinic = {
+        "name": "山林診所", "phone": "", "address": "", "addressNote": "",
+        "hours": "", "elderlyDates": [], "elderlyTimes": [],
+    }
+    for key, default in clinic.items():
+        if key in saved:
+            value = saved[key]
+            if not isinstance(value, type(default)):
+                raise HTTPException(status_code=503, detail="山林診所設定欄位格式不正確")
+            clinic[key] = value
+    if clinic["name"].replace(" ", "").strip() != "山林診所":
+        raise HTTPException(status_code=503, detail="診所設定與山林身分不符")
+    return {"clinic": clinic, "configured": bool(saved)}
