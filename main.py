@@ -4,6 +4,9 @@ import hmac
 import hashlib
 import base64
 from datetime import datetime
+import secrets
+import time
+from threading import RLock
 
 from fastapi import FastAPI, Request, HTTPException, Header, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -496,16 +499,17 @@ def _extract_self_pay_items(raw: dict) -> list:
 
 
 @app.get("/api/admin/appointments")
-async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)):
-    check_admin(x_admin_password)
+async def admin_list_appointments(x_admin_password: Optional[str] = Header(None),
+                                  x_doubts_read_token: Optional[str] = Header(None)):
+    check_appointment_reader(x_admin_password, x_doubts_read_token)
     try:
         all_appts = db.reference("appointments").get() or {}
     except Exception:
-        all_appts = {}
+        raise HTTPException(503, "無法讀取山林正式預約，請稍後重試") from None
     try:
         all_selfpay = db.reference("self_pay_booking").get() or {}
     except Exception:
-        all_selfpay = {}
+        raise HTTPException(503, "無法讀取山林正式自費預約，請稍後重試") from None
 
     def _norm_phone(p):
         p = str(p or "").strip()
@@ -871,3 +875,45 @@ async def admin_get_clinic_config(x_admin_password: Optional[str] = Header(None)
     if clinic["name"].replace(" ", "").strip() != "山林診所":
         raise HTTPException(status_code=503, detail="診所設定與山林身分不符")
     return {"clinic": clinic, "configured": bool(saved)}
+
+
+# Scoped appointment-read credentials: memory only, never accepted by write APIs.
+# ponytail: single-process token store; re-login after a restart or worker change.
+_APPOINTMENT_READ_TOKENS = {}
+_APPOINTMENT_READ_LOCK = RLock()
+_APPOINTMENT_READ_TTL = 7200
+
+
+def check_appointment_reader(password, token):
+    if token:
+        with _APPOINTMENT_READ_LOCK:
+            expires = _APPOINTMENT_READ_TOKENS.get(hashlib.sha256(token.encode()).hexdigest(), 0)
+        if expires > time.time():
+            return
+        raise HTTPException(401, "正式預約檢視授權已到期，請重新登入")
+    check_admin(password)
+
+
+@app.post("/api/admin/appointments/read-session")
+async def create_appointment_read_session(payload: dict):
+    password = payload.get("password")
+    if not isinstance(password, str) or not password:
+        raise HTTPException(401, "密碼錯誤")
+    check_admin(password)
+    # Existing read-only metadata endpoint verifies the Shanlin Firebase host/name.
+    metadata = await admin_get_clinic_config(x_admin_password=password)
+    clinic = metadata.get("clinic", {})
+    if clinic.get("name", "").replace(" ", "").strip() != "山林診所":
+        raise HTTPException(503, "正式資料來源並非山林診所")
+    now = time.time()
+    with _APPOINTMENT_READ_LOCK:
+        for digest, expires in list(_APPOINTMENT_READ_TOKENS.items()):
+            if expires <= now:
+                _APPOINTMENT_READ_TOKENS.pop(digest, None)
+        if len(_APPOINTMENT_READ_TOKENS) >= 1024:
+            raise HTTPException(503, "檢視工作階段已滿，請稍後重試")
+        token = secrets.token_urlsafe(36)
+        _APPOINTMENT_READ_TOKENS[hashlib.sha256(token.encode()).hexdigest()] = now + _APPOINTMENT_READ_TTL
+    return JSONResponse({"clinicId": "shanlin", "readToken": token,
+                         "expiresIn": _APPOINTMENT_READ_TTL},
+                        headers={"Cache-Control": "no-store"})
