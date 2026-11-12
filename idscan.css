@@ -1,0 +1,34 @@
+/* DOUBTS：身分證掃描模組，限定 idscan 前綴，不影響原語音和表單。 */
+#doubts-idscan-root { position: fixed; inset:0; z-index: 2147483000; display:none; align-items:center; justify-content:center; padding: env(safe-area-inset-top,12px) 12px env(safe-area-inset-bottom,12px); background:rgba(16,36,49,.76); box-sizing:border-box; }
+#doubts-idscan-root * { box-sizing:border-box; }
+#doubts-idscan-root.is-open { display:flex; }
+#doubts-idscan-root .ids-panel { width:min(100%,520px); max-height:min(96dvh,940px); overflow:auto; overscroll-behavior:contain; background:#f8fbfd; border-radius:18px; color:#1b3b50; box-shadow:0 18px 55px rgba(0,0,0,.25); font-family:system-ui,-apple-system,'PingFang TC','Noto Sans TC',sans-serif; }
+#doubts-idscan-root .ids-top { display:flex; align-items:center; gap:10px; justify-content:space-between; background:#8BA8BA; padding:14px 18px; }
+#doubts-idscan-root .ids-top strong {font-size:22px;line-height:1.4;color:#173c50}
+#doubts-idscan-root .ids-body { padding:18px; display:grid; gap:14px; }
+#doubts-idscan-root p {font-size:18px; line-height:1.5; margin:0}
+#doubts-idscan-root label {font-size:18px; font-weight:700; display:block; margin:0 0 5px}
+#doubts-idscan-root input:not([type=file]):not([type=checkbox]) {display:block;width:100%;border:2px solid #9dbacb;border-radius:12px;background:#fff;color:#1b3b50;padding:12px;font-size:21px;min-height:56px}
+#doubts-idscan-root input:focus-visible, #doubts-idscan-root button:focus-visible, .doubts-idscan-entry:focus-visible {outline:3px solid #e1a33e; outline-offset:2px}
+#doubts-idscan-root .ids-help {font-size:16px;color:#365c73}
+#doubts-idscan-root .ids-error {color:#a02735;font-weight:700;font-size:17px;white-space:pre-wrap}
+#doubts-idscan-root button {font-family:inherit;cursor:pointer;min-height:54px;padding:10px 16px;border-radius:12px;font-size:19px;font-weight:700;border:2px solid #9ebccc;background:white;color:#1b3b50}
+#doubts-idscan-root button.ids-primary { background:#365c73;color:#fff;border-color:#365c73;}
+#doubts-idscan-root button:disabled {opacity:.48;cursor:not-allowed}
+#doubts-idscan-root .ids-x {width:48px;min-width:48px;min-height:48px;padding:2px}
+#doubts-idscan-root .ids-actions {display:flex;flex-wrap:wrap;gap:10px}
+#doubts-idscan-root .ids-actions button {flex:1 1 180px}
+#doubts-idscan-root .ids-privacy {border:1px solid #bdceda; border-radius:12px;padding:12px;background:#edf5f8;font-size:16px;line-height:1.45}
+#doubts-idscan-root .ids-status {font-size:17px;font-weight:600;min-height:24px}
+#doubts-idscan-root .ids-check {display:flex;align-items:start;gap:10px;font-size:17px;line-height:1.5;font-weight:600}
+#doubts-idscan-root .ids-check input {width:24px;height:24px;flex:none;accent-color:#365c73;margin-top:2px}
+#doubts-idscan-root .ids-fields {display:grid;gap:10px}
+#doubts-idscan-root .ids-fields[hidden], #doubts-idscan-root .ids-start[hidden], #doubts-idscan-root .ids-check[hidden] {display:none}
+#doubts-idscan-root .ids-photo {font-size:15px;border:2px dashed #a8c0ce;padding:10px;border-radius:14px;color:#476a7f}
+#doubts-idscan-root .ids-photo img {display:block;max-height:148px;max-width:100%;margin:0 auto;object-fit:contain;border-radius:8px}
+#doubts-idscan-root .ids-start {display:grid;gap:12px}
+.doubts-idscan-entry {display:block;min-height:56px!important;background:#365c73!important;color:#fff!important;border:2px solid #365c73!important;border-radius:14px!important;padding:10px 16px!important;font-size:19px!important;font-weight:700!important;cursor:pointer!important;}
+.doubts-idscan-entry .ids-sub {font-size:14px;display:block;font-weight:500;opacity:.95}
+#chat-body .doubts-idscan-entry {margin:12px 0 2px;width:100%;}
+#bookingForm .doubts-idscan-entry {width:100%;margin:8px 0 20px}
+@media(max-width:450px){#doubts-idscan-root{padding:6px}#doubts-idscan-root .ids-panel{max-height:98dvh;border-radius:14px}#doubts-idscan-root .ids-top{padding:12px}#doubts-idscan-root .ids-body{padding:12px}#doubts-idscan-root .ids-top strong{font-size:20px}#doubts-idscan-root p{font-size:18px}#doubts-idscan-root .ids-actions button{flex:1 1 100%}}
