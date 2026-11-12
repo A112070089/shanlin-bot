@@ -1,0 +1,150 @@
+"""Flexible, conservative XLSX parser for health-check price sheets.
+
+No patient files and no macros; all parsed items need staff review before publication.
+"""
+from __future__ import annotations
+
+from io import BytesIO
+from hashlib import sha256
+import re
+from zipfile import ZipFile, BadZipFile
+from openpyxl import load_workbook
+
+CATEGORIES = [
+    {"id":"cardiovascular", "name":"心臟與血管"},
+    {"id":"pulmonary", "name":"肺部與呼吸"},
+    {"id":"hepatobiliary_gastrointestinal", "name":"肝膽與腸胃"},
+    {"id":"renal_urology", "name":"腎臟與泌尿"},
+    {"id":"other_value_added", "name":"抽血與全身健康"},
+]
+
+ALIASES = {
+    "name": ["細項名稱", "檢查名稱", "健檢名稱", "服務名稱", "醫療服務名稱", "項目名稱", "檢查項目", "細項", "品項", "項目"],
+    "price": ["價格", "收費金額", "收費標準", "費用", "定價", "金額", "收費", "價錢"],
+    "description": ["臨床上可提供的參考意義", "臨床意義", "檢查內容", "檢查說明", "參考意義", "用途", "備註", "說明"],
+    "group": ["檢查分類", "健檢分類", "分類", "類別", "科別", "項目"],
+}
+
+def clean(v):
+    return re.sub(r"\s+", " ", str(v if v is not None else "")).strip()
+
+
+def detect_header(ws):
+    """Return header position/field cols; never guess price from bare numbers."""
+    best = None
+    for rownum in range(1, min(ws.max_row, 22) + 1):
+        cells = [(col, clean(ws.cell(rownum, col).value)) for col in range(1, min(ws.max_column, 30) + 1)]
+        used = set(); found = {}
+        for field in ("name", "price", "description", "group"):
+            for col, label in cells:
+                if col in used or not label: continue
+                match = any(label == a for a in ALIASES[field])
+                if match:
+                    # '項目' is group only if an explicit subitem column exists.
+                    found[field] = col; used.add(col); break
+        # Original format: 項目, 細項名稱, 臨床..., 價格: treat 項目 as group.
+        if found.get("name") and found.get("group") and clean(ws.cell(rownum, found["name"]).value) == "項目":
+            if clean(ws.cell(rownum, found["group"]).value) not in ("項目", "分類", "類別"):
+                pass
+        if "price" not in found or "name" not in found: continue
+        score = 4 + int("group" in found) + int("description" in found)
+        if best is None or score > best[0]: best = (score, rownum, found)
+    if best:
+        _, header, fields = best
+        # If '項目' was claimed as name, but another explicit name column exists,
+        # repoint name to the more precise field and group to 項目.
+        hdr = {col:clean(ws.cell(header,col).value) for col in range(1,min(ws.max_column,30)+1)}
+        more_precise = next((c for c,v in hdr.items() if v in ALIASES["name"] and v != "項目"), None)
+        item_col = next((c for c,v in hdr.items() if v=="項目"), None)
+        if more_precise and item_col and more_precise != item_col:
+            fields["name"] = more_precise; fields["group"] = item_col
+        return header, fields
+    return None, {}
+
+
+def category_guess(group, name):
+    text = group + " " + name
+    if re.search(r"肺|呼吸|氣管|胸部|哮喘", text): return "pulmonary"
+    if re.search(r"心臟|心電|血管|動脈|靜脈|心力|心血管|ABI|TBI|LDL", text, re.I): return "cardiovascular"
+    if re.search(r"肝|膽|胰|胃|腸|消化|纖維化", text): return "hepatobiliary_gastrointestinal"
+    if re.search(r"腎|泌尿|尿液|尿酸|膀胱|eGFR|BUN", text, re.I): return "renal_urology"
+    return "other_value_added"
+
+
+def price_from_cell(cell):
+    if cell is None or cell.value is None: return None, "缺少價格"
+    if cell.data_type == "f": return None, "原始價格為 Excel 公式，需人工確認後輸入定價"
+    raw = clean(cell.value).replace(",", "").replace("NT$", "").replace("＄", "").replace("元", "").replace("$", "")
+    if not re.fullmatch(r"\d+(?:\.0+)?", raw): return None, "價格不是有效的非負整數"
+    number = int(float(raw))
+    if number > 10_000_000: return None, "價格超過允許範圍"
+    return number, ""
+
+
+def parse_xlsx(content: bytes, source_name: str = "clinic.xlsx") -> dict:
+    if len(content) > 5*1024*1024: raise ValueError("Excel 不可超過 5 MB")
+    if not content.startswith(b"PK"): raise ValueError("只接受 .xlsx 檔案")
+    try:
+        with ZipFile(BytesIO(content)) as z:
+            if len(z.infolist()) > 200: raise ValueError("Excel 壓縮檔內容過多")
+            if sum(x.file_size for x in z.infolist()) > 28*1024*1024:
+                raise ValueError("Excel 解壓縮大小超過安全限制")
+    except BadZipFile as exc:
+        raise ValueError("不是有效的 Excel 檔案") from exc
+    wb = load_workbook(BytesIO(content), read_only=False, data_only=False, keep_links=False)
+    if len(wb.worksheets) > 20: raise ValueError("工作表超過 20 張，請分批匯入")
+    results = []; warnings = []
+    for ws in wb.worksheets:
+        if ws.max_row > 2400 or ws.max_column > 40:
+            raise ValueError(f"{ws.title} 的範圍過大，請簡化後再匯入")
+        start, fields = detect_header(ws)
+        if not start:
+            warnings.append(f"{ws.title}：找不到檢查名稱與價格欄位，已略過")
+            continue
+        group_col=fields.get("group"); name_col=fields["name"]; price_col=fields["price"]
+        desc_col=fields.get("description")
+        price_merges={}
+        for area in ws.merged_cells.ranges:
+            if area.min_col<=price_col<=area.max_col and area.min_row>start and area.max_row>area.min_row:
+                for n in range(area.min_row,area.max_row+1):
+                    price_merges[n]=(area.min_row,area.max_row)
+        current_group=""; row=start+1
+        while row<=ws.max_row:
+            if group_col:
+                g=clean(ws.cell(row,group_col).value)
+                if g: current_group=g
+            name=clean(ws.cell(row,name_col).value)
+            merge=price_merges.get(row)
+            if merge and merge[0] != row:
+                row+=1;continue
+            if not name:
+                row+=1;continue
+            end=merge[1] if merge else row
+            is_package=end>row
+            components=[]; descriptions=[]
+            for r in range(row,end+1):
+                n=clean(ws.cell(r,name_col).value)
+                d=clean(ws.cell(r,desc_col).value) if desc_col else ""
+                if n and is_package:components.append({"name":n,"meaning":d})
+                if d and d not in descriptions:descriptions.append(d)
+            actual_name=(current_group or name)+"（套組）" if is_package else name
+            price,issue=price_from_cell(ws.cell(row,price_col))
+            checksum=sha256(f"{ws.title}|{row}|{end}|{actual_name}".encode()).hexdigest()[:12]
+            results.append({
+                "id":"item_"+checksum,"name":actual_name,"type":"package" if is_package else "single",
+                "categoryId":category_guess(current_group,actual_name),
+                "description":"\n".join(descriptions)[:4000],
+                "components":components[:100],"price":price,
+                "originalGroup":current_group,"sourceSheet":ws.title,"sourceRows":f"{row}-{end}" if end>row else str(row),
+                "reviewed":False,"enabled":False,"issue":issue,
+            })
+            row=end+1
+    if not results: raise ValueError("無法辨識有效檢查項目；請確認 Excel 含有名稱與價格欄位")
+    if len(results)>1000: raise ValueError("檢查項目超過 1000 筆")
+    return {
+        "schemaVersion":"clinic-catalog/v1","sourceFilename":source_name[:180],
+        "categories":CATEGORIES,"items":results,"warnings":warnings,
+        "status":"draft_not_published",
+        "statistics":{"count":len(results),"packages":sum(x["type"]=="package" for x in results),
+                      "priced":sum(isinstance(x["price"],int) for x in results)},
+    }
