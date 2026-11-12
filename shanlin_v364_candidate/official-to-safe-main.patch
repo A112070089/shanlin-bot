@@ -1,0 +1,285 @@
+--- official-1b5714/main.py
++++ candidate-v364/main.py
+@@ -1,3 +1,6 @@
++from shanlin_v363_readonly import check_staging_configuration as _v363_check_before_existing_app_import
++_v363_check_before_existing_app_import()
++
+ import os
+ import json
+ import hmac
+@@ -19,9 +22,10 @@
+ 
+ app = FastAPI(title="山林診所 LINE Bot API")
+ 
++# STAGING: allow only explicitly configured LIFF/website origins.
+ app.add_middleware(
+     CORSMiddleware,
+-    allow_origins=["*"],
++    allow_origins=[origin.strip() for origin in os.getenv('SHANLIN_ALLOWED_ORIGINS', '').split(',') if origin.strip()],
+     allow_methods=["*"],
+     allow_headers=["*"],
+ )
+@@ -315,8 +319,10 @@
+     body = await request.body()
+     signature = request.headers.get("X-Line-Signature", "")
+ 
+-    if CHANNEL_SECRET and not verify_signature(body, signature):
+-        raise HTTPException(status_code=400, detail="Invalid signature")
++    if not CHANNEL_SECRET:
++        raise HTTPException(status_code=503, detail='LINE webhook 金鑰尚未設定')
++    if not verify_signature(body, signature):
++        raise HTTPException(status_code=400, detail='Invalid signature')
+ 
+     data = json.loads(body)
+ 
+@@ -361,11 +367,14 @@
+     keywords_address = ["地址", "位置", "在哪", "怎麼去"]
+ 
+     if any(k in text for k in keywords_query):
++        from reminder_secure_v35 import Settings, _verified_binding
+         appt_data = None
++        binding_settings = Settings.load()
+         try:
+             all_appts = db.reference("appointments").get() or {}
+             for id_num, data in all_appts.items():
+-                if isinstance(data, dict) and data.get("lineUserId") == user_id:
++                if (isinstance(data,dict) and data.get('lineUserId') == user_id
++                        and _verified_binding(data,str(id_num),binding_settings)):
+                     appt_data = data
+                     break
+         except Exception as e:
+@@ -456,51 +465,15 @@
+ #  LIFF 身分驗證綁定 API
+ # ══════════════════════════════════════
+ class VerifyRequest(BaseModel):
+-    id_number:    str
+-    phone:        str
+-    line_user_id: str
+-
+-
+-@app.post("/api/liff/verify")
+-async def liff_verify(req: VerifyRequest):
+-    id_num = req.id_number.upper().strip()
+-    phone  = req.phone.strip()
+-
+-    try:
+-        ref  = db.reference(f"appointments/{id_num}")
+-        data = ref.get()
+-    except Exception:
+-        raise HTTPException(status_code=404, detail="查無資料")
+-
+-    if not data:
+-        raise HTTPException(status_code=404, detail="查無此身分證資料")
+-
+-    stored_phone = str(data.get("phone", ""))
+-    if not stored_phone.startswith("0"):
+-        stored_phone = "0" + stored_phone
+-    if stored_phone != phone:
+-        raise HTTPException(status_code=401, detail="手機號碼不符")
+-
+-    ref.update({"lineUserId": req.line_user_id, "boundAt": datetime.now().isoformat()})
+-
+-    await push_message(req.line_user_id, [
+-        {
+-            "type": "text",
+-            "text": (
+-                f"✅ LINE 帳號綁定成功！\n\n"
+-                f"您好，{data.get('name', '')}！\n"
+-                f"之後健檢前我們會主動提醒您禁食注意事項，\n"
+-                f"健檢完成後也可以在 LINE 查看報告 📋"
+-            )
+-        }
+-    ])
+-
+-    return {
+-        "name": data.get("name"),
+-        "date": data.get("date"),
+-        "time": data.get("time"),
+-        "plan": data.get("plan"),
+-    }
++    # Left in place for import compatibility. This shape cannot authenticate LINE.
++    id_number: str
++    phone: str
++    line_user_id: str = ''
++
++
++@app.post('/api/liff/verify')
++async def liff_verify():
++    raise HTTPException(status_code=410, detail='舊版不安全的 LINE 綁定 API 已停用，請使用 v3.5 安全綁定')
+ 
+ 
+ # ══════════════════════════════════════
+@@ -512,111 +485,71 @@
+     plan:         str
+     date:         str
+     time_slot:    str
+-    line_user_id: str = ""
++    line_user_id: str = ""  # DEPRECATED: ignored, never trusted
++    line_access_token: str = ""  # LINE LIFF: verified against channel on the backend
+     birth:        str = ""
+     id_number:    str = ""
+     veg:          str = "葷"
+ 
+ 
+-@app.post("/api/appointment/book")
++@app.post('/api/appointment/book')
+ async def book_appointment(req: AppointmentRequest):
+-    plan_names = {
+-        "A": "A 方案（腦肺方案）",
+-        "B": "B 方案（腹部方案）",
+-        "C": "C 方案（骨密肌力方案）"
+-    }
+-
++    import re
++    import uuid
++
++    from reminder_secure_v35 import _verified_line_user
++    channel = os.getenv('REMINDER_V35_LIFF_CHANNEL_ID', '')
++    if not req.line_access_token or not await _verified_line_user(req.line_access_token, channel):
++        raise HTTPException(status_code=403, detail='請從 LINE 重新登入並完成身分驗證')
+     phone = req.phone.strip()
+-    if not phone.startswith("0"):
+-        phone = "0" + phone
+-
+-    try:
+-        all_appts = db.reference("appointments").get() or {}
+-        target_key = None
+-        for id_num, data in all_appts.items():
+-            if isinstance(data, dict):
+-                stored = str(data.get("phone", ""))
+-                if not stored.startswith("0"):
+-                    stored = "0" + stored
+-                if stored == phone:
+-                    target_key = id_num
+-                    break
+-
++    if phone and not phone.startswith('0'):
++        phone = '0' + phone
++    ident = req.id_number.upper().strip()
++    if not re.fullmatch(r'09[0-9]{8}', phone) or (ident and not re.fullmatch(r'[A-Z][12][0-9]{8}', ident)):
++        raise HTTPException(status_code=422, detail='預約資料格式不正確')
++    if not req.name.strip() or not req.date or not req.time_slot or req.plan not in ('A','B','C'):
++        raise HTTPException(status_code=422, detail='請確認預約資料')
++
++    # Do not allow anonymous bookings to overwrite a different patient's record.
++    try:
++        existing = db.reference('appointments').get() or {}
++        if not isinstance(existing,dict):
++            raise TypeError('Invalid booking database shape')
++        if any(isinstance(v,dict) and (
++                (str(v.get('phone') or '').strip().lstrip('0') == phone.lstrip('0'))
++                or (ident and str(v.get('idNumber') or '').upper() == ident)
++        ) for v in existing.values()):
++            raise HTTPException(status_code=409, detail='已有相符預約，請聯絡診所確認，勿重複送出')
++        booking_id = uuid.uuid4().hex
+         record = {
+-            "name":     req.name,
+-            "phone":    phone,
+-            "plan":     req.plan,
+-            "date":     req.date,
+-            "time":     req.time_slot,
+-            "bookedAt": datetime.now().isoformat(),
+-            "source":   "LINE",
++            'name': req.name.strip(), 'phone':phone, 'plan':req.plan,
++            'date':req.date, 'time':req.time_slot,
++            'bookedAt': datetime.now().isoformat(), 'source':'LINE',
++            'bookingRefV352':booking_id,
+         }
+-        if req.birth:
+-            record["birth"] = req.birth
+-        if req.id_number:
+-            record["idNumber"] = req.id_number.upper()
+-        if req.veg:
+-            record["veg"] = req.veg
+-        if req.line_user_id:
+-            record["lineUserId"] = req.line_user_id
+-
+-        if target_key:
+-            db.reference(f"appointments/{target_key}").update(record)
+-        else:
+-            new_key = req.id_number.upper().strip() if req.id_number else f"LIFF_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+-            db.reference(f"appointments/{new_key}").set(record)
+-
+-    except Exception as e:
+-        print(f"book error: {e}")
+-
+-    if req.line_user_id:
+-        await push_message(req.line_user_id, [{
+-            "type": "text",
+-            "text": (
+-                f"✅ 預約成功！\n\n"
+-                f"📋 方案：{plan_names.get(req.plan, req.plan)}\n"
+-                f"📅 日期：{req.date}\n"
+-                f"⏰ 時段：{req.time_slot}\n\n"
+-                f"健檢前我們會提醒您禁食注意事項 😊"
+-            )
+-        }])
+-
+-    return {"status": "success", "message": "預約成功"}
++        if req.birth: record['birth']=req.birth
++        if ident: record['idNumber']=ident
++        if req.veg: record['veg']=req.veg
++        # Do not trust req.line_user_id from the browser and NEVER push to it.
++        key = ident or 'LIFF_'+booking_id
++        ref = db.reference('appointments').child(key)
++        saved = ref.transaction(lambda prior: prior if prior is not None else record)
++        if not isinstance(saved,dict) or saved.get('bookingRefV352') != booking_id:
++            raise HTTPException(status_code=409, detail='已有相符預約，請聯絡診所確認')
++    except HTTPException:
++        raise
++    except Exception:
++        raise HTTPException(status_code=503, detail='預約儲存暫時無法完成，請稍後再試') from None
++    return {'status':'success','message':'預約已送出；LINE 通知須另外完成安全綁定'}
+ 
+ 
+ # ══════════════════════════════════════
+ #  診前提醒
+ # ══════════════════════════════════════
++# DOUBTS_V35_LINE_REMINDERS_INTEGRATED (legacy endpoint disabled; cron must use v35 authenticated endpoint)
+ @app.post("/api/reminder/send")
+ async def send_reminders():
+-    import datetime as dt
+-    tomorrow = (dt.date.today() + dt.timedelta(days=1)).isoformat()
+-
+-    try:
+-        all_appts = db.reference("appointments").get() or {}
+-    except Exception:
+-        return {"status": "error", "message": "Firebase 連線失敗"}
+-
+-    sent = 0
+-    for id_num, data in all_appts.items():
+-        if not isinstance(data, dict):
+-            continue
+-        if data.get("date") == tomorrow and data.get("lineUserId"):
+-            await push_message(data["lineUserId"], [{
+-                "type": "text",
+-                "text": (
+-                    f"⏰ 健檢提醒\n\n"
+-                    f"{data.get('name', '您好')}，明天 {tomorrow} 您有健檢預約！\n\n"
+-                    f"📌 注意事項：\n"
+-                    f"• 今晚 10 點後請禁食禁水\n"
+-                    f"• 請攜帶健保卡與身分證\n"
+-                    f"• 穿著輕便衣物\n\n"
+-                    f"健檢時間：{data.get('time', '')}，請準時到達 🏥"
+-                )
+-            }])
+-            sent += 1
+-
+-    return {"status": "success", "sent": sent}
++    raise HTTPException(status_code=410, detail="舊版提醒入口已停用；請改用授權排程 v3.5")
+ 
+ 
+ # ══════════════════════════════════════
+@@ -1002,3 +935,12 @@
+ @app.get("/")
+ async def root():
+     return {"status": "ok", "service": "山林診所 LINE Bot API"}
++
++# DOUBTS_V35_LINE_REMINDERS_INTEGRATED
++from reminder_secure_v35 import router as _reminder_v35_router
++app.include_router(_reminder_v35_router)
++
++
++# DOUBTS v3.6.3: attached ONLY to this pinned, isolated test copy.
++from shanlin_v363_readonly import attach_staging_router as _attach_v363
++_attach_v363(app, db)

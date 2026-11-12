@@ -1,0 +1,946 @@
+from shanlin_v363_readonly import check_staging_configuration as _v363_check_before_existing_app_import
+_v363_check_before_existing_app_import()
+
+import os
+import json
+import hmac
+import hashlib
+import base64
+from datetime import datetime
+
+from fastapi import FastAPI, Request, HTTPException, Header, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Optional
+import io
+
+import httpx
+import firebase_admin
+from firebase_admin import credentials, db
+from openpyxl import load_workbook
+
+app = FastAPI(title="山林診所 LINE Bot API")
+
+# STAGING: allow only explicitly configured LIFF/website origins.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in os.getenv('SHANLIN_ALLOWED_ORIGINS', '').split(',') if origin.strip()],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+CHANNEL_SECRET       = os.environ.get("CHANNEL_SECRET", "")
+CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
+FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
+LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
+LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
+DIFY_API_URL         = "https://api.dify.ai/v1"
+LINE_API             = "https://api.line.me/v2/bot/message"
+
+SELFPAY_KEY_PREFIX = "SELFPAY::"
+
+firebase_cred_json = os.environ.get("FIREBASE_CREDENTIALS", "")
+try:
+    if firebase_cred_json and firebase_cred_json != "{}" and not firebase_admin._apps:
+        cred_dict = json.loads(firebase_cred_json)
+        if cred_dict.get("type") == "service_account":
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_URL})
+except Exception as e:
+    print(f"Firebase init skipped: {e}")
+
+
+def verify_signature(body: bytes, signature: str) -> bool:
+    hash_ = hmac.new(CHANNEL_SECRET.encode(), body, hashlib.sha256).digest()
+    expected = base64.b64encode(hash_).decode()
+    return hmac.compare_digest(expected, signature)
+
+
+async def push_message(user_id: str, messages: list):
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            f"{LINE_API}/push",
+            headers={"Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"},
+            json={"to": user_id, "messages": messages}
+        )
+        print(f"Push status: {res.status_code}, body: {res.text}")
+
+
+async def reply_message(reply_token: str, messages: list):
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            f"{LINE_API}/reply",
+            headers={"Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"},
+            json={"replyToken": reply_token, "messages": messages}
+        )
+        print(f"Reply status: {res.status_code}, body: {res.text}")
+
+
+def make_liff_button(label: str, url: str) -> dict:
+    return {
+        "type": "template",
+        "altText": label,
+        "template": {
+            "type": "buttons",
+            "text": label,
+            "actions": [{
+                "type": "uri",
+                "label": label[:20],
+                "uri": url
+            }]
+        }
+    }
+
+
+def check_admin(x_admin_password: Optional[str]):
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="管理密碼尚未設定")
+    if not isinstance(x_admin_password, str) or not hmac.compare_digest(x_admin_password, ADMIN_PASSWORD):
+        raise HTTPException(status_code=401, detail="密碼錯誤")
+
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 山林診所基本資料：供舊後台與頤典公版讀取的單一資料來源
+# 僅操作 Shanlin Firebase 的 booking_config/clinic，不碰病患資料。
+# 未設定前，管理 API 不會假裝已設定，也不會自動寫入預設值。
+# ═══════════════════════════════════════════════════════════════════
+from urllib.parse import urlparse as _clinic_urlparse
+from datetime import date as _clinic_date, timezone as _clinic_timezone
+import re as _clinic_re
+
+SHANLIN_CLINIC_NAME = "山林診所"
+# This value is the Shanlin Firebase RTDB host, NOT a credential.
+SHANLIN_FIREBASE_HOST = "shanlin-clinic-default-rtdb.firebaseio.com"
+CLINIC_DEFAULTS = {
+    "name": SHANLIN_CLINIC_NAME,
+    "phone": "02-2933-2010",
+    "address": "臺北市文山區羅斯福路六段407號2樓",
+    "addressNote": "由車前路門口上樓",
+    "hours": "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
+             "週六 早上 8:30-12:30\n週日公休\n國定假日門診半天",
+    # No date/time is invented. Clinic staff can enter confirmed appointment slots.
+    "elderlyDates": [],
+    "elderlyTimes": [],
+}
+_CLINIC_PUBLIC_FIELDS = tuple(CLINIC_DEFAULTS)
+
+
+def _shanlin_config_ref():
+    """Fail closed rather than read/write another clinic's Firebase project."""
+    parsed = _clinic_urlparse(FIREBASE_URL)
+    if (parsed.scheme != "https" or parsed.hostname != SHANLIN_FIREBASE_HOST
+            or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.path not in ("", "/")):
+        raise HTTPException(
+            status_code=503,
+            detail="山林診所 Firebase 來源尚未確認；已停止診所設定存取",
+        )
+    try:
+        return db.reference("booking_config/clinic")
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所 Firebase 尚無法使用") from None
+
+
+def _check_shanlin_clinic_admin(password):
+    # New writes must not inherit the legacy code's hard-coded fallback password.
+    if not os.environ.get("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=503, detail="請先於 Railway 安全設定 ADMIN_PASSWORD")
+    check_admin(password)
+
+
+def _stored_shanlin_config():
+    ref = _shanlin_config_ref()
+    try:
+        saved = ref.get()
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所設定讀取失敗") from None
+    if saved is None:
+        return ref, None
+    if (not isinstance(saved, dict)
+            or saved.get("clinicId") not in (None, "shanlin")
+            or str(saved.get("name", "")).strip() != SHANLIN_CLINIC_NAME):
+        raise HTTPException(
+            status_code=409,
+            detail="Firebase 已有無法確認歸屬的診所設定；為避免資料混用，已停止存取",
+        )
+    return ref, saved
+
+
+def _clinic_public_view(saved):
+    public = dict(CLINIC_DEFAULTS)
+    if saved:
+        for key in _CLINIC_PUBLIC_FIELDS:
+            if key in saved and saved[key] is not None:
+                public[key] = saved[key]
+    return public
+
+
+class ShanlinClinicSettings(BaseModel):
+    name: str = SHANLIN_CLINIC_NAME
+    phone: str
+    address: str
+    addressNote: str = ""
+    hours: str = ""
+    elderlyDates: list[str] = []
+    elderlyTimes: list[str] = []
+
+
+@app.get("/api/clinic-config")
+async def public_shanlin_clinic_config():
+    """Public business-only fields, never passwords or patient records."""
+    _, saved = _stored_shanlin_config()
+    return {
+        "status": "success",
+        "clinic": _clinic_public_view(saved),
+        "configured": saved is not None,
+    }
+
+
+@app.get("/api/admin/clinic-config")
+async def admin_get_shanlin_clinic_config(x_admin_password: Optional[str] = Header(None)):
+    _check_shanlin_clinic_admin(x_admin_password)
+    _, saved = _stored_shanlin_config()
+    return {
+        # Empty until FIRST verified save, so a tenant bridge cannot mistake
+        # a default template for an actual saved Shanlin clinic configuration.
+        "clinic": _clinic_public_view(saved) if saved is not None else {},
+        "defaults": dict(CLINIC_DEFAULTS),
+        "configured": saved is not None,
+    }
+
+
+@app.put("/api/admin/clinic-config")
+async def admin_save_shanlin_clinic_config(
+        settings: ShanlinClinicSettings,
+        x_admin_password: Optional[str] = Header(None)):
+    _check_shanlin_clinic_admin(x_admin_password)
+    body = settings.model_dump() if hasattr(settings, "model_dump") else settings.dict()
+    name = body["name"].strip()
+    if name != SHANLIN_CLINIC_NAME:
+        raise HTTPException(status_code=400, detail="此後台只允許設定山林診所")
+    phone = body["phone"].strip()
+    address = body["address"].strip()
+    address_note = body["addressNote"].strip()
+    hours = body["hours"].strip()
+    if not _clinic_re.fullmatch(r"[0-9+()\-\s]{6,40}", phone):
+        raise HTTPException(status_code=400, detail="診所電話格式不正確")
+    if not address or len(address) > 250:
+        raise HTTPException(status_code=400, detail="診所地址須填寫，且不可超過 250 字")
+    if len(address_note) > 500 or len(hours) > 1000:
+        raise HTTPException(status_code=400, detail="地址補充或門診時間文字過長")
+    dates = body["elderlyDates"]
+    times = body["elderlyTimes"]
+    if len(dates) > 100 or len(times) > 30:
+        raise HTTPException(status_code=400, detail="日期或時段數量超過上限")
+    clean_dates = set()
+    for d in dates:
+        d = d.strip()
+        if not _clinic_re.fullmatch(r"\d{4}-\d{2}-\d{2}", d):
+            raise HTTPException(status_code=400, detail="日期須為 YYYY-MM-DD")
+        try:
+            _clinic_date.fromisoformat(d)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="存在無效的預約日期") from None
+        clean_dates.add(d)
+    clean_times = set()
+    for t in times:
+        t = t.strip()
+        if not _clinic_re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", t):
+            raise HTTPException(status_code=400, detail="時段須為 HH:MM")
+        clean_times.add(t)
+
+    # Require the expected Firebase instance and prevent overwriting an
+    # existing record belonging to a different or unverified tenant.
+    ref, _ = _stored_shanlin_config()
+    updates = {
+        "clinicId": "shanlin",
+        "name": SHANLIN_CLINIC_NAME,
+        "phone": phone,
+        "address": address,
+        "addressNote": address_note,
+        "hours": hours,
+        "elderlyDates": sorted(clean_dates),
+        "elderlyTimes": sorted(clean_times),
+        "updatedAt": datetime.now(_clinic_timezone.utc).isoformat(timespec="seconds"),
+    }
+    try:
+        # Update only these clinic fields; never set the database root or
+        # overwrite appointments, booking_config/questions or other subtrees.
+        ref.update(updates)
+    except Exception:
+        raise HTTPException(status_code=503, detail="山林診所設定儲存失敗") from None
+    return {
+        "status": "success",
+        "clinic": _clinic_public_view(updates),
+        "configured": True,
+    }
+
+
+# ══════════════════════════════════════
+#  LINE Webhook
+# ══════════════════════════════════════
+async def call_dify(user_id: str, message: str) -> str:
+    """呼叫 Dify AI，回傳回覆文字"""
+    if not DIFY_API_KEY:
+        return "AI 助理目前無法使用，請稍後再試。"
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            res = await client.post(
+                f"{DIFY_API_URL}/chat-messages",
+                headers={
+                    "Authorization": f"Bearer {DIFY_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "inputs": {},
+                    "query": message,
+                    "response_mode": "blocking",
+                    "conversation_id": "",
+                    "user": user_id
+                }
+            )
+            if res.status_code == 200:
+                data = res.json()
+                return data.get("answer", "抱歉，我暫時無法回答這個問題。")
+            else:
+                print(f"Dify error: {res.status_code}, {res.text}")
+                return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+    except Exception as e:
+        print(f"Dify exception: {e}")
+        return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+
+
+@app.post("/webhook")
+async def webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("X-Line-Signature", "")
+
+    if not CHANNEL_SECRET:
+        raise HTTPException(status_code=503, detail='LINE webhook 金鑰尚未設定')
+    if not verify_signature(body, signature):
+        raise HTTPException(status_code=400, detail='Invalid signature')
+
+    data = json.loads(body)
+
+    for event in data.get("events", []):
+        event_type  = event.get("type")
+        user_id     = event.get("source", {}).get("userId", "")
+        reply_token = event.get("replyToken", "")
+
+        if event_type == "follow":
+            await handle_follow(user_id, reply_token)
+        elif event_type == "message" and event["message"]["type"] == "text":
+            text = event["message"]["text"].strip()
+            await handle_text(user_id, reply_token, text)
+
+    return JSONResponse({"status": "ok"})
+
+
+async def handle_follow(user_id: str, reply_token: str):
+    await reply_message(reply_token, [
+        {
+            "type": "text",
+            "text": (
+                "感謝您成為山林診所好友 💗\n\n"
+                "⭐ 門診時間\n"
+                "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
+                "週六 早上 8:30-12:30\n"
+                "週日公休\n\n"
+                "⭐ 診所位置：台北市文山區羅斯福路六段 407 號 2 樓\n"
+                "⭐ 連絡電話：02-2933-2010\n\n"
+                "請使用下方選單選擇服務 👇"
+            )
+        }
+    ])
+
+
+async def handle_text(user_id: str, reply_token: str, text: str):
+    keywords_booking = ["預約", "體檢", "健檢", "掛號"]
+    keywords_verify  = ["綁定", "驗證", "身分證"]
+    keywords_query   = ["我的預約", "查詢預約", "預約資料", "預約紀錄", "查預約"]
+    keywords_report  = ["報告", "檢查結果"]
+    keywords_hours   = ["時間", "門診", "幾點"]
+    keywords_address = ["地址", "位置", "在哪", "怎麼去"]
+
+    if any(k in text for k in keywords_query):
+        from reminder_secure_v35 import Settings, _verified_binding
+        appt_data = None
+        binding_settings = Settings.load()
+        try:
+            all_appts = db.reference("appointments").get() or {}
+            for id_num, data in all_appts.items():
+                if (isinstance(data,dict) and data.get('lineUserId') == user_id
+                        and _verified_binding(data,str(id_num),binding_settings)):
+                    appt_data = data
+                    break
+        except Exception as e:
+            print(f"query error: {e}")
+
+        if appt_data:
+            plan_names = {
+                "A": "A 方案（腦肺方案）",
+                "B": "B 方案（腹部方案）",
+                "C": "C 方案（骨密肌力方案）"
+            }
+            await reply_message(reply_token, [{
+                "type": "text",
+                "text": (
+                    f"📋 您的預約資料\n\n"
+                    f"👤 姓名：{appt_data.get('name', '—')}\n"
+                    f"📅 日期：{appt_data.get('date', '—')}\n"
+                    f"⏰ 時段：{appt_data.get('time', '—')}\n"
+                    f"🏥 方案：{plan_names.get(appt_data.get('plan', ''), appt_data.get('plan', '—'))}\n\n"
+                    f"如需修改請撥打 02-2933-2010"
+                )
+            }])
+        else:
+            await reply_message(reply_token, [{
+                "type": "text",
+                "text": "目前查無您的預約紀錄。\n如需預約請說「預約」，或撥打 02-2933-2010 😊"
+            }])
+
+    elif any(k in text for k in keywords_booking):
+        await reply_message(reply_token, [
+            {
+                "type": "text",
+                "text": "您好！請點下方按鈕進行健檢預約 📋"
+            },
+            make_liff_button("📅 立即預約健檢", LIFF_APPT_URL)
+        ])
+
+    elif any(k in text for k in keywords_verify):
+        await reply_message(reply_token, [
+            {
+                "type": "text",
+                "text": (
+                    "如果您已在診所完成預約，\n"
+                    "請點下方按鈕綁定 LINE 帳號，\n"
+                    "之後即可收到禁食提醒與報告通知 🔔"
+                )
+            },
+            make_liff_button("🔐 綁定 LINE 帳號", LIFF_VERIFY_URL)
+        ])
+
+    elif any(k in text for k in keywords_report):
+        await reply_message(reply_token, [
+            {
+                "type": "text",
+                "text": "您的健檢報告可在綁定後查閱，AI 會用白話文解讀紅字數值 📋"
+            },
+            make_liff_button("📄 查看我的報告", LIFF_VERIFY_URL)
+        ])
+
+    elif any(k in text for k in keywords_hours):
+        await reply_message(reply_token, [{
+            "type": "text",
+            "text": (
+                "⭐ 門診時間\n"
+                "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
+                "週六 早上 8:30-12:30\n"
+                "週日公休\n"
+                "國定假日門診半天"
+            )
+        }])
+
+    elif any(k in text for k in keywords_address):
+        await reply_message(reply_token, [{
+            "type": "text",
+            "text": "📍 台北市文山區羅斯福路六段 407 號 2 樓\n（由車前路門口上樓）\n\n📞 02-2933-2010"
+        }])
+
+    else:
+        # 其他問題轉發給 Dify AI 智能回覆
+        ai_reply = await call_dify(user_id, text)
+        await reply_message(reply_token, [{
+            "type": "text",
+            "text": ai_reply
+        }])
+
+
+# ══════════════════════════════════════
+#  LIFF 身分驗證綁定 API
+# ══════════════════════════════════════
+class VerifyRequest(BaseModel):
+    # Left in place for import compatibility. This shape cannot authenticate LINE.
+    id_number: str
+    phone: str
+    line_user_id: str = ''
+
+
+@app.post('/api/liff/verify')
+async def liff_verify():
+    raise HTTPException(status_code=410, detail='舊版不安全的 LINE 綁定 API 已停用，請使用 v3.5 安全綁定')
+
+
+# ══════════════════════════════════════
+#  語音預約 API
+# ══════════════════════════════════════
+class AppointmentRequest(BaseModel):
+    name:         str
+    phone:        str
+    plan:         str
+    date:         str
+    time_slot:    str
+    line_user_id: str = ""  # DEPRECATED: ignored, never trusted
+    line_access_token: str = ""  # LINE LIFF: verified against channel on the backend
+    birth:        str = ""
+    id_number:    str = ""
+    veg:          str = "葷"
+
+
+@app.post('/api/appointment/book')
+async def book_appointment(req: AppointmentRequest):
+    import re
+    import uuid
+
+    from reminder_secure_v35 import _verified_line_user
+    channel = os.getenv('REMINDER_V35_LIFF_CHANNEL_ID', '')
+    if not req.line_access_token or not await _verified_line_user(req.line_access_token, channel):
+        raise HTTPException(status_code=403, detail='請從 LINE 重新登入並完成身分驗證')
+    phone = req.phone.strip()
+    if phone and not phone.startswith('0'):
+        phone = '0' + phone
+    ident = req.id_number.upper().strip()
+    if not re.fullmatch(r'09[0-9]{8}', phone) or (ident and not re.fullmatch(r'[A-Z][12][0-9]{8}', ident)):
+        raise HTTPException(status_code=422, detail='預約資料格式不正確')
+    if not req.name.strip() or not req.date or not req.time_slot or req.plan not in ('A','B','C'):
+        raise HTTPException(status_code=422, detail='請確認預約資料')
+
+    # Do not allow anonymous bookings to overwrite a different patient's record.
+    try:
+        existing = db.reference('appointments').get() or {}
+        if not isinstance(existing,dict):
+            raise TypeError('Invalid booking database shape')
+        if any(isinstance(v,dict) and (
+                (str(v.get('phone') or '').strip().lstrip('0') == phone.lstrip('0'))
+                or (ident and str(v.get('idNumber') or '').upper() == ident)
+        ) for v in existing.values()):
+            raise HTTPException(status_code=409, detail='已有相符預約，請聯絡診所確認，勿重複送出')
+        booking_id = uuid.uuid4().hex
+        record = {
+            'name': req.name.strip(), 'phone':phone, 'plan':req.plan,
+            'date':req.date, 'time':req.time_slot,
+            'bookedAt': datetime.now().isoformat(), 'source':'LINE',
+            'bookingRefV352':booking_id,
+        }
+        if req.birth: record['birth']=req.birth
+        if ident: record['idNumber']=ident
+        if req.veg: record['veg']=req.veg
+        # Do not trust req.line_user_id from the browser and NEVER push to it.
+        key = ident or 'LIFF_'+booking_id
+        ref = db.reference('appointments').child(key)
+        saved = ref.transaction(lambda prior: prior if prior is not None else record)
+        if not isinstance(saved,dict) or saved.get('bookingRefV352') != booking_id:
+            raise HTTPException(status_code=409, detail='已有相符預約，請聯絡診所確認')
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail='預約儲存暫時無法完成，請稍後再試') from None
+    return {'status':'success','message':'預約已送出；LINE 通知須另外完成安全綁定'}
+
+
+# ══════════════════════════════════════
+#  診前提醒
+# ══════════════════════════════════════
+# DOUBTS_V35_LINE_REMINDERS_INTEGRATED (legacy endpoint disabled; cron must use v35 authenticated endpoint)
+@app.post("/api/reminder/send")
+async def send_reminders():
+    raise HTTPException(status_code=410, detail="舊版提醒入口已停用；請改用授權排程 v3.5")
+
+
+# ══════════════════════════════════════
+#  後台管理 API
+# ══════════════════════════════════════
+@app.get("/admin.html", include_in_schema=False)
+async def serve_shanlin_admin_page():
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    admin_file = Path(__file__).resolve().parent / "admin.html"
+    if not admin_file.is_file():
+        raise HTTPException(status_code=404, detail="後台頁面不存在")
+    return FileResponse(admin_file, media_type="text/html")
+
+
+@app.post("/api/admin/login")
+async def admin_login(payload: dict):
+    check_admin(payload.get("password"))
+    return {"status": "ok"}
+
+
+def _extract_self_pay_items(raw: dict) -> list:
+    """把 self_pay_booking 裡的 selfPayItems 整理成一個字串陣列（項目名稱）。
+    Firebase 有時會把陣列存成 {0: ..., 1: ...} 這種物件形式，這裡一併處理。"""
+    items = raw.get("selfPayItems")
+    if not items:
+        return []
+    if isinstance(items, dict):
+        try:
+            items = [items[k] for k in sorted(items.keys(), key=lambda x: str(x))]
+        except Exception:
+            items = list(items.values())
+    result = []
+    for it in items:
+        if isinstance(it, dict):
+            name = it.get("name") or it.get("item") or it.get("itemName") or it.get("title")
+            result.append(str(name) if name else json.dumps(it, ensure_ascii=False))
+        elif it is not None:
+            result.append(str(it))
+    return result
+
+
+@app.get("/api/admin/appointments")
+async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    try:
+        all_appts = db.reference("appointments").get() or {}
+    except Exception:
+        all_appts = {}
+    try:
+        all_selfpay = db.reference("self_pay_booking").get() or {}
+    except Exception:
+        all_selfpay = {}
+
+    def _norm_phone(p):
+        p = str(p or "").strip()
+        if p and not p.startswith("0"):
+            p = "0" + p
+        return p
+
+    # self_pay_booking 的 key 有時候是身分證字號、有時候是手機號碼，不固定，
+    # 所以除了直接用 key 對應之外，再額外用「身分證字號」「手機號碼」欄位本身
+    # 建立索引，兩邊都對不到才算真的沒有自費資料，避免同一個人被拆成
+    # 「appointments 裡沒有自費項目」+「另一筆獨立的純自費」兩筆紀錄
+    selfpay_by_idnumber = {}
+    selfpay_by_phone = {}
+    if isinstance(all_selfpay, dict):
+        for sp_key, sp_val in all_selfpay.items():
+            if not isinstance(sp_val, dict):
+                continue
+            sp_id = str(sp_val.get("idNumber") or "").strip().upper()
+            sp_phone = _norm_phone(sp_val.get("phone"))
+            if sp_id and sp_id not in selfpay_by_idnumber:
+                selfpay_by_idnumber[sp_id] = sp_key
+            if sp_phone and sp_phone not in selfpay_by_phone:
+                selfpay_by_phone[sp_phone] = sp_key
+
+    def _find_selfpay_key(appt_key, appt_data):
+        if isinstance(all_selfpay, dict) and isinstance(all_selfpay.get(appt_key), dict):
+            return appt_key
+        appt_id = str(appt_data.get("idNumber") or "").strip().upper()
+        if appt_id and appt_id in selfpay_by_idnumber:
+            return selfpay_by_idnumber[appt_id]
+        appt_phone = _norm_phone(appt_data.get("phone"))
+        if appt_phone and appt_phone in selfpay_by_phone:
+            return selfpay_by_phone[appt_phone]
+        return None
+
+    result = []
+    matched_selfpay_keys = set()
+
+    # 一般健檢預約（有些人同時也有自費項目，用身分證字號／手機號碼對應 self_pay_booking）
+    for key, data in all_appts.items():
+        if not isinstance(data, dict):
+            continue
+        item = dict(data)
+        item["_key"] = key
+        item["_bound"] = bool(data.get("lineUserId"))
+        item["_pureSelfPay"] = False
+
+        # 有些預約是「健檢＋自費」合在同一筆 appointments 資料裡，自費欄位
+        # （selfPayItems / selfPayDate / ...）直接內嵌在這筆資料本身，根本不需要
+        # 也不會出現在 self_pay_booking 節點裡。這種情況要優先採用，
+        # 不然下面「去 self_pay_booking 找不到就清空」的邏輯會把它已經有的自費資料蓋掉。
+        own_sp_items = _extract_self_pay_items(data)
+        has_own_selfpay = bool(own_sp_items) or bool(data.get("selfPayDate")) or bool(data.get("selfPayTotal"))
+
+        if has_own_selfpay:
+            item["selfPayItems"] = own_sp_items
+            item["selfPayTotal"] = data.get("selfPayTotal")
+            item["selfPayCount"] = data.get("selfPayCount")
+            item["selfPayDate"]  = data.get("selfPayDate")
+            item["selfPayTime"]  = data.get("selfPayTime")
+            item["_hasSelfPay"]  = bool(own_sp_items)
+            # 如果剛好也能對應到 self_pay_booking 裡的一筆，順便標記掉，
+            # 避免它又被當成一筆獨立的「純自費」重複出現
+            sp_key = _find_selfpay_key(key, data)
+            if sp_key:
+                matched_selfpay_keys.add(sp_key)
+        else:
+            sp_key = _find_selfpay_key(key, data)
+            sp = all_selfpay.get(sp_key) if sp_key and isinstance(all_selfpay, dict) else None
+            if isinstance(sp, dict):
+                matched_selfpay_keys.add(sp_key)
+                sp_items = _extract_self_pay_items(sp)
+                item["selfPayItems"] = sp_items
+                item["selfPayTotal"] = sp.get("selfPayTotal")
+                item["selfPayCount"] = sp.get("selfPayCount")
+                item["selfPayDate"]  = sp.get("selfPayDate")
+                item["selfPayTime"]  = sp.get("selfPayTime")
+                item["_hasSelfPay"]  = bool(sp_items)
+            else:
+                item["selfPayItems"] = []
+                item["_hasSelfPay"] = False
+
+        result.append(item)
+
+    # 純自費（沒有對應健檢預約）的紀錄，一樣顯示在同一張表，標記起來方便前端區分
+    if isinstance(all_selfpay, dict):
+        for key, sp in all_selfpay.items():
+            if key in matched_selfpay_keys or not isinstance(sp, dict):
+                continue
+            sp_items = _extract_self_pay_items(sp)
+            item = {
+                "_key":         f"{SELFPAY_KEY_PREFIX}{key}",
+                "_bound":       False,
+                "_pureSelfPay": True,
+                "_hasSelfPay":  bool(sp_items),
+                "name":         sp.get("name", ""),
+                "phone":        sp.get("phone", ""),
+                "idNumber":     sp.get("idNumber", key),
+                "birth":        sp.get("birth", ""),
+                "plan":         "",
+                "date":         "",
+                "time":         "",
+                "veg":          "",
+                "source":       sp.get("source", "SELF_PAY_BOOKING"),
+                "bookedAt":     sp.get("bookedAt", ""),
+                "selfPayItems": sp_items,
+                "selfPayTotal": sp.get("selfPayTotal"),
+                "selfPayCount": sp.get("selfPayCount"),
+                "selfPayDate":  sp.get("selfPayDate"),
+                "selfPayTime":  sp.get("selfPayTime"),
+            }
+            result.append(item)
+
+    result.sort(key=lambda x: x.get("date") or x.get("selfPayDate") or "", reverse=True)
+    return {"appointments": result}
+
+
+class AdminCreateRequest(BaseModel):
+    name:      str
+    phone:     str
+    plan:      str
+    date:      str
+    time:      str
+    source:    str = "電話"
+    birth:     str = ""
+    id_number: str = ""
+    note:      str = ""
+    veg:       str = "葷"
+
+
+@app.post("/api/admin/appointments")
+async def admin_create_appointment(req: AdminCreateRequest, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    phone = req.phone.strip()
+    if phone and not phone.startswith("0"):
+        phone = "0" + phone
+
+    record = {
+        "name":     req.name,
+        "phone":    phone,
+        "plan":     req.plan,
+        "date":     req.date,
+        "time":     req.time,
+        "source":   req.source,
+        "bookedAt": datetime.now().isoformat(),
+    }
+    if req.birth:
+        record["birth"] = req.birth
+    if req.id_number:
+        record["idNumber"] = req.id_number.upper()
+    if req.note:
+        record["note"] = req.note
+    if req.veg:
+        record["veg"] = req.veg
+
+    key = req.id_number.upper().strip() if req.id_number else f"ADMIN_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    try:
+        # 用 update 而非 set：若這個身分證字號原本就有資料（例如之前 Excel 匯入過），
+        # update 只會覆蓋這次填寫的欄位，不會把其他既有欄位清空
+        db.reference(f"appointments/{key}").update(record)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"status": "success", "key": key}
+
+
+class AdminUpdateRequest(BaseModel):
+    name:      Optional[str] = None
+    phone:     Optional[str] = None
+    plan:      Optional[str] = None
+    date:      Optional[str] = None
+    time:      Optional[str] = None
+    source:    Optional[str] = None
+    birth:     Optional[str] = None
+    id_number: Optional[str] = None
+    note:      Optional[str] = None
+    veg:       Optional[str] = None
+
+
+@app.put("/api/admin/appointments/{key}")
+async def admin_update_appointment(key: str, req: AdminUpdateRequest, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    if key.startswith(SELFPAY_KEY_PREFIX):
+        raise HTTPException(status_code=400, detail="純自費紀錄目前不支援在後台編輯，請直接於 Firebase 修改")
+
+    update_data = {}
+    if req.name is not None: update_data["name"] = req.name
+    if req.phone is not None:
+        p = req.phone.strip()
+        if p and not p.startswith("0"):
+            p = "0" + p
+        update_data["phone"] = p
+    if req.plan is not None: update_data["plan"] = req.plan
+    if req.date is not None: update_data["date"] = req.date
+    if req.time is not None: update_data["time"] = req.time
+    if req.source is not None: update_data["source"] = req.source
+    if req.birth is not None: update_data["birth"] = req.birth
+    if req.id_number is not None: update_data["idNumber"] = req.id_number.upper()
+    if req.note is not None: update_data["note"] = req.note
+    if req.veg is not None: update_data["veg"] = req.veg
+
+    try:
+        db.reference(f"appointments/{key}").update(update_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"status": "success"}
+
+
+@app.delete("/api/admin/appointments/{key}")
+async def admin_delete_appointment(key: str, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    try:
+        if key.startswith(SELFPAY_KEY_PREFIX):
+            real_key = key[len(SELFPAY_KEY_PREFIX):]
+            db.reference(f"self_pay_booking/{real_key}").delete()
+        else:
+            db.reference(f"appointments/{key}").delete()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "success"}
+
+
+# ══════════════════════════════════════
+#  Excel 批次匯入 API
+#  欄位順序對應範本：姓名、手機號碼、身分證字號、出生年月日(民國)、
+#  健檢方案(A/B/C)、葷素(葷/素)、預約日期、預約時段、來源、備註
+# ══════════════════════════════════════
+@app.post("/api/admin/import")
+async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+
+    if not file.filename.endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="請上傳 Excel 檔案（.xlsx 或 .xls）")
+
+    contents = await file.read()
+    try:
+        wb = load_workbook(io.BytesIO(contents), data_only=True)
+        sheet = wb.worksheets[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"無法讀取 Excel 檔案：{e}")
+
+    rows = list(sheet.iter_rows(min_row=2, values_only=True))
+
+    imported = 0
+    skipped = 0
+    errors = []
+
+    for idx, row in enumerate(rows, start=2):
+        if not row or not row[0]:
+            continue
+
+        try:
+            name      = str(row[0]).strip() if row[0] else ""
+            phone     = str(row[1]).strip() if len(row) > 1 and row[1] else ""
+            id_number = str(row[2]).strip().upper() if len(row) > 2 and row[2] else ""
+            birth     = str(row[3]).strip() if len(row) > 3 and row[3] else ""
+            plan      = str(row[4]).strip().upper() if len(row) > 4 and row[4] else ""
+            veg       = str(row[5]).strip() if len(row) > 5 and row[5] else "葷"
+            date_val  = row[6] if len(row) > 6 else None
+            time_val  = row[7] if len(row) > 7 else None
+            source    = str(row[8]).strip() if len(row) > 8 and row[8] else "Excel匯入"
+            note      = str(row[9]).strip() if len(row) > 9 and row[9] else ""
+
+            if not name or not phone or plan not in ("A", "B", "C"):
+                skipped += 1
+                errors.append(f"第 {idx} 列：缺少必填欄位或方案格式錯誤")
+                continue
+
+            # 葷素欄位標準化，避免 Excel 填寫時多打字或格式不一致
+            if "葷" in veg:
+                veg = "葷"
+            elif "素" in veg:
+                veg = "素"
+            else:
+                veg = "葷"
+
+            # 處理日期格式（可能是 datetime 物件或字串）
+            if hasattr(date_val, "strftime"):
+                date_str = date_val.strftime("%Y-%m-%d")
+            else:
+                date_str = str(date_val).strip() if date_val else ""
+
+            if hasattr(time_val, "strftime"):
+                time_str = time_val.strftime("%H:%M")
+            else:
+                time_str = str(time_val).strip() if time_val else ""
+
+            if not phone.startswith("0"):
+                phone = "0" + phone
+
+            record = {
+                "name":     name,
+                "phone":    phone,
+                "plan":     plan,
+                "date":     date_str,
+                "time":     time_str,
+                "veg":      veg,
+                "source":   source,
+                "bookedAt": datetime.now().isoformat(),
+            }
+            if birth:
+                record["birth"] = birth
+            if id_number:
+                record["idNumber"] = id_number
+            if note:
+                record["note"] = note
+
+            key = id_number if id_number else f"IMPORT_{datetime.now().strftime('%Y%m%d%H%M%S')}_{idx}"
+            # 用 update 而非 set：同一位受檢者若被重複匯入（例如身分證字號相同），
+            # 只會覆蓋這次表格帶來的欄位，不會清空該筆資料原本其他欄位
+            db.reference(f"appointments/{key}").update(record)
+            imported += 1
+
+        except Exception as e:
+            skipped += 1
+            errors.append(f"第 {idx} 列：{str(e)}")
+
+    return {
+        "status": "success",
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors[:20]
+    }
+
+
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "山林診所 LINE Bot API"}
+
+# DOUBTS_V35_LINE_REMINDERS_INTEGRATED
+from reminder_secure_v35 import router as _reminder_v35_router
+app.include_router(_reminder_v35_router)
+
+
+# DOUBTS v3.6.3: attached ONLY to this pinned, isolated test copy.
+from shanlin_v363_readonly import attach_staging_router as _attach_v363
+_attach_v363(app, db)

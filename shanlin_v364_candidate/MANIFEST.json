@@ -1,0 +1,26 @@
+{
+  "project": "DOUBTS public platform, Shanlin staging consolidation",
+  "release": "v3.6.4 (offline candidate, no production deployment)",
+  "pinned_railway_commit": "1b5714783bd8e0b6f6396fcb7fc8384e6f990387",
+  "official_main_sha256": "de3c75b6fbda11db0bddc5f1d37ce07ede0eec36b65212cd50bccbfc35909b51",
+  "candidate_main_sha256": "51a6fb120b4820a73c04422c399c0dab26aeaba68403f10905a53cce4c5c3366",
+  "existing_main_staging_sha256": "51a6fb120b4820a73c04422c399c0dab26aeaba68403f10905a53cce4c5c3366",
+  "clinic": "shanlin",
+  "data": "synthetic isolated test Firebase only; never real records",
+  "booking_writes_enabled": false,
+  "line_notifications_enabled": false,
+  "production_deploy_enabled": false,
+  "candidate_file_sha256": {
+    "admin.html": "2e58d9b8f759a62c990016435ee58408f6bca875ce776a3ff57c3487cca0b18b",
+    "app_readonly_v364.py": "c8a825f0891bf3fcd238a5e236c94d5befbc6d731dc3c3119dda3e48f4d3c11c",
+    "liff-appt.html": "a0640c7dfa556be60e4e7d0cc411813ec803475f5fe9781970198e7e876fecb4",
+    "liff-verify.html": "54248125a26a3b058e1cc154daea02c3d44d6efaa4f8c1d07d74a2940cde6097",
+    "main.py": "51a6fb120b4820a73c04422c399c0dab26aeaba68403f10905a53cce4c5c3366",
+    "reminder_secure_v35.py": "fd5740d589a3eed038a6262b7ab7664418adccedc286eba5a14028e193fa662c",
+    "shanlin-demo.html": "c04f714d3f69273c05ae6c6bd5a9a2867b559a4dc4312f767b582a06f9ef4ea1",
+    "shanlin_v363_readonly.py": "c3ac45048dd64d790e7ff5dbc87deca0f76a61c6baa9c6b8604c89592f99aab6"
+  },
+  "v352_verified_safe_patch_sha256": "9f9c74426ceee574334eb10130b233df03aa693caef27f598dd11d8b70c6b515",
+  "staging_entrypoint": "app_readonly_v364:app (or main:app, both guarded and read-only)",
+  "strict_test_database_required": true
+}
