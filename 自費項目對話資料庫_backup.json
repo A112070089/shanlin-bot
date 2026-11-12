@@ -1,0 +1,1750 @@
+{
+  "metadata": {
+    "source_file": "自費項目及價格.xlsx",
+    "currency": "TWD",
+    "generated_note": "價格完全依原始試算表整理；套組合併儲存格視為套組價。原表無有效價格者不推估。",
+    "item_count": 101,
+    "package_count": 9
+  },
+  "packages": [
+    {
+      "package_id": "P001",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "血液檢測",
+      "price": 270,
+      "price_note": null,
+      "items": [
+        "I001",
+        "I002",
+        "I003",
+        "I004",
+        "I005",
+        "I006",
+        "I007",
+        "I008"
+      ]
+    },
+    {
+      "package_id": "P002",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "血脂肪檢查",
+      "price": 800,
+      "price_note": null,
+      "items": [
+        "I012",
+        "I013",
+        "I014",
+        "I015",
+        "I016",
+        "I017"
+      ]
+    },
+    {
+      "package_id": "P003",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "肝膽胰功能檢測",
+      "price": 400,
+      "price_note": null,
+      "items": [
+        "I019",
+        "I020",
+        "I021",
+        "I022",
+        "I023",
+        "I024",
+        "I025",
+        "I026"
+      ]
+    },
+    {
+      "package_id": "P004",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "腎功能檢測",
+      "price": 260,
+      "price_note": null,
+      "items": [
+        "I027",
+        "I028",
+        "I029",
+        "I030",
+        "I031"
+      ]
+    },
+    {
+      "package_id": "P005",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿液檢查",
+      "price": 100,
+      "price_note": null,
+      "items": [
+        "I032",
+        "I033",
+        "I034",
+        "I035",
+        "I036",
+        "I037",
+        "I038",
+        "I039",
+        "I040",
+        "I041"
+      ]
+    },
+    {
+      "package_id": "P006",
+      "sheet": "會員項目 (抽血)",
+      "category": "甲狀腺檢測",
+      "name": "甲狀腺檢測",
+      "price": null,
+      "price_note": "原始試算表公式含 #REF!，價格需由診所確認",
+      "items": [
+        "I042",
+        "I043",
+        "I044"
+      ]
+    },
+    {
+      "package_id": "P007",
+      "sheet": "會員項目 (抽血)",
+      "category": "鐵功能檢測",
+      "name": "鐵功能檢測",
+      "price": 1660,
+      "price_note": "由原始公式計算",
+      "items": [
+        "I045",
+        "I046",
+        "I047",
+        "I048"
+      ]
+    },
+    {
+      "package_id": "P008",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "礦物質檢測",
+      "price": 430,
+      "price_note": null,
+      "items": [
+        "I049",
+        "I050",
+        "I051",
+        "I052",
+        "I053",
+        "I054"
+      ]
+    },
+    {
+      "package_id": "P009",
+      "sheet": "會員項目 (抽血)",
+      "category": "免疫檢測",
+      "name": "免疫檢測",
+      "price": 3500,
+      "price_note": null,
+      "items": [
+        "I055",
+        "I056",
+        "I057",
+        "I058"
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "I001",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "紅血球（RBC）",
+      "aliases": [
+        "紅血球（RBC）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 2
+    },
+    {
+      "id": "I002",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "白血球（WBC）",
+      "aliases": [
+        "白血球（WBC）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 3
+    },
+    {
+      "id": "I003",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "血紅素（HB）",
+      "aliases": [
+        "血紅素（HB）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 4
+    },
+    {
+      "id": "I004",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "血球容積比（Hct）",
+      "aliases": [
+        "血球容積比（Hct）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 5
+    },
+    {
+      "id": "I005",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "血小板數（Platelet）",
+      "aliases": [
+        "血小板數（Platelet）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 6
+    },
+    {
+      "id": "I006",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "平均血球容積（MCV）",
+      "aliases": [
+        "平均血球容積（MCV）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 7
+    },
+    {
+      "id": "I007",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "平均紅血球血紅素量（MCH）",
+      "aliases": [
+        "平均紅血球血紅素量（MCH）"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 8
+    },
+    {
+      "id": "I008",
+      "sheet": "會員項目 (抽血)",
+      "category": "血液檢測",
+      "name": "平均紅血球血紅素濃度",
+      "aliases": [
+        "平均紅血球血紅素濃度"
+      ],
+      "clinical_reference": "貧血、感染、白血病及骨髓造血功能、血液凝固功能等",
+      "price": 270,
+      "price_type": "package_component",
+      "package_id": "P001",
+      "price_note": "此價格為「血液檢測」套組價格，非單項價格",
+      "source_row": 9
+    },
+    {
+      "id": "I009",
+      "sheet": "會員項目 (抽血)",
+      "category": "血糖檢測",
+      "name": "飯前血糖（suger AC）",
+      "aliases": [
+        "飯前血糖（suger AC）",
+        "飯前血糖",
+        "空腹血糖",
+        "血糖"
+      ],
+      "clinical_reference": "糖尿病之篩檢",
+      "price": 70,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 10
+    },
+    {
+      "id": "I010",
+      "sheet": "會員項目 (抽血)",
+      "category": "血糖檢測",
+      "name": "糖化白蛋白 (Glycoalbumin)",
+      "aliases": [
+        "糖化白蛋白 (Glycoalbumin)",
+        "糖化白蛋白"
+      ],
+      "clinical_reference": "血液中葡萄糖濃度越高、血糖越高，被糖化的白蛋白則越多。可以反映過去2-4週內的平均血糖。",
+      "price": 500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 11
+    },
+    {
+      "id": "I011",
+      "sheet": "會員項目 (抽血)",
+      "category": "血糖檢測",
+      "name": "醣化白蛋白 (HbA1c)",
+      "aliases": [
+        "醣化白蛋白 (HbA1c)",
+        "糖化血色素",
+        "糖化血紅素",
+        "HbA1c",
+        "A1C"
+      ],
+      "clinical_reference": "血液中葡萄糖濃度愈高時，醣化血色素就越高，可反映最近3個月來血糖情形",
+      "price": 270,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 12
+    },
+    {
+      "id": "I012",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "膽固醇（cholesterol）",
+      "aliases": [
+        "膽固醇（cholesterol）",
+        "膽固醇",
+        "總膽固醇"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 13
+    },
+    {
+      "id": "I013",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "三酸甘油酯（triglyceride）",
+      "aliases": [
+        "三酸甘油酯（triglyceride）",
+        "三酸甘油酯",
+        "中性脂肪"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 14
+    },
+    {
+      "id": "I014",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "高密度脂蛋白膽固醇（HDL）",
+      "aliases": [
+        "高密度脂蛋白膽固醇（HDL）",
+        "高密度膽固醇",
+        "好膽固醇",
+        "HDL"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 15
+    },
+    {
+      "id": "I015",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "低密度脂蛋白膽固醇（HDL）",
+      "aliases": [
+        "低密度脂蛋白膽固醇（HDL）",
+        "低密度膽固醇",
+        "壞膽固醇",
+        "LDL"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 16
+    },
+    {
+      "id": "I016",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "血管硬化程度 TC/HDL-c",
+      "aliases": [
+        "血管硬化程度 TC/HDL-c"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 17
+    },
+    {
+      "id": "I017",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "低/高膽固醇比值 LDL-c/HDL-c",
+      "aliases": [
+        "低/高膽固醇比值 LDL-c/HDL-c"
+      ],
+      "clinical_reference": "脂肪分析及動脈硬化風險評估",
+      "price": 800,
+      "price_type": "package_component",
+      "package_id": "P002",
+      "price_note": "此價格為「血脂肪檢查」套組價格，非單項價格",
+      "source_row": 18
+    },
+    {
+      "id": "I018",
+      "sheet": "會員項目 (抽血)",
+      "category": "血脂肪檢查",
+      "name": "超壞膽固醇 Small Dense LDL",
+      "aliases": [
+        "超壞膽固醇 Small Dense LDL"
+      ],
+      "clinical_reference": "隱藏在低密度膽固醇內的危險因子",
+      "price": 950,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 19
+    },
+    {
+      "id": "I019",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "麩胺酸草醋酸轉胺酶 (GOT)",
+      "aliases": [
+        "麩胺酸草醋酸轉胺酶 (GOT)"
+      ],
+      "clinical_reference": "急慢性肝炎、肝病、酒精性肝病膽道疾病等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 20
+    },
+    {
+      "id": "I020",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "麩胺酸丙酮酸轉胺酶 (GPT)",
+      "aliases": [
+        "麩胺酸丙酮酸轉胺酶 (GPT)"
+      ],
+      "clinical_reference": "急慢性肝炎、肝病、酒精性肝病膽道疾病等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 21
+    },
+    {
+      "id": "I021",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "珈瑪麩胺酸酵素 (γ-GT)",
+      "aliases": [
+        "珈瑪麩胺酸酵素 (γ-GT)"
+      ],
+      "clinical_reference": "急慢性肝炎、肝病、酒精性肝病膽道疾病等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 22
+    },
+    {
+      "id": "I022",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "總膽紅素 (T-bilirubin)",
+      "aliases": [
+        "總膽紅素 (T-bilirubin)"
+      ],
+      "clinical_reference": "急慢性肝炎、肝病、酒精性肝病膽道疾病等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 23
+    },
+    {
+      "id": "I023",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "直接膽紅素 (D-bilirubin)",
+      "aliases": [
+        "直接膽紅素 (D-bilirubin)"
+      ],
+      "clinical_reference": "升高於肝炎、阻塞性黃疸、肝硬化等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 24
+    },
+    {
+      "id": "I024",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "總蛋白 (Total protein)",
+      "aliases": [
+        "總蛋白 (Total protein)"
+      ],
+      "clinical_reference": "評估營養狀況低下之原因包括肝硬化、慢性酒精性中毒、腎病變等",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 25
+    },
+    {
+      "id": "I025",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "白蛋白 (Albumin)",
+      "aliases": [
+        "白蛋白 (Albumin)",
+        "白蛋白",
+        "Albumin"
+      ],
+      "clinical_reference": "肝病變、腎絲球病變會造成其降低",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 26
+    },
+    {
+      "id": "I026",
+      "sheet": "會員項目 (抽血)",
+      "category": "肝膽胰功能檢測",
+      "name": "球蛋白 (Globulin)",
+      "aliases": [
+        "球蛋白 (Globulin)",
+        "球蛋白",
+        "Globulin"
+      ],
+      "clinical_reference": "球蛋白的主要功能是負責身體的免疫系統和體內物質的運送，與慢性肝炎、肝硬化密切相關",
+      "price": 400,
+      "price_type": "package_component",
+      "package_id": "P003",
+      "price_note": "此價格為「肝膽胰功能檢測」套組價格，非單項價格",
+      "source_row": 27
+    },
+    {
+      "id": "I027",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "尿酸 (uric acid)",
+      "aliases": [
+        "尿酸 (uric acid)"
+      ],
+      "clinical_reference": "腎衰竭、腎功能障礙等",
+      "price": 260,
+      "price_type": "package_component",
+      "package_id": "P004",
+      "price_note": "此價格為「腎功能檢測」套組價格，非單項價格",
+      "source_row": 28
+    },
+    {
+      "id": "I028",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "鹼性磷酸酶 (Alk-P)",
+      "aliases": [
+        "鹼性磷酸酶 (Alk-P)",
+        "鹼性磷酸酶",
+        "ALK-P",
+        "ALKP"
+      ],
+      "clinical_reference": "腎衰竭、腎功能障礙等",
+      "price": 260,
+      "price_type": "package_component",
+      "package_id": "P004",
+      "price_note": "此價格為「腎功能檢測」套組價格，非單項價格",
+      "source_row": 29
+    },
+    {
+      "id": "I029",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "血中尿素氮 (BUN)",
+      "aliases": [
+        "血中尿素氮 (BUN)",
+        "尿素氮",
+        "BUN",
+        "血中尿素氮"
+      ],
+      "clinical_reference": "腎衰竭、腎功能障礙等",
+      "price": 260,
+      "price_type": "package_component",
+      "package_id": "P004",
+      "price_note": "此價格為「腎功能檢測」套組價格，非單項價格",
+      "source_row": 30
+    },
+    {
+      "id": "I030",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "肌酐酸 (creatinine)",
+      "aliases": [
+        "肌酐酸 (creatinine)"
+      ],
+      "clinical_reference": "腎衰竭、腎功能障礙等",
+      "price": 260,
+      "price_type": "package_component",
+      "package_id": "P004",
+      "price_note": "此價格為「腎功能檢測」套組價格，非單項價格",
+      "source_row": 31
+    },
+    {
+      "id": "I031",
+      "sheet": "會員項目 (抽血)",
+      "category": "腎功能檢測",
+      "name": "腎絲球過濾率 (eGFR)",
+      "aliases": [
+        "腎絲球過濾率 (eGFR)"
+      ],
+      "clinical_reference": "腎衰竭、腎功能障礙等",
+      "price": 260,
+      "price_type": "package_component",
+      "package_id": "P004",
+      "price_note": "此價格為「腎功能檢測」套組價格，非單項價格",
+      "source_row": 32
+    },
+    {
+      "id": "I032",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿糖（Suger）",
+      "aliases": [
+        "尿糖（Suger）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 33
+    },
+    {
+      "id": "I033",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿蛋白（Protein）",
+      "aliases": [
+        "尿蛋白（Protein）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 34
+    },
+    {
+      "id": "I034",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿比重（SG）",
+      "aliases": [
+        "尿比重（SG）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 35
+    },
+    {
+      "id": "I035",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿液酸鹼度（pH）",
+      "aliases": [
+        "尿液酸鹼度（pH）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 36
+    },
+    {
+      "id": "I036",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "膽紅素（Bilirubin）",
+      "aliases": [
+        "膽紅素（Bilirubin）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 37
+    },
+    {
+      "id": "I037",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿膽素（Urobilinogen）",
+      "aliases": [
+        "尿膽素（Urobilinogen）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 38
+    },
+    {
+      "id": "I038",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "亞硝酸鹽（Nitrite）",
+      "aliases": [
+        "亞硝酸鹽（Nitrite）"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 39
+    },
+    {
+      "id": "I039",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "潛血反應 (Blood)",
+      "aliases": [
+        "潛血反應 (Blood)"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 40
+    },
+    {
+      "id": "I040",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "白血球 (Leukocytes)",
+      "aliases": [
+        "白血球 (Leukocytes)"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 41
+    },
+    {
+      "id": "I041",
+      "sheet": "會員項目 (抽血)",
+      "category": "尿液檢查",
+      "name": "尿酮體 (Ketones)",
+      "aliases": [
+        "尿酮體 (Ketones)"
+      ],
+      "clinical_reference": "腎功能、糖尿病、泌尿道感染等",
+      "price": 100,
+      "price_type": "package_component",
+      "package_id": "P005",
+      "price_note": "此價格為「尿液檢查」套組價格，非單項價格",
+      "source_row": 42
+    },
+    {
+      "id": "I042",
+      "sheet": "會員項目 (抽血)",
+      "category": "甲狀腺檢測",
+      "name": "三碘甲狀腺素 T3",
+      "aliases": [
+        "三碘甲狀腺素 T3"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": null,
+      "price_type": "package_component",
+      "package_id": "P006",
+      "price_note": "原始試算表公式含 #REF!，價格需由診所確認",
+      "source_row": 43
+    },
+    {
+      "id": "I043",
+      "sheet": "會員項目 (抽血)",
+      "category": "甲狀腺檢測",
+      "name": "四碘甲狀腺素 T4",
+      "aliases": [
+        "四碘甲狀腺素 T4"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": null,
+      "price_type": "package_component",
+      "package_id": "P006",
+      "price_note": "原始試算表公式含 #REF!，價格需由診所確認",
+      "source_row": 44
+    },
+    {
+      "id": "I044",
+      "sheet": "會員項目 (抽血)",
+      "category": "甲狀腺檢測",
+      "name": "甲狀腺刺激素 TSH",
+      "aliases": [
+        "甲狀腺刺激素 TSH",
+        "甲狀腺刺激素",
+        "甲狀腺",
+        "TSH"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": null,
+      "price_type": "package_component",
+      "package_id": "P006",
+      "price_note": "原始試算表公式含 #REF!，價格需由診所確認",
+      "source_row": 45
+    },
+    {
+      "id": "I045",
+      "sheet": "會員項目 (抽血)",
+      "category": "鐵功能檢測",
+      "name": "鐵 Fe",
+      "aliases": [
+        "鐵 Fe"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": 1660,
+      "price_type": "package_component",
+      "package_id": "P007",
+      "price_note": "由原始公式計算",
+      "source_row": 46
+    },
+    {
+      "id": "I046",
+      "sheet": "會員項目 (抽血)",
+      "category": "鐵功能檢測",
+      "name": "Ferritin",
+      "aliases": [
+        "Ferritin"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": 1660,
+      "price_type": "package_component",
+      "package_id": "P007",
+      "price_note": "由原始公式計算",
+      "source_row": 47
+    },
+    {
+      "id": "I047",
+      "sheet": "會員項目 (抽血)",
+      "category": "鐵功能檢測",
+      "name": "TIBC",
+      "aliases": [
+        "TIBC"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": 1660,
+      "price_type": "package_component",
+      "package_id": "P007",
+      "price_note": "由原始公式計算",
+      "source_row": 48
+    },
+    {
+      "id": "I048",
+      "sheet": "會員項目 (抽血)",
+      "category": "鐵功能檢測",
+      "name": "維生素B12",
+      "aliases": [
+        "維生素B12"
+      ],
+      "clinical_reference": "甲狀腺之篩檢",
+      "price": 1660,
+      "price_type": "package_component",
+      "package_id": "P007",
+      "price_note": "由原始公式計算",
+      "source_row": 49
+    },
+    {
+      "id": "I049",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "鈉 Na",
+      "aliases": [
+        "鈉 Na",
+        "鈉",
+        "血鈉",
+        "鈉離子",
+        "Na"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 50
+    },
+    {
+      "id": "I050",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "鉀 K",
+      "aliases": [
+        "鉀 K",
+        "鉀",
+        "血鉀",
+        "鉀離子",
+        "K"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 51
+    },
+    {
+      "id": "I051",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "氯 Cl",
+      "aliases": [
+        "氯 Cl",
+        "氯",
+        "血氯",
+        "氯離子",
+        "Cl"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 52
+    },
+    {
+      "id": "I052",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "鈣 Ca",
+      "aliases": [
+        "鈣 Ca",
+        "鈣",
+        "血鈣",
+        "鈣離子",
+        "Ca"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 53
+    },
+    {
+      "id": "I053",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "磷 P",
+      "aliases": [
+        "磷 P",
+        "磷",
+        "血磷",
+        "P"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 54
+    },
+    {
+      "id": "I054",
+      "sheet": "會員項目 (抽血)",
+      "category": "礦物質檢測",
+      "name": "鎂 Mg",
+      "aliases": [
+        "鎂 Mg",
+        "鎂",
+        "血鎂",
+        "鎂離子",
+        "Mg"
+      ],
+      "clinical_reference": "礦物質之篩檢",
+      "price": 430,
+      "price_type": "package_component",
+      "package_id": "P008",
+      "price_note": "此價格為「礦物質檢測」套組價格，非單項價格",
+      "source_row": 55
+    },
+    {
+      "id": "I055",
+      "sheet": "會員項目 (抽血)",
+      "category": "免疫檢測",
+      "name": "高敏感度發炎指標 (hsCRP)",
+      "aliases": [
+        "高敏感度發炎指標 (hsCRP)"
+      ],
+      "clinical_reference": "免疫、發炎之篩檢",
+      "price": 3500,
+      "price_type": "package_component",
+      "package_id": "P009",
+      "price_note": "此價格為「免疫檢測」套組價格，非單項價格",
+      "source_row": 56
+    },
+    {
+      "id": "I056",
+      "sheet": "會員項目 (抽血)",
+      "category": "免疫檢測",
+      "name": "同半胱胺酸 (homocysteine)",
+      "aliases": [
+        "同半胱胺酸 (homocysteine)"
+      ],
+      "clinical_reference": "免疫、發炎之篩檢",
+      "price": 3500,
+      "price_type": "package_component",
+      "package_id": "P009",
+      "price_note": "此價格為「免疫檢測」套組價格，非單項價格",
+      "source_row": 57
+    },
+    {
+      "id": "I057",
+      "sheet": "會員項目 (抽血)",
+      "category": "免疫檢測",
+      "name": "鋅 Zn",
+      "aliases": [
+        "鋅 Zn"
+      ],
+      "clinical_reference": "免疫、發炎之篩檢",
+      "price": 3500,
+      "price_type": "package_component",
+      "package_id": "P009",
+      "price_note": "此價格為「免疫檢測」套組價格，非單項價格",
+      "source_row": 58
+    },
+    {
+      "id": "I058",
+      "sheet": "會員項目 (抽血)",
+      "category": "免疫檢測",
+      "name": "硒 Se",
+      "aliases": [
+        "硒 Se"
+      ],
+      "clinical_reference": "免疫、發炎之篩檢",
+      "price": 3500,
+      "price_type": "package_component",
+      "package_id": "P009",
+      "price_note": "此價格為「免疫檢測」套組價格，非單項價格",
+      "source_row": 59
+    },
+    {
+      "id": "I059",
+      "sheet": "會員項目 (抽血)",
+      "category": "男性功能檢測",
+      "name": "Testosterone 睪固酮",
+      "aliases": [
+        "Testosterone 睪固酮"
+      ],
+      "clinical_reference": "輔助判斷男性不孕症",
+      "price": 300,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 60
+    },
+    {
+      "id": "I060",
+      "sheet": "會員項目 (抽血)",
+      "category": "女性功能檢測",
+      "name": "Estradiol 女性荷爾蒙",
+      "aliases": [
+        "Estradiol 女性荷爾蒙"
+      ],
+      "clinical_reference": "檢測女性生育能力",
+      "price": 500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 61
+    },
+    {
+      "id": "I061",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "全套代謝綜合評估",
+      "aliases": [
+        "全套代謝綜合評估"
+      ],
+      "clinical_reference": "細胞能量製造效率評估、維生素B群代謝效率評估、神經傳導物質代謝評估、肝臟解毒功能評估、腸道菌叢健康評估，立即了解體內新陳代謝狀況。",
+      "price": 9800,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 2
+    },
+    {
+      "id": "I062",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "雌激素代謝",
+      "aliases": [
+        "雌激素代謝"
+      ],
+      "clinical_reference": "測定健康型與風險型之雌激素代謝物比例分布，可了解乳癌、子宮內膜癌、卵巢癌與前列腺癌等病症發生之風險性。",
+      "price": 3200,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 3
+    },
+    {
+      "id": "I063",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "抗氧化維生素",
+      "aliases": [
+        "抗氧化維生素"
+      ],
+      "clinical_reference": "評估體內抗氧化維生素平衡狀態，進而了解體內抗氧化能力、減少有害自由基、預防老化，降低退化性疾病或其他病症的風險。",
+      "price": 4500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 4
+    },
+    {
+      "id": "I064",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "脂肪酸分析",
+      "aliases": [
+        "脂肪酸分析"
+      ],
+      "clinical_reference": "了解個人飲食營養中的脂肪酸攝取趨勢，並評估體內脂肪酸平衡與身體健康狀況。",
+      "price": 6000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 5
+    },
+    {
+      "id": "I065",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "環境荷爾蒙",
+      "aliases": [
+        "環境荷爾蒙"
+      ],
+      "clinical_reference": "外來物質會干擾到負責維持生物體中穩定環境、生殖、發育和/或行為的內升荷爾蒙，其合成、分泌、傳輸、結合、動作、和排除作用。",
+      "price": 4500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 6
+    },
+    {
+      "id": "I066",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "維生素D代謝分析",
+      "aliases": [
+        "維生素D代謝分析"
+      ],
+      "clinical_reference": "常規生化檢測中僅能檢測維生素D總量，無法個別了解25-Hydroxyvitamin D2/D3 (維生素D2/D3) 含量，此檢測以高效液相層析質譜儀提供兩個個別結果。",
+      "price": 1500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 7
+    },
+    {
+      "id": "I067",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "MDA氧化壓力",
+      "aliases": [
+        "MDA氧化壓力"
+      ],
+      "clinical_reference": "分析細胞內脂質氧化情形，進而評估目前體內的氧化壓力程度。",
+      "price": 1000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 8
+    },
+    {
+      "id": "I068",
+      "sheet": "會員項目 (功醫)",
+      "category": "功能醫學",
+      "name": "8-OHdG氧化壓力",
+      "aliases": [
+        "8-OHdG氧化壓力"
+      ],
+      "clinical_reference": "評估體內對細胞產生的DNA氧化成傷害程度，亦與發炎、心血管疾病、老化、退化型疾病等皆相關。",
+      "price": 1500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 9
+    },
+    {
+      "id": "I069",
+      "sheet": "會員項目 (功醫)",
+      "category": "基因檢測",
+      "name": "心血管健康分析",
+      "aliases": [
+        "心血管健康分析"
+      ],
+      "clinical_reference": "ACE酵素負責代謝產生活化型的血管收縮素，與血壓、血管內皮細胞彈性有關；AGT (血管升壓素原)產生體內的血管收縮素原，與高血壓有關；MTHFR酵素參與葉酸代謝生化反應；PAI-1活性調控血管纖維蛋白團塊的分解，與血栓、動脈粥狀硬化有關。",
+      "price": 12000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 10
+    },
+    {
+      "id": "I070",
+      "sheet": "會員項目 (功醫)",
+      "category": "基因檢測",
+      "name": "阿茲海默症傾向分析",
+      "aliases": [
+        "阿茲海默症傾向分析"
+      ],
+      "clinical_reference": "APOE參與血脂質代謝，與阿茲海默症、冠狀動脈心臟病、高血脂症等疾病有關。",
+      "price": 3000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 11
+    },
+    {
+      "id": "I071",
+      "sheet": "會員項目 (功醫)",
+      "category": "基因檢測",
+      "name": "細胞抗氧化能力分析",
+      "aliases": [
+        "細胞抗氧化能力分析"
+      ],
+      "clinical_reference": "SOD2負責清除細胞粒線體內的自由基，與許多疾病有關；MPO會增加有害的二級自由基產生。因而增加自由基產生，加劇慢性發炎反應。",
+      "price": 6000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 12
+    },
+    {
+      "id": "I072",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "甲型胎兒蛋白 (AFP)",
+      "aliases": [
+        "甲型胎兒蛋白 (AFP)"
+      ],
+      "clinical_reference": "肝癌之篩檢，敏感度達1公分之腫瘤、胰臟癌之篩檢、膽囊癌之篩檢",
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 13
+    },
+    {
+      "id": "I073",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "高敏感性肝癌腫瘤標記 (PIVIKA)",
+      "aliases": [
+        "高敏感性肝癌腫瘤標記 (PIVIKA)"
+      ],
+      "clinical_reference": null,
+      "price": 1500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 14
+    },
+    {
+      "id": "I074",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "胰臟癌腫瘤標記 (CA199)",
+      "aliases": [
+        "胰臟癌腫瘤標記 (CA199)"
+      ],
+      "clinical_reference": null,
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 15
+    },
+    {
+      "id": "I075",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "鼻咽癌篩檢EB virus IgA",
+      "aliases": [
+        "鼻咽癌篩檢EB virus IgA"
+      ],
+      "clinical_reference": "鼻咽癌篩檢",
+      "price": 1200,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 16
+    },
+    {
+      "id": "I076",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "PSA 攝護腺抗原 (男)",
+      "aliases": [
+        "PSA 攝護腺抗原 (男)"
+      ],
+      "clinical_reference": "攝護腺癌輔助篩檢",
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 17
+    },
+    {
+      "id": "I077",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "睪丸癌(B-HCG) (男)",
+      "aliases": [
+        "睪丸癌(B-HCG) (男)"
+      ],
+      "clinical_reference": "睪丸癌之篩檢",
+      "price": 300,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 18
+    },
+    {
+      "id": "I078",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "卵巢癌 (CA125) (女)",
+      "aliases": [
+        "卵巢癌 (CA125) (女)"
+      ],
+      "clinical_reference": "卵巢癌之篩檢",
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 19
+    },
+    {
+      "id": "I079",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "乳癌 (CA15-3)",
+      "aliases": [
+        "乳癌 (CA15-3)"
+      ],
+      "clinical_reference": "乳癌之篩檢",
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 20
+    },
+    {
+      "id": "I080",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "Anti-SCC",
+      "aliases": [
+        "Anti-SCC"
+      ],
+      "clinical_reference": "消化道麟狀上皮細胞腫瘤標記。",
+      "price": 800,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 21
+    },
+    {
+      "id": "I081",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "非小細胞肺癌  (CYFRA 21-1)",
+      "aliases": [
+        "非小細胞肺癌  (CYFRA 21-1)"
+      ],
+      "clinical_reference": "針對肺部三種不同組織型態(扁平上皮細胞、腺細胞、大細胞)癌症進行檢測，其檢測之靈敏度與特異性遠高於其他腫瘤標記。",
+      "price": 1000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 22
+    },
+    {
+      "id": "I082",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "NSE",
+      "aliases": [
+        "NSE"
+      ],
+      "clinical_reference": "小細胞肺癌腫瘤標記檢測。",
+      "price": 1000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 23
+    },
+    {
+      "id": "I083",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "胃癌篩檢(CA72-4)",
+      "aliases": [
+        "胃癌篩檢(CA72-4)"
+      ],
+      "clinical_reference": "胃癌之篩檢",
+      "price": 1000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 24
+    },
+    {
+      "id": "I084",
+      "sheet": "會員項目 (功醫)",
+      "category": "防癌篩檢",
+      "name": "大腸癌 (CEA)",
+      "aliases": [
+        "大腸癌 (CEA)"
+      ],
+      "clinical_reference": "大腸癌之篩檢",
+      "price": 400,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 25
+    },
+    {
+      "id": "I085",
+      "sheet": "會員項目(儀器)",
+      "category": "超音波檢查",
+      "name": "高階精密心臟超音波 (StrainEchocardiography)",
+      "aliases": [
+        "高階精密心臟超音波 (StrainEchocardiography)",
+        "心臟超音波",
+        "高階心臟超音波"
+      ],
+      "clinical_reference": "檢查心臟收縮功能、結構、瓣膜、血流情形是否正常，且進一步評估冠狀動脈阻塞情形及心肌缺氧狀況",
+      "price": 5000,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 2
+    },
+    {
+      "id": "I086",
+      "sheet": "會員項目(儀器)",
+      "category": "超音波檢查",
+      "name": "頸動脈超音波 (ECCD)",
+      "aliases": [
+        "頸動脈超音波 (ECCD)",
+        "頸動脈超音波",
+        "中風篩檢"
+      ],
+      "clinical_reference": "測量頸動脈內膜厚度、動脈硬化斑塊、血管的流速及阻力，預估中風之風險",
+      "price": 2200,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 3
+    },
+    {
+      "id": "I087",
+      "sheet": "會員項目(儀器)",
+      "category": "心臟功能檢測",
+      "name": "電子心力測量 (EC)",
+      "aliases": [
+        "電子心力測量 (EC)"
+      ],
+      "clinical_reference": "主要用於評估即時心臟功能和循環狀態",
+      "price": 2500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 4
+    },
+    {
+      "id": "I088",
+      "sheet": "會員項目(儀器)",
+      "category": "心臟功能檢測",
+      "name": "靜態心電圖 (EKG)",
+      "aliases": [
+        "靜態心電圖 (EKG)"
+      ],
+      "clinical_reference": "檢查是否心律不整、心肌缺氧、傳導阻滯等疾病",
+      "price": 200,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 5
+    },
+    {
+      "id": "I089",
+      "sheet": "會員項目(儀器)",
+      "category": "心臟功能檢測",
+      "name": "24hr攜帶式心電圖紀錄 (Holter)",
+      "aliases": [
+        "24hr攜帶式心電圖紀錄 (Holter)"
+      ],
+      "clinical_reference": null,
+      "price": 1600,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 6
+    },
+    {
+      "id": "I090",
+      "sheet": "會員項目(儀器)",
+      "category": "心臟功能檢測",
+      "name": "心電心音紀錄器 (EMAT)",
+      "aliases": [
+        "心電心音紀錄器 (EMAT)"
+      ],
+      "clinical_reference": null,
+      "price": 800,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 7
+    },
+    {
+      "id": "I091",
+      "sheet": "會員項目(儀器)",
+      "category": "肝功能檢測",
+      "name": "肝臟硬度掃描儀 Fibrosacn",
+      "aliases": [
+        "肝臟硬度掃描儀 Fibrosacn",
+        "肝臟硬度",
+        "Fibroscan",
+        "脂肪肝檢查"
+      ],
+      "clinical_reference": "通過判斷肝臟硬度，量化評估肝臟纖維化、肝硬化及脂肪肝的程度",
+      "price": 1500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 8
+    },
+    {
+      "id": "I092",
+      "sheet": "會員項目(儀器)",
+      "category": "肺功能檢測",
+      "name": "肺功能",
+      "aliases": [
+        "肺功能"
+      ],
+      "clinical_reference": "測量空氣進出身體的流速、流量、壓力變化，以檢查呼吸道是否有阻塞或不正常侷限",
+      "price": 570,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 9
+    },
+    {
+      "id": "I093",
+      "sheet": "會員項目(儀器)",
+      "category": "血管檢查",
+      "name": "大動脈壓及主動脈硬化檢測 (Xcel)",
+      "aliases": [
+        "大動脈壓及主動脈硬化檢測 (Xcel)",
+        "大動脈壓",
+        "主動脈硬化",
+        "Xcel"
+      ],
+      "clinical_reference": "檢查主動脈壓及主動脈是否硬化",
+      "price": 3800,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 10
+    },
+    {
+      "id": "I094",
+      "sheet": "會員項目(儀器)",
+      "category": "血管檢查",
+      "name": "周邊動脈硬化篩檢 (ABI)",
+      "aliases": [
+        "周邊動脈硬化篩檢 (ABI)",
+        "周邊動脈硬化",
+        "ABI"
+      ],
+      "clinical_reference": "檢查周邊動脈是否硬化或阻塞等",
+      "price": 2250,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 11
+    },
+    {
+      "id": "I095",
+      "sheet": "會員項目(儀器)",
+      "category": "血管檢查",
+      "name": "精密週邊微血管檢測 (TBI)",
+      "aliases": [
+        "精密週邊微血管檢測 (TBI)"
+      ],
+      "clinical_reference": "檢查周邊動脈與末梢循環是否有病變或不良",
+      "price": 2250,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 12
+    },
+    {
+      "id": "I096",
+      "sheet": "會員項目(儀器)",
+      "category": "血管檢查",
+      "name": "深部靜脈檢測 (MVO)",
+      "aliases": [
+        "深部靜脈檢測 (MVO)"
+      ],
+      "clinical_reference": "檢查深部靜脈是否有栓塞的風險",
+      "price": 2250,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 13
+    },
+    {
+      "id": "I097",
+      "sheet": "會員項目(儀器)",
+      "category": "X光檢測",
+      "name": "胸部正面X光",
+      "aliases": [
+        "胸部正面X光"
+      ],
+      "clinical_reference": "檢查肺炎、肺結核、腫瘤等",
+      "price": 300,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 14
+    },
+    {
+      "id": "I098",
+      "sheet": "會員項目(儀器)",
+      "category": "全身骨質分析",
+      "name": "全身骨質分析DEXA",
+      "aliases": [
+        "全身骨質分析DEXA",
+        "骨密度",
+        "DEXA",
+        "全身骨質分析"
+      ],
+      "clinical_reference": "全身骨質密度精密分析",
+      "price": 2500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 15
+    },
+    {
+      "id": "I099",
+      "sheet": "會員項目(儀器)",
+      "category": "全身脂肪分析",
+      "name": "全身體脂肪分析Core Scan",
+      "aliases": [
+        "全身體脂肪分析Core Scan",
+        "體脂肪分析",
+        "內臟脂肪",
+        "Core Scan"
+      ],
+      "clinical_reference": "全身脂肪及內臟脂肪精密分布分析",
+      "price": 2500,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 16
+    },
+    {
+      "id": "I100",
+      "sheet": "會員項目(儀器)",
+      "category": "自律神經功能檢測",
+      "name": "心律變異度 (HRV)",
+      "aliases": [
+        "心律變異度 (HRV)",
+        "心律變異度",
+        "自律神經",
+        "HRV"
+      ],
+      "clinical_reference": "精密自律神經失調檢測",
+      "price": 800,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 17
+    },
+    {
+      "id": "I101",
+      "sheet": "會員項目(儀器)",
+      "category": "神經傳導功能檢測",
+      "name": "Q-Sense 神經功能溫度閾值測定",
+      "aliases": [
+        "Q-Sense 神經功能溫度閾值測定",
+        "神經功能",
+        "Q-Sense",
+        "手腳麻"
+      ],
+      "clinical_reference": "從以色列引進最新利用溫度變化，判別感覺神經是否因生活作息或是病症產生病變。",
+      "price": 3600,
+      "price_type": "individual",
+      "package_id": null,
+      "price_note": null,
+      "source_row": 18
+    }
+  ]
+}

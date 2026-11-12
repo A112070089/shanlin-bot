@@ -1,0 +1,18 @@
+Yidian Phase 1 integration overlay - validation report
+
+Source inspected: yidian_integration_source.zip (17 selected source files).
+Routes connected in preview: original booking, self-pay, Taigi STT/TTS,
+and pilot backend with existing revision/transaction logic.
+
+Validation environment: isolated copy of these 17 files, with synthetic
+TEST-ONLY substitutes for the source archive's missing database.json,
+self-pay catalog JSON and pilot_shanlin_catalog.py.
+
+Smoke test result: 7 passed (FastAPI TestClient, no external network).
+The test-only substitutes are NOT included in the delivered overlay.
+No Firebase/real booking transactions were performed by these tests.
+
+Limits: The 17-file source ZIP omits original project assets and dependencies,
+so fully rendered browser/UI/real Mac speech service tests cannot be claimed.
+The separately operated original appointment-admin API was not merged.
+No Railway deployment performed. Not cleared for production with patient data.
