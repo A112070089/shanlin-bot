@@ -1,0 +1,31 @@
+{
+  "replacement_files": {
+    "website/platform_clinic_registry.py": {
+      "old_sha256": "4684a8c03b9249a891b6f26f2290988f9a8b5914a348daa85e391733e7a09410",
+      "new_sha256": "f7abe3ea385cd922b37ff4a175709e4ea7264246ee4e67db4a99f9952c2a8cd6"
+    },
+    "website/platform_static/clinic-center.html": {
+      "old_sha256": "82d4326faf34ddedae5d01a313dcc1355364d12defdfd8c48d56e89a28a15dee",
+      "new_sha256": "16e20ea3252fee63a210262423dc4a5ec620078386d81028057d8c82d171a4ab"
+    },
+    "website/platform_static/clinic-center.css": {
+      "old_sha256": "d408edaa374dceb757af50330eaa4bb6dc39364659080f32752b30cdc394e24f",
+      "new_sha256": "d722bdbedda14aabaacdae428465f5b8dc27b4778e9de9843f3bd6e9278b771d"
+    },
+    "website/platform_static/clinic-center.js": {
+      "old_sha256": "e9a72ff35b2d9e50379e8a6f3a4a0b2db76d5bef05528b3595d6d975063ff5e0",
+      "new_sha256": "d3d8d82e0853e1929a99b39cd0ef60a688092dafd316529e85eff5fafb8b343b",
+      "allowed_old_sha256": [
+        "e9a72ff35b2d9e50379e8a6f3a4a0b2db76d5bef05528b3595d6d975063ff5e0",
+        "278b439d58a093ba5b9ae0dd1eba052eed0984ed8b51793f41f3430cce46a3b2",
+        "4261f426be3ab9e0411edb561bdd2cc67ea2f15d1c2fea4af7f6cccaacf6e83d"
+      ]
+    }
+  },
+  "new_files": {
+    "website/integrated_app_platform_v31.py": "124b51ab12c5a2fd2331413ee0c44bb130572b2f4a8baa0ccb064652127922fb",
+    "website/platform_lifecycle_routes_v31.py": "9d97cb7972d6e22ded19704b6ea25356604d76b5813293d66dc4a02ad036ebde",
+    "website/platform_lifecycle_store_v31.py": "d8a16964d48ccd8bfb647da211757a7e9e028bc9769075c0f5ef7df3d160bbe9",
+    "tests/test_platform_lifecycle_v31.py": "b7b5f52cee2dd57c4d02e9ba1f415307ac5cf8ec02e64e11d32faeb871a0b993"
+  }
+}

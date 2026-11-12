@@ -1,0 +1,19 @@
+# EXAMPLE ONLY. This is not installed into shanlin-bot automatically.
+# GitHub Actions scheduled triggers can be delayed or skipped; inspect workflow logs.
+name: Shanlin reminder v3.5 safe daily check
+on:
+  schedule:
+    - cron: '5 10 * * *' # 18:05 Asia/Taipei (UTC+8)
+  workflow_dispatch:
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run authorized reminder check
+        env:
+          REMINDER_V35_BOT_URL: https://shanlin-bot-production.up.railway.app
+          REMINDER_V35_JOB_SECRET: ${{ secrets.REMINDER_V35_JOB_SECRET }}
+          REMINDER_V35_JOB_MODE: preview # Change only after live safety acceptance
+        run: python3 run_reminder_v35_cron.py
