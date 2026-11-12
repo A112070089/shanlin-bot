@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>新診所開通準備｜DOUBTS</title>
+  <link rel="stylesheet" href="/platform/assets/platform.css">
+  <link rel="stylesheet" href="/platform/assets/clinic-center.css">
+  <link rel="stylesheet" href="/platform/assets/clinic-onboarding-v3.css">
+</head>
+<body>
+  <header><div><strong>頤典 DOUBTS</strong><span>工程師平台 · 新診所開通準備 v3</span></div><a class="back-link" href="/platform/clinics">← 返回診所管理中心</a></header>
+  <main id="root" hidden>
+    <div class="heading"><div><span class="eyebrow">CLINIC ONBOARDING</span><h1 id="clinicTitle">新診所開通準備</h1><p class="muted" id="clinicSubtitle">讀取中…</p></div><span class="stage-chip" id="stageChip">導入草稿</span></div>
+    <p id="status" role="status" aria-live="polite">正在驗證工程師權限…</p>
+    <section id="content" hidden>
+      <div class="tip"><strong>本機導入準備，不等於正式開通。</strong>這裡只管理新診所設定。原本的山林／頤典資料、病患預約及 Firebase 都不會被改動；正式上線還需要獨立資料庫讀寫、權限與預約流程驗收。</div>
+      <div class="onboarding-grid">
+        <section class="card"><h2><span class="step">1</span> 診所基本資訊</h2><p class="muted">只填診所公開資訊；請勿填入病歷或病患個資。</p>
+          <form id="profileForm"><label>診所聯絡電話<input id="phone" type="text" maxlength="30" placeholder="例如：02-1234-5678" autocomplete="off"></label>
+          <label>診所地址<input id="address" type="text" maxlength="160" placeholder="請輸入診所核准公開的地址" autocomplete="off"></label>
+          <label>門診／服務時間<input id="hours" type="text" maxlength="100" placeholder="例如：週一至週五 09:00–18:00" autocomplete="off"></label>
+          <button type="submit" id="saveProfile">儲存基本資訊</button></form>
+        </section>
+        <section class="card"><h2><span class="step">2</span> 診所共用管理帳號</h2><p class="muted">一間診所一組帳密，可由授權工作人員共用；密碼僅儲存加鹽雜湊，不會顯示或寄送。</p>
+          <p class="tagline" id="accountInfo">尚未建立帳號</p>
+          <form id="accountForm" autocomplete="off"><label>管理帳號<input id="username" type="text" autocomplete="off" minlength="4" maxlength="64" placeholder="例如：third_admin" required></label>
+          <label>管理密碼（至少 12 字）<input id="newPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+          <label>再次輸入密碼<input id="confirmPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+          <label class="checkbox-line"><input id="resetAccount" type="checkbox"> 已建立帳號時，明確重設帳密</label>
+          <button type="submit" id="saveAccount">建立／重設導入帳號</button></form>
+          <p class="footnote">此帳號目前只能用於本機的導入登入測試，尚未取得正式預約或病患資料權限。測試登入建議使用無痕視窗，避免取代工程師工作階段。</p>
+          <a id="stagingLoginLink" class="back-link smaller" href="/platform/clinic-onboarding-login">測試新診所帳號 →</a>
+        </section>
+      </div>
+      <section class="card"><h2><span class="step">3</span> 獨立 Firebase 資料來源準備</h2><p class="muted">此階段不會新建 Firebase 專案，也不收集或在頁面儲存金鑰。只檢查 Mac 環境變數是否存在且未指向已知診所的資料庫網域。</p>
+        <form id="storageForm"><label>預計使用的儲存方式<select id="storageMode"><option value="unconfigured">尚未設定</option><option value="firebase_rtdb">獨立 Firebase Realtime Database（待驗證）</option></select></label>
+          <button type="submit" id="saveStorage">儲存資料來源規劃</button></form>
+        <div class="env-grid"><div><small>Firebase URL 環境變數</small><code id="envUrl"></code><span id="urlState"></span></div><div><small>Firebase 金鑰環境變數</small><code id="envCredentials"></code><span id="credentialsState"></span></div></div>
+        <p class="footnote" id="storageStatus">尚未檢查。</p>
+        <button type="button" class="outline" id="refreshStorage">重新檢查環境變數</button>
+      </section>
+      <section class="card"><h2><span class="step">4</span> 功能模組預先授權</h2><p class="muted">勾選只記錄未來可使用的功能，不代表模組已部署或出現在醫護平台。</p><div id="features" class="feature-grid"></div></section>
+      <section class="card"><h2><span class="step">5</span> 開通檢查與提交驗收</h2><div id="checklist" class="checklist"></div>
+        <div class="tip understated">就算提交驗收，狀態也只是「待驗收」。真正的 Firebase 連線與安全規則、診所時段、預約 API 和醫護權限還必須另行完成；本版沒有正式上線按鈕。</div>
+        <button type="button" id="submitReview" disabled>完成準備，送交工程師驗收</button>
+      </section>
+      <section class="card"><h2>最近操作紀錄</h2><div id="audit"></div></section>
+    </section>
+  </main>
+  <script src="/platform/assets/clinic-onboarding-v3.js" defer></script>
+</body></html>

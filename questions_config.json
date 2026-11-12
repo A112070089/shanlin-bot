@@ -1,0 +1,33 @@
+{
+  "_說明": "本機測試用。正式上線時，題目以診所後台（admin.html →「問診題目設定」）存到 Firebase 的內容為準；Firebase 連不上時才會讀這個檔案。",
+  "items": [
+    {
+      "id": "q_bmi",
+      "label": "身高體重 / BMI",
+      "prompt": "請告訴我您的身高和體重，例如：身高160公分、體重55公斤。",
+      "type": "bmi",
+      "options": [],
+      "unit": "",
+      "min": null,
+      "max": null,
+      "followUp": "",
+      "required": true,
+      "appliesTo": "all",
+      "enabled": true
+    },
+    {
+      "id": "q_allergy",
+      "label": "過敏史",
+      "prompt": "請問您有沒有對藥物或食物過敏？",
+      "type": "yesno",
+      "options": [],
+      "unit": "",
+      "min": null,
+      "max": null,
+      "followUp": "請問是對什麼過敏呢？",
+      "required": true,
+      "appliesTo": "all",
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+/* 頤典診所 AI 語音工具列（精簡收合版）
+   保留原有語言選擇、語速控制、預覽與重播，讓對話區可正常捲動。 */
+#yidian-speech-controls {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 9px 13px;
+  border: 0;
+  border-bottom: 1px solid #dfe6f4;
+  border-radius: 0;
+  background: #f6f8fc;
+  color: #203755;
+  font-size: 16px;
+}
+.yidian-voice-bar,
+.yidian-voice-languages,
+.yidian-voice-settings {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.yidian-voice-bar { flex-wrap: wrap; }
+.yidian-voice-languages { margin-right: auto; }
+.yidian-voice-label { font-weight: 800; font-size: 16px; white-space: nowrap; }
+.yidian-language, .yidian-preview, .yidian-replay, .yidian-settings-toggle {
+  border: 1.6px solid #4053bc;
+  border-radius: 10px;
+  padding: 6px 10px;
+  min-height: 38px;
+  background: #fff;
+  color: #304bb4;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.yidian-language[aria-pressed="true"] { background: #4053bc; color: #fff; }
+.yidian-preview { font-weight: 800; }
+.yidian-settings-toggle[aria-expanded="true"] { background: #e5edff; }
+.yidian-voice-settings {
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding: 9px 4px 3px;
+  border-top: 1px solid #e3eaf6;
+}
+.yidian-voice-settings[hidden] { display: none !important; }
+#yidian-speed { flex: 1 1 100px; min-width: 72px; min-height: 30px; accent-color: #4053bc; }
+#yidian-speed-value { min-width: 45px; font-weight: 800; font-size: 16px; }
+#yidian-speech-message {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #725113;
+  overflow-wrap: anywhere;
+}
+#yidian-speech-message:empty { display: none; }
+#yidian-speech-message[data-error="true"] { color: #a03c09; font-weight: 700; }
+.yidian-language:focus-visible, .yidian-preview:focus-visible,
+.yidian-replay:focus-visible, .yidian-settings-toggle:focus-visible {
+  outline: 3px solid #f0b83c;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  #yidian-speech-controls { padding: 7px 9px; }
+  .yidian-voice-bar { gap: 5px; }
+  .yidian-voice-languages { flex: 1 0 100%; margin: 0; }
+  .yidian-voice-label { font-size: 16px; }
+  .yidian-language, .yidian-preview, .yidian-replay, .yidian-settings-toggle {
+    font-size: 16px;
+    min-height: 40px;
+    padding: 5px 9px;
+  }
+}

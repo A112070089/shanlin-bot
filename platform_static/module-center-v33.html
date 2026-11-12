@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>共用標準版功能管理｜DOUBTS</title>
+  <link rel="stylesheet" href="/platform/assets/platform.css">
+  <link rel="stylesheet" href="/platform/assets/module-center-v33.css">
+</head>
+<body>
+  <header><div><strong>頤典 DOUBTS</strong><span>工程師平台 · 全平台共用功能 v3.3</span></div><a class="header-return" href="/platform/admin">← 返回工程師總控台</a></header>
+  <main id="moduleMain" hidden>
+    <h1>功能模組管理中心</h1>
+    <p class="muted">同一套標準版功能，所有已正式開通的診所共同適用，無須每家勾選。頤典 Demo 僅作預覽，未開通草稿不能使用正式醫療功能。</p>
+    <p id="moduleStatus" role="status">讀取中…</p>
+    <section id="moduleContent" hidden>
+      <section class="card migration-review" aria-label="舊版授權對應檢查">
+        <strong>舊版授權對應檢查</strong>
+        <div id="moduleMigration" role="status">正在核對歷史紀錄…</div>
+      </section>
+      <div class="module-toolbar"><h2>模組清單</h2><button id="newModule" type="button">＋ 新增模組</button></div>
+      <div id="moduleList" class="module-list"></div>
+      <section id="moduleEditor" class="card module-editor" hidden aria-labelledby="moduleEditorHeading">
+        <h2 id="moduleEditorHeading">新增功能模組</h2>
+        <p class="muted">模組代號建立後不可更改。此處不會上傳或執行程式碼。</p>
+        <form id="moduleForm">
+          <div class="module-two-col">
+            <label>模組代號（英文小寫、底線）<input id="modId" name="moduleId" required minlength="3" maxlength="40" pattern="[a-z][a-z0-9_]{2,39}" placeholder="例如：ai_followup_reminder" autocomplete="off"></label>
+            <label>模組名稱<input id="modName" name="name" required minlength="2" maxlength="80" placeholder="例如：AI 語音回診提醒"></label>
+          </div>
+          <label>功能說明（請勿輸入病患資料）<textarea id="modDescription" maxlength="500" rows="3" placeholder="簡述未來功能與使用範圍"></textarea></label>
+          <div class="module-two-col">
+            <label>規劃版本<input id="modVersion" required maxlength="40" value="0.1.0" placeholder="0.1.0"></label>
+            <label>舊版模組登記狀態（部署進度請至「部署／驗收」）<select id="modStage"><option value="planned">規劃中</option><option value="testing">測試中</option></select></label>
+          </div>
+          <div class="module-actions"><button id="moduleSave" type="submit">建立模組</button><button id="moduleCancel" class="outline" type="button">取消</button></div>
+        </form>
+      </section>
+      <h2>最近模組變更紀錄</h2><div id="moduleAudit" class="card" aria-live="polite">讀取中…</div>
+    </section>
+    <p class="muted module-footer">v3.3 新增每個功能的「部署／驗收」入口；開發、測試、部署狀態分別記錄，不能手動把未安裝的程式標成已上線。<br>納入標準版只代表全平台產品規劃，不等於程式已部署或診所已驗收。實際臨床使用仍須完成伺服器部署、驗證、身分權限及資料隔離檢查。</p>
+  </main>
+  <script src="/platform/assets/module-center-v33.js" defer></script>
+</body>
+</html>

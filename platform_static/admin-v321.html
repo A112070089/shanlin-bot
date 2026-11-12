@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DOUBTS｜工程師總控台 v3.2.1</title>
+  <link rel="stylesheet" href="/platform/assets/platform.css">
+  <link rel="stylesheet" href="/platform/assets/module-center-v321.css">
+</head>
+<body>
+  <header>
+    <div><strong>頤典 DOUBTS</strong><span>工程師總控台 · 本機限定</span></div>
+    <button id="logout" class="outline" hidden>登出</button>
+  </header>
+  <main>
+    <section id="login" class="card login">
+      <small>PLATFORM ADMINISTRATOR</small>
+      <h1>工程師登入</h1>
+      <p>請輸入工程師帳號與密碼，進入平台總控台。</p>
+      <form id="loginForm">
+        <label>工程師帳號<input id="username" autocomplete="username" required placeholder="請輸入工程師帳號"></label>
+        <label>管理密碼<input id="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼"></label>
+        <button type="submit">登入工程師總控台</button>
+      </form>
+      <p id="loginMessage" role="status"></p>
+      <p id="accountHint" class="muted"></p>
+    </section>
+    <section id="dashboard" hidden>
+      <h1>平台總覽</h1>
+      <p class="muted">獨立管理診所導入與功能模組。所有同方案診所共用功能模組；平台統一設定納入標準版，未部署功能不會開放正式使用。</p>
+      <nav class="module-nav" aria-label="工程師平台管理選單">
+        <a href="/platform/clinics">診所管理中心 →</a>
+        <a href="/platform/modules">功能模組管理中心 →</a>
+      </nav>
+      <h2>現有診所</h2>
+      <div id="clinics" class="cards"></div>
+      <h2>功能模組總覽</h2>
+      <p class="muted">新增模組、規劃版本與標準版共用開關皆在「功能模組管理中心」操作，不必逐一勾選診所。</p>
+      <div class="card" id="features">載入中…</div>
+      <div class="actions"><a class="action-link" href="/platform/modules">開啟模組管理中心 →</a></div>
+      <h2>本機服務狀態</h2>
+      <div class="card" id="health">載入中…</div>
+      <h2>最近模組操作紀錄</h2>
+      <div class="card" id="audit">載入中…</div>
+      <p id="dashboardMessage" role="status"></p>
+    </section>
+  </main>
+  <script src="/platform/assets/platform-v321.js" defer></script>
+</body>
+</html>
