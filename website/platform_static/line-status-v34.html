@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LINE Bot 現有服務整合｜DOUBTS</title>
+  <link rel="stylesheet" href="/platform/assets/platform.css">
+  <link rel="stylesheet" href="/platform/assets/line-status-v34.css">
+</head>
+<body>
+  <header><div><strong>頤典 DOUBTS</strong><span>工程師平台 · LINE Bot 整合狀態 v3.4</span></div>
+    <a class="header-return" href="/platform/modules">← 返回功能模組中心</a></header>
+  <main id="lineMain" hidden>
+    <h1>預約提醒｜既有 LINE Bot 整合狀態</h1>
+    <p class="muted">這裡僅檢查山林診所原有 LINE Bot。頤典 Demo 不會接入山林的 LINE 帳號或病患資料。</p>
+    <p id="pageMessage" role="status">讀取中…</p>
+    <section id="lineContent" hidden>
+      <section class="card"><h2>既有功能與驗證進度</h2>
+        <p class="muted" id="sourceContext">來源待確認…</p>
+        <div class="line-grid" id="checkGrid" aria-label="LINE Bot 整合檢查表"></div>
+        <div class="line-notice">功能存在於程式碼，不等於已在 Railway 部署，也不能代表提醒排程、發送或送達成功。</div>
+      </section>
+      <section class="card"><h2>LINE Bot 服務連線</h2>
+        <p>只有按下按鈕才會從本機對既有山林服務首頁執行一次唯讀 GET，絕不呼叫發送提醒。</p>
+        <div class="line-actions"><button type="button" id="checkService">檢查服務連線</button><span id="serviceState" role="status">尚未檢查</span></div>
+        <p id="lastChecked" class="muted"></p>
+      </section>
+      <section class="card"><h2>正式整合前還需要確認</h2>
+        <p>每日排程的執行位置、已發送／失敗／重試日誌、重複發送防護，以及 LINE 發送入口的授權。這些項目未完成驗證前，不應在工程師總控台標示正式上線。</p>
+        <p class="line-notice warning">目前公開的主程式碼中，提醒發送入口沒有看見權限檢查。請先於既有 LINE Bot 後端完成安全修正，勿用管理介面直接觸發提醒。</p>
+        <p class="muted">此頁不會讀取患者姓名、電話、身分證、LINE user ID，也不會更動 Firebase 或 LINE Bot。</p>
+        <p><a id="codeLink" class="line-source-link" href="https://github.com/A112070089/shanlin-bot/blob/main/main.py" target="_blank" rel="noopener noreferrer">檢視既有 LINE Bot 原始碼 ↗</a></p>
+      </section>
+    </section>
+  </main>
+  <script src="/platform/assets/line-status-v34.js" defer></script>
+</body>
+</html>

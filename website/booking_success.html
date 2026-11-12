@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>預約成功 - 頤典診所</title>
+
+  <link rel="stylesheet" href="./assets/css/booking_success.css"/>
+  <!-- 部署設定：後端網址（開通新診所時改這個檔） -->
+  <script src="site-config.js"></script>
+  <!-- 診所設定：名稱 -->
+  <script>
+  // SHANLIN_DEMO_SUCCESS_SKIP_CLINIC_JS_V1
+  // Only skip redundant clinic lookups for a completed local no-write demo.
+  (() => {
+    let demo = false;
+    try {
+      const params = new URLSearchParams(location.search);
+      const booking = JSON.parse(
+        sessionStorage.getItem("lastBooking") || "null"
+      );
+      demo =
+        ["127.0.0.1", "localhost"].includes(location.hostname) &&
+        params.get("clinic") === "shanlin" &&
+        booking &&
+        booking.demoOnly === true &&
+        booking.persisted === false &&
+        booking.date === "2026-11-20";
+    } catch (_) {}
+
+    if (!demo) {
+      document.write(
+        '<script src="clinic.js" data-api="booking"><' + '/script>'
+      );
+    }
+  })();
+</script>
+</head>
+
+<body>
+
+  <div class="header">
+    <span data-clinic="name">頤典診所</span>
+  </div>
+
+  <main class="main">
+
+    <div class="success-icon">✅</div>
+
+    <h1>預約成功，感謝您的預約！</h1>
+
+    <div class="subtitle">
+      以下是您的預約資料，建議截圖保留
+    </div>
+
+    <div class="plan" id="plan">
+      健檢方案
+    </div>
+
+    <div class="booking-card">
+
+      <div class="row">
+        <span class="label">姓名</span>
+        <span class="value" id="name">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">身分證字號</span>
+        <span class="value" id="pid">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">手機號碼</span>
+        <span class="value" id="phone">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">出生年月日</span>
+        <span class="value" id="birthday">—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">預約時段</span>
+        <span class="value" id="datetime">—</span>
+      </div>
+
+      <!-- 診所自訂問診題目的回答 -->
+      <div id="extraAnswers"></div>
+
+    </div>
+<div id="selfPaySection" class="selfpay-section">
+
+  <div class="selfpay-section-title">
+    自費加購項目
+  </div>
+
+  <div class="booking-card">
+<div class="row">
+    <span class="label">
+        自費健檢預約時段
+    </span>
+
+    <span
+        class="value"
+        id="selfPayDatetime"
+    >
+        —
+    </span>
+</div>
+    <div id="selfPayItems"></div>
+
+    <div class="row selfpay-total-row">
+      <span class="label">
+        自費項目合計
+      </span>
+
+      <span class="value" id="selfPayTotal">
+        NT$0
+      </span>
+    </div>
+
+  </div>
+
+</div>
+    <div class="notice">
+      請於健檢當天攜帶健保卡、身分證，並保持空腹 8 小時。
+      若需要異動或取消預約，請於健檢前一日致電本診所櫃檯。
+    </div>
+
+    <div class="buttons">
+
+      <a href="index.html" class="btn btn-home">
+        回首頁
+      </a>
+
+      <a href="index.html?mode=self_pay" class="btn btn-selfpay">
+        順便看看自費健康管理項目
+      </a>
+
+    </div>
+
+  </main>
+
+  <script>
+    const booking =
+      JSON.parse(sessionStorage.getItem("lastBooking") || "{}");
+
+    const planNames = {
+      A: "A方案：腦肺方案",
+      B: "B方案：腹部方案",
+      C: "C方案：基本方案"
+    };
+
+    document.getElementById("plan").textContent =
+      planNames[booking.plan] || booking.plan || "健檢方案";
+
+    document.getElementById("name").textContent =
+      booking.name || "—";
+
+    document.getElementById("pid").textContent =
+      booking.pid || "—";
+
+    document.getElementById("phone").textContent =
+      booking.phone || "—";
+
+    const rawBirthday = booking.birthday || "";
+
+let birthdayText = "—";
+
+if (/^\d{6,7}$/.test(rawBirthday)) {
+    const yearLength = rawBirthday.length - 4;
+
+    const rocYear = parseInt(
+        rawBirthday.slice(0, yearLength),
+        10
+    );
+
+    const month = parseInt(
+        rawBirthday.slice(yearLength, yearLength + 2),
+        10
+    );
+
+    const day = parseInt(
+        rawBirthday.slice(yearLength + 2),
+        10
+    );
+
+    birthdayText =
+        `民國${rocYear}年${month}月${day}日`;
+} else if (rawBirthday) {
+    birthdayText = rawBirthday;
+}
+
+document.getElementById("birthday").textContent =
+    birthdayText;
+
+    // 診所自訂問診題目（BMI、過敏史…）
+    (Array.isArray(booking.extraAnswers) ? booking.extraAnswers : [])
+      .forEach(a => {
+        const row = document.createElement("div");
+        row.className = "row";
+        const l = document.createElement("span");
+        l.className = "label";
+        l.textContent = a.label || "";
+        const v = document.createElement("span");
+        v.className = "value";
+        v.textContent = a.value || "—";
+        row.append(l, v);
+        document.getElementById("extraAnswers").appendChild(row);
+      });
+
+    const date = booking.date || "";
+    const time = booking.time || "";
+
+    document.getElementById("datetime").textContent =
+      (date || time)
+        ? `${date} ${time}`.trim()
+        : "—";
+        const selfPayDate =
+  booking.selfPayDate || "";
+
+const selfPayTime =
+  booking.selfPayTime || "";
+
+const selfPayDatetimeElement =
+  document.getElementById(
+    "selfPayDatetime"
+  );
+
+if (selfPayDatetimeElement) {
+
+  selfPayDatetimeElement.textContent =
+    (selfPayDate || selfPayTime)
+
+      ? `${selfPayDate} ${selfPayTime}`.trim()
+
+      : "—";
+
+}
+        const selfPaySection = document.getElementById("selfPaySection");
+const selfPayItemsContainer = document.getElementById("selfPayItems");
+const selfPayTotalElement = document.getElementById("selfPayTotal");
+
+const selfPayItems = Array.isArray(booking.selfPayItems)
+  ? booking.selfPayItems
+  : [];
+
+if (selfPayItems.length > 0) {
+
+  selfPaySection.style.display = "block";
+
+  selfPayItemsContainer.innerHTML = "";
+
+  selfPayItems.forEach((item) => {
+
+    const itemName =
+      item.selected_item_name ||
+      item.name ||
+      "自費項目";
+
+    const itemPrice =
+      Number(item.price || 0);
+
+    const row = document.createElement("div");
+
+    row.className = "row";
+
+    row.innerHTML = `
+      <span class="label">${itemName}</span>
+      <span class="value">
+        NT$${itemPrice.toLocaleString("zh-TW")}
+      </span>
+    `;
+
+    selfPayItemsContainer.appendChild(row);
+  });
+
+  const total =
+    Number(booking.selfPayTotal || 0);
+
+  selfPayTotalElement.textContent =
+    `NT$${total.toLocaleString("zh-TW")}`;
+
+} else {
+
+  selfPaySection.style.display = "none";
+
+}
+  </script>
+
+<script>
+// SHANLIN_NONPERSISTENT_DEMO_20261120_V1
+(() => {
+  if (!["127.0.0.1", "localhost"].includes(location.hostname)) return;
+  let last;
+  try { last = JSON.parse(sessionStorage.getItem("lastBooking") || "null"); }
+  catch (_) { return; }
+  if (!last || last.demoOnly !== true || last.persisted !== false ||
+      last.date !== "2026-11-20") return;
+  document.title = "本機模擬完成（未建立預約）－山林診所";
+  function showDemoBanner() {
+    if (!document.body || document.getElementById("shanlin-demo-banner")) return;
+    const banner = document.createElement("section");
+    banner.id = "shanlin-demo-banner";
+    banner.setAttribute("role", "status");
+    banner.style.cssText = "box-sizing:border-box;width:100%;padding:20px 16px;background:#fff3da;border:4px solid #b8432b;color:#862d1f;font-size:22px;font-weight:800;text-align:center;line-height:1.5;position:relative;z-index:10000";
+    banner.textContent = "本機模擬流程完成｜非正式預約・未寫入 Firebase・不占用名額・不發送 LINE 提醒";
+    document.body.prepend(banner);
+    for (const heading of document.querySelectorAll("h1,h2,h3")) {
+      if ((heading.textContent || "").includes("預約成功"))
+        heading.textContent = "模擬完成（未建立預約）";
+    }
+  }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", showDemoBanner, {once:true});
+  else showDemoBanner();
+})();
+</script>
+</body>
+</html>

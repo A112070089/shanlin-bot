@@ -1,0 +1,3299 @@
+/* =========================================================
+   首頁 index.html（含 AI 語音助理聊天視窗）
+   目錄：
+     1. AI 語音助理聊天視窗
+     2. 右下角浮動按鈕
+     3. 自費加購視窗
+     4. 自費加購清單
+     5. 首頁大按鈕
+     6. 聊天室內的訊息樣式（警告、提示、方案字母）
+     7. 診所自訂問診題目：快速回覆按鈕
+     8. 自費聊天選項按鈕
+     9. 手機版（寬度 ≤ 430px）
+    10. 老人健檢：聊天室裡的日曆
+========================================================= */
+
+/* ==================================================
+   1. AI 語音助理聊天視窗
+================================================== */
+#chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 350px;
+  height: 520px;
+  z-index: 100000;
+  display: none;
+  flex-direction: column;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #ccc;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+#chat-widget.large-mode {
+  width: 90vw;
+  height: 85vh;
+  max-width: 500px;
+  bottom: 5vh;
+  right: 5vw;
+}
+
+#chat-widget.large-mode .msg {
+  font-size: 1.45rem;
+  padding: 15px 20px;
+}
+
+#chat-widget.large-mode #chat-header {
+  font-size: 1.3rem;
+  padding: 20px;
+}
+
+#chat-widget.large-mode #chat-input {
+  font-size: 1.2rem;
+  padding: 12px 20px;
+}
+
+#chat-widget.large-mode .send-btn-chat,
+#chat-widget.large-mode .mic-btn-chat {
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  flex: 0 0 60px;
+  font-size: 1.8rem;
+}
+
+#chat-widget.large-mode .action-btn {
+  font-size: 1.1rem;
+  padding: 8px 15px;
+}
+
+#chat-header {
+  background: #0d6efd;
+  color: white;
+  padding: 15px;
+  font-weight: bold;
+  font-size: 1.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-icons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+#chat-body {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.msg {
+  margin-bottom: 12px;
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 15px;
+  font-size: 1.35rem;
+  line-height: 1.65;
+}
+
+.ai-msg {
+  background: #e9ecef;
+  color: #333;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.user-msg {
+  background: #0d6efd;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.quick-actions,
+.voice-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 15px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.quick-actions {
+  border-top: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.voice-actions {
+  padding-top: 5px;
+  padding-bottom: 8px;
+}
+
+.quick-actions .action-btn,
+.voice-actions .action-btn {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.action-btn {
+  background: #f1f3f5;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #333;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: #e2e6ea;
+}
+
+#chat-footer {
+  padding: 10px 15px;
+  background: white;
+  display: flex;
+  align-items: center;
+}
+
+#chat-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 8px 15px;
+  outline: none;
+  font-size: 1.1rem;
+}
+
+/* 送出鍵 ➤ 與麥克風鍵 🎤：共用圓形按鈕外觀 */
+.send-btn-chat,
+.mic-btn-chat {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 50%;
+
+  width: 45px;
+  height: 45px;
+  min-width: 45px;
+  min-height: 45px;
+
+  flex: 0 0 45px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  padding: 0;
+
+  margin-left: 8px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn-chat {
+  font-size: 1.35rem;
+  font-weight: bold;
+}
+
+.mic-btn-chat {
+  font-size: 1.4rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mic-btn-chat.recording {
+  background: #dc3545;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+
+  100% {
+    box-shadow: 0 0 0 15px rgba(220, 53, 69, 0);
+  }
+}
+
+/* ==================================================
+   2. 右下角浮動按鈕
+================================================== */
+
+#floating-buttons {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9998;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#open-chat-btn,
+#open-selfpay-btn {
+  position: static;
+
+  width: 75px;
+  height: 75px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  color: white;
+  font-size: 30px;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 22px rgba(0, 65, 150, 0.28);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+#open-chat-btn {
+  background: #0d6efd;
+}
+
+#open-selfpay-btn {
+  background: #3154b8;
+}
+
+#open-chat-btn:hover,
+#open-selfpay-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+
+  box-shadow: 0 12px 28px rgba(0, 65, 150, 0.38);
+}
+
+#open-chat-btn:active,
+#open-selfpay-btn:active {
+  transform: scale(0.96);
+}
+
+#open-chat-btn:focus-visible,
+#open-selfpay-btn:focus-visible {
+  outline: 4px solid rgba(13, 110, 253, 0.28);
+  outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+  #floating-buttons {
+    right: 14px;
+    bottom: 14px;
+    gap: 9px;
+  }
+
+  #open-chat-btn,
+  #open-selfpay-btn {
+    width: 62px;
+    height: 62px;
+    font-size: 25px;
+  }
+}
+
+.loading-status {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 5px;
+  display: none;
+}
+
+/* ==================================================
+   3. 自費加購視窗
+================================================== */
+
+body.self-pay-modal-open {
+  overflow: hidden;
+}
+
+#selfPayModal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#selfPayModal.is-open {
+  display: flex;
+}
+
+.self-pay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 32, 52, 0.56);
+  backdrop-filter: blur(4px);
+}
+
+.self-pay-panel {
+  position: relative;
+  z-index: 1;
+  width: min(1080px, 96vw);
+  height: min(820px, 92vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(49, 84, 184, 0.18);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 25px 80px rgba(20, 48, 90, 0.32);
+}
+
+.self-pay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 28px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3154b8 0%, #0d6efd 100%);
+}
+
+.self-pay-header-label {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.self-pay-header h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 800;
+}
+
+.self-pay-header p {
+  margin: 8px 0 0;
+  opacity: 0.92;
+}
+
+.self-pay-close-btn {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.self-pay-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.self-pay-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 62px;
+  padding: 12px 26px;
+  border-bottom: 1px solid #dce6f5;
+  background: #f5f8ff;
+}
+
+.self-pay-back-btn {
+  border: 1px solid #3154b8;
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: #3154b8;
+  background: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.self-pay-back-btn:hover {
+  color: #ffffff;
+  background: #3154b8;
+}
+
+.self-pay-breadcrumb {
+  color: #58697f;
+  font-weight: 700;
+}
+
+.self-pay-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 26px;
+  background: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 196, 0, 0.2) 1.3px,
+    transparent 1.4px
+  );
+  background-size: 20px 20px;
+}
+
+.self-pay-loading,
+.self-pay-empty,
+.self-pay-error {
+  max-width: 620px;
+  margin: 40px auto;
+  padding: 26px;
+  border-radius: 18px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 8px 26px rgba(35, 67, 112, 0.12);
+}
+
+.self-pay-error {
+  color: #a32632;
+  border: 1px solid #f0c4c8;
+  background: #fff7f8;
+}
+
+.self-pay-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.self-pay-category-card {
+  min-height: 185px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+  border: 1px solid #d9e4f2;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 24px rgba(35, 67, 112, 0.1);
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.self-pay-category-card:hover {
+  transform: translateY(-4px);
+  border-color: #3154b8;
+  box-shadow: 0 14px 32px rgba(35, 67, 112, 0.17);
+}
+
+.self-pay-category-icon {
+  font-size: 2.7rem;
+}
+
+.self-pay-category-name {
+  margin-top: 16px;
+  color: #17345f;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.self-pay-category-count {
+  margin-top: 8px;
+  color: #6f7e91;
+}
+
+.self-pay-category-action {
+  margin-top: 18px;
+  color: #3154b8;
+  font-weight: 800;
+}
+
+.self-pay-items-heading {
+  margin-bottom: 20px;
+  padding: 19px 22px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 7px 22px rgba(35, 67, 112, 0.09);
+}
+
+.self-pay-items-heading h3 {
+  margin: 0;
+  color: #17345f;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.self-pay-items-heading p {
+  margin: 7px 0 0;
+  color: #66768a;
+}
+
+.self-pay-item-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.self-pay-item-card {
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid #d9e4f2;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 7px 22px rgba(35, 67, 112, 0.09);
+}
+
+.self-pay-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.self-pay-item-name {
+  color: #18365d;
+  font-size: 1.14rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.self-pay-item-code {
+  margin-top: 5px;
+  color: #728198;
+  font-size: 0.88rem;
+}
+
+.self-pay-item-price {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #3154b8;
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.self-pay-item-price.price-pending {
+  color: #805300;
+  background: #fff0c6;
+}
+
+.self-pay-item-description {
+  flex: 1;
+  margin-top: 16px;
+  color: #506176;
+  line-height: 1.7;
+}
+
+.self-pay-item-note {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #6d5211;
+  background: #fff8df;
+  font-size: 0.88rem;
+}
+
+.self-pay-detail-btn {
+  width: 100%;
+  margin-top: 17px;
+  padding: 10px 14px;
+  border: 1px solid #3154b8;
+  border-radius: 12px;
+  color: #3154b8;
+  background: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.self-pay-detail-btn:hover {
+  color: #ffffff;
+  background: #3154b8;
+}
+
+.self-pay-item-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.self-pay-add-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  background: #0d6efd;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.self-pay-add-btn:hover {
+  background: #3154b8;
+}
+
+.self-pay-add-btn:disabled {
+  color: #68788e;
+  background: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.self-pay-summary {
+  position: fixed !important;
+  right: 28px !important;
+  bottom: 28px !important;
+
+  z-index: 300000 !important;
+
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  min-width: 280px;
+  padding: 16px 18px;
+
+  border: 1px solid #d6e2f4;
+  border-radius: 18px;
+
+  color: #17345f;
+  background: #ffffff;
+
+  box-shadow: 0 14px 42px rgba(19, 54, 98, 0.28);
+}
+
+.self-pay-summary-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.self-pay-summary-info strong {
+  font-size: 1.05rem;
+}
+
+.self-pay-summary-info span {
+  color: #3154b8;
+  font-weight: 800;
+}
+
+.self-pay-summary-button {
+  padding: 9px 14px;
+
+  border: 0;
+  border-radius: 999px;
+
+  color: #ffffff;
+  background: #3154b8;
+
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.self-pay-summary-button:hover {
+  background: #0d6efd;
+}
+
+@media (max-width: 700px) {
+  .self-pay-summary {
+    right: 12px !important;
+    left: 12px !important;
+    bottom: 12px !important;
+
+    min-width: 0;
+  }
+}
+
+.self-pay-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 24px;
+  border-top: 1px solid #dce6f1;
+  color: #58687c;
+  background: #f7f9fc;
+  font-size: 0.9rem;
+}
+
+.self-pay-footer-close {
+  flex: 0 0 auto;
+  padding: 9px 20px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #3154b8;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.self-pay-detail-dialog {
+  width: min(560px, 90vw);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(16, 42, 75, 0.35);
+}
+
+.self-pay-detail-dialog::backdrop {
+  background: rgba(21, 36, 56, 0.56);
+}
+
+.self-pay-detail-body {
+  padding: 25px;
+}
+
+.self-pay-detail-body h3 {
+  margin-top: 0;
+  color: #17345f;
+  font-weight: 800;
+}
+
+.self-pay-detail-price {
+  margin: 13px 0;
+  color: #3154b8;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.self-pay-detail-description {
+  color: #516276;
+  line-height: 1.75;
+}
+
+.self-pay-detail-close {
+  width: 100%;
+  margin-top: 20px;
+  padding: 11px;
+  border: 0;
+  border-radius: 12px;
+  color: #ffffff;
+  background: #3154b8;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ==================================================
+   4. 自費加購清單：固定底部操作區
+   - 清單過長時只捲動中間項目
+   - 合計 / 提醒 / 按鈕永遠留在視窗底部
+================================================== */
+#selfPayCartDialog {
+  width: min(680px, 92vw);
+  height: min(760px, 88vh);
+  max-height: 88vh;
+}
+
+#selfPayCartDialog .self-pay-detail-body {
+  height: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#selfPayCartDialog .self-pay-cart-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+  overscroll-behavior: contain;
+}
+
+#selfPayCartDialog .self-pay-cart-bottom {
+  flex: 0 0 auto;
+  background: #ffffff;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -10px 22px rgba(23, 52, 95, 0.05);
+}
+
+#selfPayCartDialog .self-pay-cart-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: #edf4ff;
+  color: #17345f;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#selfPayCartDialog .self-pay-cart-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+#selfPayCartDialog .self-pay-cart-actions .self-pay-add-btn,
+#selfPayCartDialog .self-pay-cart-actions .self-pay-detail-close {
+  flex: 1;
+  margin-top: 0;
+  min-height: 48px;
+}
+
+@media (max-width: 700px) {
+  #selfPayCartDialog {
+    width: 94vw;
+    height: 90vh;
+    max-height: 90vh;
+  }
+
+  #selfPayCartDialog .self-pay-detail-body {
+    max-height: 90vh;
+    padding: 18px;
+  }
+
+  #selfPayCartDialog .self-pay-cart-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 700px) {
+  #selfPayModal {
+    padding: 0;
+  }
+
+  .self-pay-panel {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .self-pay-header {
+    padding: 20px 18px;
+  }
+
+  .self-pay-toolbar {
+    padding: 11px 16px;
+  }
+
+  .self-pay-content {
+    padding: 18px 14px;
+  }
+
+  .self-pay-category-grid,
+  .self-pay-item-list {
+    grid-template-columns: 1fr;
+  }
+
+  .self-pay-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 13px 17px;
+  }
+
+  .self-pay-footer-close {
+    width: 100%;
+  }
+}
+
+/* ==================================================
+   5. 首頁大按鈕（一般預約 / 老人健檢語音助理）
+================================================== */
+
+#scrollspyHero .bsb-btn-2xl {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 600px) {
+  #scrollspyHero .bsb-btn-2xl {
+    font-size: 1.6rem !important;
+    line-height: 1.3;
+  }
+}
+
+/* ==================================================
+   6. 聊天室內的訊息樣式（由 JavaScript 產生的訊息使用）
+================================================== */
+
+/* 右上角關閉 × */
+.chat-close-btn {
+  cursor: pointer;
+  font-size: 28px;
+}
+
+/* 標題下方灰色小提示 */
+.chat-hint {
+  color: #666;
+}
+
+/* 紅色錯誤提示，例如「⚠️ 身分證格式不對喔」 */
+.chat-error {
+  color: red;
+}
+
+/* 橘色注意事項，例如「未滿 18 歲建議家長陪同」 */
+.chat-notice {
+  color: #d97706;
+  font-weight: 700;
+}
+
+/* 方案介紹的紅色 A / B / C */
+.plan-letter {
+  color: #e53935;
+  font-weight: 700;
+}
+
+/* 自費加購清單的每一項 */
+.cart-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cart-item-name {
+  font-weight: 800;
+  color: #17345f;
+}
+
+.cart-item-note {
+  margin-top: 5px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.cart-item-included {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.cart-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.cart-item-price {
+  color: #3154b8;
+}
+
+.cart-item-remove {
+  border: 1px solid #dc3545;
+  border-radius: 8px;
+  background: #fff;
+  color: #dc3545;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* ==================================================
+   7. 診所自訂問診題目：快速回覆按鈕（booking_questions.js）
+================================================== */
+
+.bq-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 10px;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.bq-replies button {
+  border: 1.5px solid #0d6efd;
+  background: #fff;
+  color: #0d6efd;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.bq-replies button:hover {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.bq-replies.used {
+  display: none;
+}
+
+/* 「補充問題 1 / 3」小標籤 */
+.bq-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d6efd;
+  background: #e7f0ff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-bottom: 6px;
+}
+
+/* 問診題目的紅色提示，例如「⚠️ 我沒有聽到數字」 */
+.bq-error {
+  color: #d32f2f;
+}
+
+/* 「（這題可以說「跳過」）」 */
+.bq-optional {
+  color: #888;
+  font-size: 0.9em;
+}
+
+/* ==================================================
+   8. 自費聊天選項按鈕
+================================================== */
+
+.self-pay-option {
+  margin: 9px 0;
+  padding: 10px;
+  border: 1px solid #d9e6dc;
+  border-radius: 10px;
+  background: #f8fcf9;
+}
+
+.self-pay-choice,
+.self-pay-add,
+.self-pay-cancel {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 12px;
+  margin: 4px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.self-pay-choice,
+.self-pay-add {
+  background: #2f6f4e;
+  color: #fff;
+}
+
+.self-pay-cancel {
+  background: #e9ecef;
+  color: #333;
+}
+
+/* ==================================================
+   9. 手機版（寬度 ≤ 430px）
+================================================== */
+
+@media (max-width: 430px) {
+  #chat-widget {
+    width: calc(100vw - 16px);
+    right: 8px;
+    left: auto;
+  }
+
+  #chat-footer {
+    padding: 10px 8px;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+
+  #chat-input {
+    min-width: 0;
+    font-size: 1.15rem;
+  }
+
+  .send-btn-chat,
+  .mic-btn-chat {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    flex: 0 0 42px;
+    margin-left: 0;
+  }
+
+  /* 長輩友善：手機版字體放大 */
+  #chat-header {
+    font-size: 1.2rem;
+  }
+
+  .msg {
+    font-size: 1.35rem;
+    line-height: 1.7;
+  }
+
+  .action-btn {
+    font-size: 1.1rem;
+  }
+
+
+  #scrollspyHero .btn {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+  }
+
+  @media (max-width: 600px) {
+    #scrollspyHero .btn {
+      font-size: 1.6rem !important;
+    }
+  }
+}
+
+/* ==================================================
+   10. 老人健檢：聊天室裡的日曆（只有可預約日能點）
+================================================== */
+
+.chat-calendar {
+  align-self: flex-start;
+  margin: 0 0 12px;
+}
+
+.chat-calendar .flatpickr-calendar.inline {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+}
+
+/* 可預約的日子：藍色粗體，很明顯 */
+.chat-calendar .flatpickr-day.chat-day-open {
+  background: #e7f0ff;
+  border-color: #0d6efd;
+  color: #0d6efd;
+  font-weight: 800;
+}
+
+.chat-calendar .flatpickr-day.chat-day-open:hover {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.chat-calendar .flatpickr-day.sp-day-full,
+.chat-calendar .flatpickr-day.sp-day-closed {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.chat-calendar .flatpickr-day.sp-day-full {
+  background: #fde8e8;
+  color: #c98a8a;
+}
+
+.chat-calendar .flatpickr-day small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chat-calendar .flatpickr-day.sp-day-full small {
+  color: #c62828;
+}
+
+.chat-cal-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.chat-cal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chat-cal-legend i {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #ccd;
+  display: inline-block;
+}
+
+.chat-cal-legend i.ok {
+  background: #e7f0ff;
+  border-color: #0d6efd;
+}
+
+.chat-cal-legend i.full {
+  background: #fde8e8;
+}
+
+.chat-cal-legend i.off {
+  background: #f1f1f1;
+}
+
+/* =========================================================
+   11. 首頁長者友善版型 V2 — YIDIAN-HOME-ACCESSIBLE-V2
+   僅調整首頁導覽、主要入口、三步驟與 A/B/C 方案。
+   不影響 AI 聊天視窗、自費視窗、後台與預約 API。
+   ========================================================= */
+:root {
+  --elderly-ink: #1d2b43;
+  --elderly-blue: #304b99;
+  --elderly-blue-dark: #263d7a;
+  --elderly-muted: #4c5c70;
+  --elderly-line: #d8e0eb;
+  --elderly-bg: #f7f9fc;
+}
+
+/* 導覽字體清楚但不過大；桌面版維持同一列。 */
+#scrollspyNav .navbar-brand,
+#scrollspyNav .navbar-brand span {
+  font-size: clamp(26px, 2.1vw, 32px) !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  color: #293f86 !important;
+}
+#scrollspyNav .navbar-nav .nav-link {
+  font-size: clamp(20px, 1.55vw, 23px) !important;
+  line-height: 1.4 !important;
+  font-weight: 650 !important;
+  padding: 12px clamp(8px, 1.1vw, 16px) !important;
+  color: #1e2e4e !important;
+}
+#scrollspyNav .navbar-nav .nav-link:hover,
+#scrollspyNav .navbar-nav .nav-link:focus-visible {
+  color: var(--elderly-blue-dark) !important;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+/* 首屏：保留原本三種預約方式，縮減上下不必要的大空白。 */
+/* HOME-HERO-SIZES：首頁主標題與三個入口按鈕，尺寸統一由此調整。
+   桌面標題：原 52–76px → 65–95px（約放大 25%）。
+   桌面按鈕：原最高 40px / 最低 118px → 46px / 148px。
+   手機尺寸：見本區塊下方兩個 media query；按鈕可依文字自動增高。
+*/
+#scrollspyHero.elderly-home-hero-v2 {
+  --home-title-size: clamp(80px, 6.25vw, 95px);
+  --home-button-font-size: clamp(45px, 3.2vw, 46px);
+  --home-button-min-height: 148px;
+  --home-button-padding: 24px 20px;
+}
+@media (max-width: 950px) {
+  #scrollspyHero.elderly-home-hero-v2 {
+    --home-button-font-size: 34px;
+    --home-button-min-height: 112px;
+  }
+}
+@media (max-width: 760px) {
+  #scrollspyHero.elderly-home-hero-v2 {
+    --home-title-size: clamp(48px, 10vw, 64px);
+    --home-button-font-size: clamp(28px, 7.5vw, 34px);
+    --home-button-min-height: 104px;
+    --home-button-padding: 22px 18px;
+  }
+}
+
+#scrollspyHero.elderly-home-hero-v2 {
+  min-height: 0 !important;
+  padding-top: clamp(44px, 4.5vw, 72px) !important;
+  padding-bottom: clamp(52px, 5vw, 76px) !important;
+  background: #ffffff !important;
+  background-image: none !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-container-v15 {
+  width: calc(100% - 64px) !important;
+  max-width: 1340px !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-column-v15 {
+  width: 100% !important;
+  max-width: none !important;
+}
+#scrollspyHero.elderly-home-hero-v2 h1 {
+  font-size: var(--home-title-size) !important;
+  line-height: 1.18 !important;
+  overflow-wrap: anywhere;
+  margin: 0 !important;
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif !important;
+  letter-spacing: .015em !important;
+  font-weight: 800 !important;
+  color: #202b3e !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 {
+  width: 100% !important;
+  max-width: none !important;
+  margin-top: clamp(28px, 3vw, 42px) !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  align-items: stretch !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn {
+  font-size: var(--home-button-font-size) !important;
+  min-height: var(--home-button-min-height) !important;
+  height: auto !important;
+  padding: var(--home-button-padding) !important;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border-radius: 14px !important;
+  border: 2px solid var(--elderly-blue) !important;
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  box-shadow: none !important;
+  transition: background-color .12s ease !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary {
+  color: #fff !important;
+  background: var(--elderly-blue) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary {
+  color: var(--elderly-blue-dark) !important;
+  background: #fff !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn:hover {
+  background: #eaf0fa !important;
+  color: var(--elderly-blue-dark) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary:hover {
+  background: var(--elderly-blue-dark) !important;
+  color: #fff !important;
+}
+
+/* 步驟放在整排上方，不再和三張窄長方案卡擠在同一排。 */
+#scrollspyAppointment.elderly-booking-v2 {
+  scroll-margin-top: 110px;
+  padding: clamp(54px, 6vw, 86px) 0 clamp(64px, 7vw, 100px) !important;
+  background: var(--elderly-bg) !important;
+  background-image: none !important;
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  color: var(--elderly-ink);
+}
+#scrollspyAppointment .elderly-booking-container {
+  width: calc(100% - 64px);
+  max-width: 1340px;
+  margin: 0 auto;
+}
+#scrollspyAppointment .elderly-section-heading h2,
+#scrollspyAppointment .elderly-plans-heading h2 {
+  margin: 0;
+  font-size: clamp(32px, 3vw, 42px);
+  font-weight: 800;
+  line-height: 1.25;
+  color: #1e345e;
+}
+#scrollspyAppointment .elderly-section-heading p,
+#scrollspyAppointment .elderly-plans-heading p {
+  margin: 12px 0 0;
+  font-size: clamp(19px, 1.55vw, 22px);
+  line-height: 1.6;
+  color: var(--elderly-muted);
+}
+#scrollspyAppointment .elderly-booking-steps {
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+#scrollspyAppointment .elderly-booking-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px 23px 26px;
+  border: 1px solid var(--elderly-line);
+  border-radius: 14px;
+  background: #ffffff;
+}
+#scrollspyAppointment .elderly-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 43px;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: #e6edfa;
+  color: var(--elderly-blue-dark);
+  font-size: 23px;
+  font-weight: 800;
+}
+#scrollspyAppointment .elderly-step-content {
+  min-width: 0;
+}
+#scrollspyAppointment .elderly-step-content h3 {
+  margin: 2px 0 10px;
+  font-size: clamp(24px, 1.85vw, 28px);
+  line-height: 1.25;
+  font-weight: 800;
+  color: #203660;
+}
+#scrollspyAppointment .elderly-step-content p {
+  margin: 0;
+  font-size: clamp(20px, 1.45vw, 22px);
+  line-height: 1.7;
+  color: #344355;
+  overflow-wrap: break-word;
+}
+#scrollspyAppointment .elderly-eligibility-note {
+  margin: 20px 0 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: #48586a;
+}
+#scrollspyAppointment .elderly-plans-heading {
+  margin-top: clamp(54px, 5vw, 76px);
+}
+#scrollspyAppointment .elderly-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+  align-items: stretch;
+}
+#scrollspyAppointment .elderly-plan-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 30px 28px 28px;
+  border: 1px solid var(--elderly-line);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(21, 43, 87, .035);
+}
+#scrollspyAppointment .elderly-plan-code {
+  display: inline-block;
+  font-size: 21px;
+  font-weight: 750;
+  color: #4a618f;
+}
+#scrollspyAppointment .elderly-plan-card h3 {
+  margin: 7px 0 0;
+  font-size: clamp(28px, 2.1vw, 32px);
+  line-height: 1.3;
+  color: #233e80;
+  font-weight: 800;
+}
+#scrollspyAppointment .elderly-plan-preview-label {
+  margin: 26px 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #59687c;
+}
+#scrollspyAppointment .elderly-plan-preview,
+#scrollspyAppointment .elderly-plan-full-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#scrollspyAppointment .elderly-plan-preview li {
+  padding: 11px 0;
+  border-bottom: 1px solid #e6ebf1;
+  color: #29374a;
+  font-size: clamp(20px, 1.45vw, 22px);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+#scrollspyAppointment .elderly-plan-details {
+  margin: 23px 0 28px;
+  color: var(--elderly-blue-dark);
+}
+#scrollspyAppointment .elderly-plan-details summary {
+  cursor: pointer;
+  font-size: clamp(20px, 1.45vw, 22px);
+  line-height: 1.5;
+  font-weight: 700;
+  padding: 8px 0;
+  color: var(--elderly-blue-dark);
+}
+#scrollspyAppointment .elderly-plan-details[open] summary {
+  margin-bottom: 12px;
+}
+#scrollspyAppointment .elderly-plan-full-list li {
+  padding: 10px 2px;
+  border-bottom: 1px solid #e6ebf1;
+  color: #394b5f;
+  font-size: clamp(19px, 1.4vw, 21px);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+#scrollspyAppointment .elderly-plan-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 66px;
+  margin-top: auto;
+  padding: 12px 16px;
+  border-radius: 11px;
+  border: 2px solid var(--elderly-blue);
+  background: var(--elderly-blue);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-decoration: none;
+  text-align: center;
+}
+#scrollspyAppointment .elderly-plan-action:hover {
+  background: var(--elderly-blue-dark);
+  color: #fff;
+}
+#scrollspyHero.elderly-home-hero-v2 a:focus-visible,
+#scrollspyHero.elderly-home-hero-v2 button:focus-visible,
+#scrollspyAppointment .elderly-plan-action:focus-visible,
+#scrollspyAppointment .elderly-plan-details summary:focus-visible,
+#scrollspyNav .navbar-nav .nav-link:focus-visible {
+  outline: 3px solid #e09c28 !important;
+  outline-offset: 4px !important;
+}
+
+/* 頁尾聯絡方式：同樣以清楚、易讀為優先。 */
+#scrollspyFooter .widget-title { font-size: 28px; font-weight: 800; }
+#scrollspyFooter address,
+#scrollspyFooter a[data-clinic-tel] { font-size: 21px; line-height: 1.65; }
+
+@media (max-width: 1120px) {
+  #scrollspyAppointment .elderly-plan-grid { grid-template-columns: 1fr; }
+  #scrollspyAppointment .elderly-plan-card { max-width: none; }
+}
+@media (max-width: 950px) {
+  #scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+}
+@media (max-width: 760px) {
+  #scrollspyHero.elderly-home-hero-v2 .senior-hero-container-v15,
+  #scrollspyAppointment .elderly-booking-container { width: calc(100% - 32px) !important; }
+  #scrollspyHero.elderly-home-hero-v2 { padding: 32px 0 46px !important; }
+  
+  
+  #scrollspyAppointment.elderly-booking-v2 { padding: 45px 0 70px !important; }
+  #scrollspyAppointment .elderly-booking-steps { grid-template-columns: 1fr; gap: 14px; }
+  #scrollspyAppointment .elderly-booking-step { padding: 21px 18px; }
+  #scrollspyAppointment .elderly-plan-card { padding: 26px 21px; }
+  #scrollspyAppointment .elderly-plan-grid { gap: 17px; }
+}
+@media (min-width: 761px) and (max-width: 1120px) {
+  #scrollspyAppointment .elderly-booking-steps { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn { transition: none !important; }
+}
+
+
+/* =========================================================
+   YIDIAN-HOME-LARGE-TYPE-V3
+   只放大首頁導覽、三個主要入口及健檢說明文字。
+   保留既有藍白色系；不影響語音/預約程式。
+   ========================================================= */
+#scrollspyNav .navbar-brand,
+#scrollspyNav .navbar-brand span {
+  font-size: clamp(32px, 2.65vw, 39px) !important;
+}
+#scrollspyNav .navbar-nav .nav-link {
+  font-size: clamp(23px, 1.85vw, 27px) !important;
+  padding: 12px clamp(7px, .9vw, 13px) !important;
+}
+
+
+#scrollspyAppointment .elderly-section-heading h2,
+#scrollspyAppointment .elderly-plans-heading h2 {
+  font-size: clamp(40px, 3.6vw, 50px) !important;
+}
+#scrollspyAppointment .elderly-section-heading p,
+#scrollspyAppointment .elderly-plans-heading p {
+  font-size: clamp(23px, 1.85vw, 27px) !important;
+}
+#scrollspyAppointment .elderly-step-content h3 {
+  font-size: clamp(28px, 2.25vw, 34px) !important;
+}
+#scrollspyAppointment .elderly-step-content p {
+  font-size: clamp(23px, 1.8vw, 26px) !important;
+}
+#scrollspyAppointment .elderly-step-number {
+  font-size: 27px !important;
+  flex-basis: 48px;
+  width: 48px;
+  height: 48px;
+}
+#scrollspyAppointment .elderly-eligibility-note {
+  font-size: 22px !important;
+}
+#scrollspyAppointment .elderly-plan-code {
+  font-size: 24px !important;
+}
+#scrollspyAppointment .elderly-plan-card h3 {
+  font-size: clamp(32px, 2.5vw, 38px) !important;
+}
+#scrollspyAppointment .elderly-plan-preview-label {
+  font-size: 22px !important;
+}
+#scrollspyAppointment .elderly-plan-preview li,
+#scrollspyAppointment .elderly-plan-details summary {
+  font-size: clamp(23px, 1.8vw, 26px) !important;
+}
+#scrollspyAppointment .elderly-plan-full-list li {
+  font-size: clamp(22px, 1.7vw, 24px) !important;
+}
+#scrollspyAppointment .elderly-plan-action {
+  font-size: 30px !important;
+  min-height: 76px;
+}
+#scrollspyFooter .widget-title {
+  font-size: 32px !important;
+}
+#scrollspyFooter address,
+#scrollspyFooter a[data-clinic-tel] {
+  font-size: 24px !important;
+}
+
+/* 中等寬度筆電：維持導覽列單行，不讓字體擠在一起。 */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  #scrollspyNav .navbar-brand,
+  #scrollspyNav .navbar-brand span { font-size: 30px !important; }
+  #scrollspyNav .navbar-nav .nav-link {
+    font-size: 22px !important;
+    padding: 10px 7px !important;
+  }
+}
+@media (max-width: 760px) {
+  #scrollspyNav .navbar-brand,
+  #scrollspyNav .navbar-brand span { font-size: 32px !important; }
+  #scrollspyNav .navbar-nav .nav-link { font-size: 25px !important; }
+  
+  
+  #scrollspyAppointment .elderly-booking-step { gap: 12px; }
+  #scrollspyAppointment .elderly-plan-card { padding: 26px 20px; }
+}
+
+
+/* =======================================================================
+   頤典 DOUBTS | 識別風格版 V1
+   參考專題海報：霧藍 #8BA8BA、深靛藍、淺霧白、極少量暖米色。
+   用深靛藍承載白字，避免 #8BA8BA + 白字對比不足。
+   僅視覺層級；不改預約、語音辨識或自費加購邏輯。
+   ======================================================================= */
+:root {
+  --doubts-blue: #8BA8BA;
+  --doubts-navy: #34586F;
+  --doubts-navy-strong: #28495F;
+  --doubts-ink: #1C3647;
+  --doubts-mist: #EAF2F6;
+  --doubts-paper: #F5F8FA;
+  --doubts-border: #C6D8E2;
+  --doubts-cream: #E9D8B7;
+  --doubts-white: #FFFFFF;
+  --elderly-blue: var(--doubts-navy);
+  --elderly-blue-dark: var(--doubts-navy-strong);
+  --elderly-ink: var(--doubts-ink);
+  --elderly-muted: #4B6070;
+  --elderly-line: var(--doubts-border);
+  --elderly-bg: var(--doubts-paper);
+  --bs-primary: var(--doubts-navy);
+  --bs-primary-rgb: 52, 88, 111;
+}
+
+/* 頁首：與海報主底色一致，深藍色文字比白字更清楚。 */
+#scrollspyNav.navbar,
+#scrollspyNav.bsb-tpl-bg-blue {
+  background: var(--doubts-blue) !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(28, 54, 71, .14);
+  box-shadow: none !important;
+}
+#scrollspyNav .navbar-brand,
+#scrollspyNav .navbar-brand span,
+#scrollspyNav .navbar-nav .nav-link {
+  color: var(--doubts-ink) !important;
+}
+#scrollspyNav .navbar-nav .nav-link:hover,
+#scrollspyNav .navbar-nav .nav-link:focus-visible,
+#scrollspyNav .navbar-nav .nav-link.active {
+  color: #17364C !important;
+  text-decoration-color: var(--doubts-navy-strong);
+}
+#scrollspyNav .navbar-nav .nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: .35em;
+  text-decoration-thickness: 3px;
+}
+#scrollspyNav .navbar-toggler {
+  color: var(--doubts-ink) !important;
+  border-color: var(--doubts-navy) !important;
+}
+#scrollspyNav .navbar-toggler:focus-visible {
+  outline: 3px solid var(--doubts-navy) !important;
+}
+@media (max-width: 991.98px) {
+  #offcanvasNavbar {
+    background: #F4F8FA !important;
+    color: var(--doubts-ink) !important;
+  }
+}
+
+/* 首屏保留大字與三個入口；海報識別以排版而非多色圖案呈現。 */
+#scrollspyHero.elderly-home-hero-v2 {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 75%, #F8FAFB 100%) !important;
+  color: var(--doubts-ink) !important;
+}
+#scrollspyHero .doubts-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(8px, 1vw, 16px);
+  margin: 0 0 clamp(18px, 2vw, 27px);
+  font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  color: var(--doubts-navy-strong);
+}
+#scrollspyHero .doubts-identity-name {
+  font-weight: 800;
+  font-size: clamp(19px, 1.65vw, 24px);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+#scrollspyHero .doubts-identity-name small {
+  font-size: .71em;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+#scrollspyHero .doubts-identity-divider {
+  flex: 0 0 auto;
+  width: 31px;
+  height: 3px;
+  background: var(--doubts-cream);
+  border-radius: 3px;
+}
+#scrollspyHero .doubts-identity-tagline {
+  font-weight: 650;
+  font-size: clamp(18px, 1.55vw, 23px);
+  letter-spacing: .02em;
+}
+#scrollspyHero.elderly-home-hero-v2 h1 {
+  color: var(--doubts-ink) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn {
+  border-color: var(--doubts-navy) !important;
+  box-shadow: none !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary {
+  background: #F3F8FA !important;
+  color: var(--doubts-navy-strong) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary:hover {
+  background: var(--doubts-navy-strong) !important;
+  color: white !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary:hover {
+  background: #DCEAF1 !important;
+  color: var(--doubts-ink) !important;
+}
+
+/* 預約區：沿用原來的 3 步驟 + A/B/C，收斂框線與陰影。 */
+#scrollspyAppointment.elderly-booking-v2 {
+  background: var(--doubts-paper) !important;
+  color: var(--doubts-ink) !important;
+}
+#scrollspyAppointment .elderly-section-heading h2,
+#scrollspyAppointment .elderly-plans-heading h2,
+#scrollspyAppointment .elderly-step-content h3,
+#scrollspyAppointment .elderly-plan-card h3 {
+  color: var(--doubts-navy-strong) !important;
+}
+#scrollspyAppointment .elderly-section-heading p,
+#scrollspyAppointment .elderly-plans-heading p,
+#scrollspyAppointment .elderly-step-content p,
+#scrollspyAppointment .elderly-eligibility-note {
+  color: #364F60 !important;
+}
+#scrollspyAppointment .elderly-booking-step,
+#scrollspyAppointment .elderly-plan-card {
+  border: 1px solid var(--doubts-border) !important;
+  background: var(--doubts-white) !important;
+  box-shadow: 0 4px 15px rgba(34, 72, 96, .045) !important;
+}
+#scrollspyAppointment .elderly-plan-card {
+  border-top: 5px solid var(--doubts-blue) !important;
+}
+#scrollspyAppointment .elderly-step-number {
+  color: #fff !important;
+  background: var(--doubts-navy) !important;
+}
+#scrollspyAppointment .elderly-plan-code {
+  color: var(--doubts-navy) !important;
+}
+#scrollspyAppointment .elderly-plan-preview-label {
+  color: #536B7A !important;
+}
+#scrollspyAppointment .elderly-plan-preview li,
+#scrollspyAppointment .elderly-plan-full-list li {
+  color: var(--doubts-ink) !important;
+  border-color: #DFE9EE !important;
+}
+#scrollspyAppointment .elderly-plan-details,
+#scrollspyAppointment .elderly-plan-details summary {
+  color: var(--doubts-navy-strong) !important;
+}
+#scrollspyAppointment .elderly-plan-action {
+  border-color: var(--doubts-navy) !important;
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+#scrollspyAppointment .elderly-plan-action:hover,
+#scrollspyAppointment .elderly-plan-action:active {
+  background: var(--doubts-navy-strong) !important;
+  color: white !important;
+}
+#scrollspyHero a:focus-visible,
+#scrollspyHero button:focus-visible,
+#scrollspyAppointment .elderly-plan-action:focus-visible,
+#scrollspyAppointment summary:focus-visible {
+  outline: 4px solid #B57923 !important;
+  outline-offset: 3px;
+}
+
+/* 聯絡資訊與浮動入口 */
+#scrollspyFooter {
+  background: #EAF2F6 !important;
+  color: var(--doubts-ink) !important;
+  border-top: 1px solid var(--doubts-border) !important;
+}
+#scrollspyFooter h4,
+#scrollspyFooter address,
+#scrollspyFooter a {
+  color: var(--doubts-navy-strong) !important;
+}
+#open-chat-btn,
+#open-selfpay-btn {
+  background: var(--doubts-navy) !important;
+  box-shadow: 0 6px 16px rgba(31, 69, 91, .22) !important;
+}
+#open-chat-btn:hover,
+#open-selfpay-btn:hover {
+  background: var(--doubts-navy-strong) !important;
+}
+
+/* 共用語音聊天室：深藍標題列呼應海報深色牌匾。 */
+#chat-widget {
+  border-color: var(--doubts-border) !important;
+  box-shadow: 0 12px 38px rgba(20, 52, 72, .23) !important;
+}
+#chat-widget #chat-header {
+  background: var(--doubts-navy) !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+#chat-widget #chat-header #chat-title,
+#chat-widget #chat-header .chat-close-btn {
+  color: #fff !important;
+}
+#chat-widget #chat-body {
+  background: #F5F8FA !important;
+}
+#chat-widget #chat-body .msg.ai-msg,
+#chat-widget #chat-body .ai-msg {
+  color: var(--doubts-ink) !important;
+  background: #E4EDF2 !important;
+}
+#chat-widget #chat-body .msg.user-msg,
+#chat-widget #chat-body .user-msg {
+  background: var(--doubts-navy) !important;
+  color: #fff !important;
+}
+#chat-widget .quick-actions,
+#chat-widget .voice-actions,
+#chat-widget #chat-footer {
+  background: #fff !important;
+}
+#chat-widget .quick-actions .action-btn,
+#chat-widget .voice-actions .action-btn {
+  background: #EFF4F7 !important;
+  color: var(--doubts-navy-strong) !important;
+  border-color: var(--doubts-border) !important;
+}
+#chat-widget .send-btn-chat,
+#chat-widget .mic-btn-chat {
+  background: var(--doubts-navy) !important;
+  color: #fff !important;
+}
+#chat-widget .mic-btn-chat.recording {
+  background: #A23B3B !important;
+}
+#chat-widget #chat-input {
+  border-color: #B9CCD7 !important;
+  color: var(--doubts-ink) !important;
+  background: white !important;
+}
+#chat-widget #chat-input:focus-visible {
+  border-color: var(--doubts-navy) !important;
+  outline: 3px solid rgba(139, 168, 186, .42) !important;
+}
+#chat-body .pid-letter-picker button,
+#chat-body .pid-confirm-picker button {
+  border-color: var(--doubts-navy) !important;
+  color: var(--doubts-navy-strong) !important;
+}
+#chat-body .pid-confirm-picker .pid-accept {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+#chat-body .pid-candidate,
+#chat-widget .plan-letter {
+  color: var(--doubts-navy-strong) !important;
+}
+#chat-body .chat-error,
+#chat-widget .bq-error {
+  color: #A62A32 !important;
+}
+
+/* 診所自訂問題與聊天選項：保留狀態差異，僅換掉螢光藍。 */
+#chat-widget .bq-replies button {
+  color: var(--doubts-navy-strong) !important;
+  border-color: var(--doubts-navy) !important;
+  background: white !important;
+}
+#chat-widget .bq-replies button:hover,
+#chat-widget .bq-replies button:focus-visible {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+#chat-widget .bq-tag {
+  color: var(--doubts-navy-strong) !important;
+  background: #DFEBF1 !important;
+}
+#chat-widget .self-pay-choice,
+#chat-widget .self-pay-add {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+
+/* 自費項目瀏覽視窗：與首頁同色系，價格與操作使用深藍。 */
+#selfPayModal .self-pay-header {
+  background: var(--doubts-navy) !important;
+  background-image: none !important;
+  color: white !important;
+}
+#selfPayModal .self-pay-panel {
+  border-color: var(--doubts-border) !important;
+  box-shadow: 0 18px 56px rgba(20, 52, 72, .24) !important;
+}
+#selfPayModal .self-pay-toolbar,
+#selfPayModal .self-pay-footer {
+  background: #EAF2F6 !important;
+  border-color: var(--doubts-border) !important;
+}
+#selfPayModal .self-pay-content {
+  background: #F5F8FA !important;
+  background-image: none !important;
+}
+#selfPayModal .self-pay-category-card,
+#selfPayModal .self-pay-item-card,
+#selfPayModal .self-pay-items-heading {
+  border-color: var(--doubts-border) !important;
+  box-shadow: 0 5px 15px rgba(34, 72, 96, .055) !important;
+}
+#selfPayModal .self-pay-category-card:hover,
+#selfPayModal .self-pay-item-card:hover {
+  border-color: var(--doubts-navy) !important;
+}
+#selfPayModal .self-pay-category-name,
+#selfPayModal .self-pay-items-heading h3,
+#selfPayModal .self-pay-item-name {
+  color: var(--doubts-navy-strong) !important;
+}
+#selfPayModal .self-pay-back-btn,
+#selfPayModal .self-pay-category-action,
+#selfPayModal .self-pay-detail-btn {
+  color: var(--doubts-navy-strong) !important;
+  border-color: var(--doubts-navy) !important;
+}
+#selfPayModal .self-pay-category-action:hover {
+  color: var(--doubts-navy-strong) !important;
+}
+#selfPayModal .self-pay-footer-close,
+#selfPayModal .self-pay-add-btn,
+#selfPayModal .self-pay-item-price:not(.price-pending),
+#selfPayModal .self-pay-summary-button {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+#selfPayModal .self-pay-footer-close:hover,
+#selfPayModal .self-pay-add-btn:hover {
+  background: var(--doubts-navy-strong) !important;
+}
+#selfPayModal .self-pay-item-price.price-pending {
+  background: #F7EBCF !important;
+  color: #6A4B12 !important;
+}
+#selfPayCartDialog .self-pay-cart-total {
+  background: #DFEBF1 !important;
+  color: var(--doubts-navy-strong) !important;
+}
+#selfPayCartDialog .self-pay-add-btn,
+#selfPayCartDialog .self-pay-detail-close {
+  background: var(--doubts-navy) !important;
+  color: #fff !important;
+}
+#selfPayCartDialog .cart-item-price {
+  color: var(--doubts-navy-strong) !important;
+}
+#selfPayModal .self-pay-footer-close:focus-visible,
+#chat-widget button:focus-visible,
+#selfPayCartDialog button:focus-visible {
+  outline: 3px solid #B57923 !important;
+  outline-offset: 3px;
+}
+
+/* 日曆：可選日仍與一般日期有明顯區隔。 */
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open {
+  background: #DCEAF1 !important;
+  border-color: var(--doubts-navy) !important;
+  color: var(--doubts-navy-strong) !important;
+}
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open:hover,
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open.selected {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+
+@media (max-width: 640px) {
+  #scrollspyHero .doubts-identity {
+    flex-wrap: wrap;
+    gap: 7px 10px;
+    margin-bottom: 18px;
+  }
+  #scrollspyHero .doubts-identity-divider { width: 22px; }
+  #scrollspyHero .doubts-identity-tagline { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn {
+    transition: none !important;
+  }
+}
+
+/* 自費清單和彈出詳細資訊均動態掛在 body 上，不在 #selfPayModal 裡。 */
+.self-pay-summary,
+.self-pay-detail-dialog {
+  border-color: var(--doubts-border) !important;
+  color: var(--doubts-ink) !important;
+}
+.self-pay-summary-info span,
+.self-pay-detail-body h3,
+.self-pay-detail-price,
+.self-pay-cart-total {
+  color: var(--doubts-navy-strong) !important;
+}
+.self-pay-summary-button,
+.self-pay-detail-close,
+.self-pay-detail-dialog .self-pay-add-btn {
+  background: var(--doubts-navy) !important;
+  color: white !important;
+}
+.self-pay-summary-button:hover,
+.self-pay-detail-close:hover,
+.self-pay-detail-dialog .self-pay-add-btn:hover {
+  background: var(--doubts-navy-strong) !important;
+}
+.self-pay-summary-button:focus-visible,
+.self-pay-detail-close:focus-visible {
+  outline: 3px solid #B57923 !important;
+  outline-offset: 3px;
+}
+
+
+/* =======================================================================
+   頤典 DOUBTS | 主色統一版 V2
+   主品牌色 #8BA8BA：導覽、主要按鈕、卡片重點、語音與自費視窗。
+   品牌藍上的文字一律用深色，確保長輩能看清楚；危險/錯誤仍保留紅色。
+   這裡只調整視覺樣式，不修改任何預約、語音、身分證或付款邏輯。
+   ======================================================================= */
+:root {
+  --doubts-blue: #8BA8BA;
+  --doubts-primary: #8BA8BA;
+  --doubts-primary-hover: #7798AD;
+  --doubts-primary-tint: #E8F0F4;
+  --doubts-primary-soft: #F3F7F9;
+  --doubts-on-primary: #1C3647;
+  --doubts-paper: #EFF4F7;
+  --doubts-border: #BDD0DC;
+  --doubts-ink: #1C3647;
+  --elderly-blue: #8BA8BA;
+  --elderly-blue-dark: #1C3647;
+  --elderly-ink: #1C3647;
+  --bs-primary: #8BA8BA;
+  --bs-primary-rgb: 139, 168, 186;
+}
+
+/* 頁首和首頁首屏：霧藍為主，深色文字維持清晰。 */
+#scrollspyNav.navbar,
+#scrollspyNav.bsb-tpl-bg-blue {
+  background: var(--doubts-primary) !important;
+}
+#scrollspyHero .doubts-identity-divider {
+  background: var(--doubts-primary) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn {
+  border-color: var(--doubts-primary) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary {
+  background: var(--doubts-primary-soft) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary:hover,
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-primary:focus-visible {
+  background: var(--doubts-primary-hover) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary:hover,
+#scrollspyHero.elderly-home-hero-v2 .senior-hero-actions-v14 > .btn-outline-primary:focus-visible {
+  background: #D6E4EC !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 三步驟和方案卡片：一致的霧藍重點，不使用大面積深藍。 */
+#scrollspyAppointment.elderly-booking-v2 {
+  background: var(--doubts-paper) !important;
+}
+#scrollspyAppointment .elderly-booking-step,
+#scrollspyAppointment .elderly-plan-card {
+  border-color: var(--doubts-border) !important;
+}
+#scrollspyAppointment .elderly-plan-card {
+  border-top: 5px solid var(--doubts-primary) !important;
+}
+#scrollspyAppointment .elderly-step-number {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#scrollspyAppointment .elderly-plan-code,
+#scrollspyAppointment .elderly-plan-details summary {
+  color: var(--doubts-on-primary) !important;
+}
+#scrollspyAppointment .elderly-plan-action {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+  border-color: var(--doubts-primary) !important;
+}
+#scrollspyAppointment .elderly-plan-action:hover,
+#scrollspyAppointment .elderly-plan-action:focus-visible {
+  background: var(--doubts-primary-hover) !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 頁尾與右下角聊天室入口 */
+#scrollspyFooter {
+  background: var(--doubts-primary-tint) !important;
+}
+#open-chat-btn,
+#open-selfpay-btn {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#open-chat-btn:hover,
+#open-selfpay-btn:hover {
+  background: var(--doubts-primary-hover) !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 公費和自費共用聊天室：標題/使用者泡泡/語音操作統一為霧藍。 */
+#chat-widget #chat-header {
+  background: var(--doubts-primary) !important;
+  background-image: none !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget #chat-header #chat-title,
+#chat-widget #chat-header .chat-close-btn {
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget #chat-body .msg.user-msg,
+#chat-widget #chat-body .user-msg {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget .send-btn-chat,
+#chat-widget .mic-btn-chat,
+#chat-body .pid-confirm-picker .pid-accept,
+#chat-widget .self-pay-choice,
+#chat-widget .self-pay-add {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget .mic-btn-chat.recording {
+  background: #A23B3B !important;
+  color: white !important;
+}
+#chat-widget .bq-replies button:hover,
+#chat-widget .bq-replies button:focus-visible {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-body .pid-letter-picker button,
+#chat-body .pid-confirm-picker button,
+#chat-widget .bq-replies button {
+  border-color: var(--doubts-primary) !important;
+}
+#chat-widget #chat-body .msg.ai-msg,
+#chat-widget #chat-body .ai-msg {
+  background: var(--doubts-primary-tint) !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 自費項目瀏覽、金額與確認按鈕：沿用同一主色。 */
+#selfPayModal .self-pay-header {
+  background: var(--doubts-primary) !important;
+  background-image: none !important;
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-header-label,
+#selfPayModal .self-pay-header h2,
+#selfPayModal .self-pay-header p,
+#selfPayModal .self-pay-close-btn {
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-close-btn {
+  background: rgba(255, 255, 255, .45) !important;
+}
+#selfPayModal .self-pay-category-card:hover,
+#selfPayModal .self-pay-item-card:hover,
+#selfPayModal .self-pay-back-btn,
+#selfPayModal .self-pay-detail-btn {
+  border-color: var(--doubts-primary) !important;
+}
+#selfPayModal .self-pay-footer-close,
+#selfPayModal .self-pay-add-btn,
+#selfPayModal .self-pay-item-price:not(.price-pending),
+#selfPayCartDialog .self-pay-add-btn,
+#selfPayCartDialog .self-pay-detail-close,
+.self-pay-summary-button,
+.self-pay-detail-close,
+.self-pay-detail-dialog .self-pay-add-btn {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-footer-close:hover,
+#selfPayModal .self-pay-add-btn:hover,
+#selfPayCartDialog .self-pay-add-btn:hover,
+#selfPayCartDialog .self-pay-detail-close:hover,
+.self-pay-summary-button:hover,
+.self-pay-detail-close:hover,
+.self-pay-detail-dialog .self-pay-add-btn:hover {
+  background: var(--doubts-primary-hover) !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 月曆：可選日期用品牌淺霧藍，選中後使用主色。 */
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open {
+  background: var(--doubts-primary-tint) !important;
+  border-color: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open:hover,
+#chat-widget .chat-calendar .flatpickr-day.chat-day-open.selected {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+
+/* 鍵盤操作：可辨識的深色外框，不使用和背景對比不足的淡色環。 */
+#scrollspyHero a:focus-visible,
+#scrollspyHero button:focus-visible,
+#scrollspyAppointment .elderly-plan-action:focus-visible,
+#scrollspyAppointment summary:focus-visible,
+#chat-widget button:focus-visible,
+#selfPayModal button:focus-visible,
+#selfPayCartDialog button:focus-visible {
+  outline: 3px solid #28495F !important;
+  outline-offset: 3px !important;
+}
+
+/* DOUBTS-UI-FIX-V3: cool palette, price card overflow, accessible hover */
+/* 主色固定為 #8BA8BA；請放在 index.css 最底部以覆蓋舊樣式。 */
+:root {
+  --doubts-primary: #8BA8BA;
+  --doubts-blue: #8BA8BA;
+  --doubts-primary-hover: #7798AD;
+  --doubts-on-primary: #1C3647;
+  --doubts-cream: #E6EEF3; /* 移除原本偏黃的裝飾色 */
+  --doubts-soft-hover: #E2EDF3;
+}
+
+/* 一、統一成冷調霧藍，不混用黃米色。 */
+#scrollspyNav.navbar,
+#scrollspyNav.bsb-tpl-bg-blue {
+  background: #8BA8BA !important;
+  background-image: none !important;
+}
+#scrollspyHero .doubts-identity-divider {
+  background: #8BA8BA !important;
+}
+#selfPayModal .self-pay-item-note,
+#selfPayCartDialog .self-pay-item-note {
+  background: #EAF2F6 !important;
+  color: #28485B !important;
+  border: 1px solid #CDDDE5 !important;
+}
+#selfPayModal .self-pay-item-price.price-pending {
+  background: #E1EBF1 !important;
+  color: #28485B !important;
+  border: 1px dashed #8BA8BA !important;
+}
+
+/* 二、適用所有自費項目卡片：品名可換行、價格永遠待在卡片內。 */
+#selfPayModal .self-pay-item-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+#selfPayModal .self-pay-item-card {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+#selfPayModal .self-pay-item-top {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+#selfPayModal .self-pay-item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+#selfPayModal .self-pay-item-price {
+  position: static !important;
+  transform: none !important;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 11px;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  background: #8BA8BA !important;
+  color: #1C3647 !important;
+}
+/* 極窄螢幕讓價格移到品名下一列，避免互相擠壓。 */
+@media (max-width: 380px) {
+  #selfPayModal .self-pay-item-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  #selfPayModal .self-pay-item-price {
+    justify-self: start;
+  }
+}
+
+/* 三、查看詳細內容：柔和霧藍 hover + 深藍灰文字，避免深藍底與深字混在一起。 */
+#selfPayModal .self-pay-detail-btn {
+  background: #FFFFFF !important;
+  border: 1.5px solid #8BA8BA !important;
+  color: #1C3647 !important;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+#selfPayModal .self-pay-detail-btn:hover,
+#selfPayModal .self-pay-detail-btn:focus-visible {
+  background: #E2EDF3 !important;
+  border-color: #7295A9 !important;
+  color: #1C3647 !important;
+}
+#selfPayModal .self-pay-detail-btn:active {
+  background: #D2E3EB !important;
+  color: #1C3647 !important;
+}
+
+/* ============================================================================
+   DOUBTS 2026-10-22 | Homepage accessibility & self-pay visual QA
+   基於原始 2,413 行 index.css 增補；保留預約與語音功能。
+   注意：appointment2.html 自費對話屬不同頁面，請另核對其專用 CSS/JS。
+   ============================================================================ */
+:root {
+  --doubts-primary: #8BA8BA;
+  --doubts-blue: #8BA8BA;
+  --doubts-primary-hover: #7798AD;
+  --doubts-primary-tint: #E8F0F4;
+  --doubts-primary-soft: #F4F8FA;
+  --doubts-on-primary: #1C3647;
+  --doubts-ink: #1C3647;
+  --doubts-border: #BED1DC;
+  --doubts-panel: #F6F9FB;
+  --doubts-surface: #FFFFFF;
+  --doubts-focus: #28495F;
+}
+
+/* 1. 老人健檢聊天室：訊息保留本身高度，讓聊天室捲動而非擠壓泡泡。
+   避免連續回答多時，flex 子項被壓縮而重疊。 */
+#chat-widget #chat-body {
+  min-width: 0;
+  min-height: 0;
+  justify-content: flex-start !important;
+  align-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+#chat-widget #chat-body > .msg,
+#chat-widget #chat-body > .bq-replies,
+#chat-widget #chat-body > .chat-calendar {
+  flex: 0 0 auto !important;
+}
+#chat-widget #chat-body .msg {
+  box-sizing: border-box;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  width: fit-content;
+  max-width: 92%;
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+#chat-widget #chat-body .msg > :first-child {
+  margin-top: 0;
+}
+#chat-widget #chat-body .msg > :last-child {
+  margin-bottom: 0;
+}
+#chat-widget #chat-body .msg:empty {
+  display: none !important;
+}
+#chat-widget #chat-body .msg.ai-msg,
+#chat-widget #chat-body .msg.user-msg {
+  padding-block: 14px;
+  border-radius: 17px;
+}
+#chat-widget #chat-body .msg.ai-msg {
+  border-bottom-left-radius: 5px;
+}
+#chat-widget #chat-body .msg.user-msg {
+  border-bottom-right-radius: 5px;
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget.elderly-readable-v15 #chat-body .msg {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 18px !important;
+}
+
+/* 2. 問診的三個選項：與問題正文之間留出明顯間距，並允許小螢幕換行。 */
+#chat-widget #chat-body .bq-replies:not(.used) {
+  flex: 0 0 auto !important;
+  gap: 11px 12px;
+  margin: 22px 0 18px !important;
+  padding: 0;
+  max-width: 100%;
+}
+#chat-widget #chat-body .bq-replies:empty,
+#chat-widget #chat-body .bq-replies.used {
+  display: none !important;
+}
+#chat-widget #chat-body .bq-replies button {
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--doubts-primary) !important;
+  background: #FFFFFF !important;
+  color: var(--doubts-ink) !important;
+  font-size: clamp(17px, 1.3vw, 21px);
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#chat-widget #chat-body .bq-replies button:is(:hover, :focus-visible) {
+  background: var(--doubts-primary-tint) !important;
+  color: var(--doubts-ink) !important;
+  border-color: var(--doubts-primary-hover) !important;
+}
+
+/* 3. 老人健檢聊天室：維持主色與深色文字，避免淡底白字不清楚。 */
+#chat-widget #chat-header {
+  background: var(--doubts-primary) !important;
+  background-image: none !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget #chat-header #chat-title,
+#chat-widget #chat-header .chat-close-btn {
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget #chat-body {
+  background: var(--doubts-panel) !important;
+}
+#chat-widget #chat-body .msg.ai-msg {
+  background: #E5EEF3 !important;
+  color: var(--doubts-ink) !important;
+}
+#chat-widget #chat-footer,
+#chat-widget .quick-actions,
+#chat-widget .voice-actions {
+  background: #FFFFFF !important;
+  border-color: var(--doubts-border) !important;
+}
+#chat-widget .quick-actions .action-btn,
+#chat-widget .voice-actions .action-btn {
+  background: #EEF4F7 !important;
+  color: var(--doubts-ink) !important;
+  border-color: var(--doubts-border) !important;
+}
+#chat-widget .quick-actions .action-btn:hover,
+#chat-widget .voice-actions .action-btn:hover {
+  background: var(--doubts-primary-tint) !important;
+}
+#chat-widget .send-btn-chat,
+#chat-widget .mic-btn-chat {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#chat-widget .mic-btn-chat.recording {
+  background: #A23B3B !important;
+  color: #FFFFFF !important;
+}
+
+/* 4. 自費檢查項目視窗（index.html 使用的 #selfPayModal）。
+   使用同一霧藍及白底，不使用過亮的藍色或偏黃裝飾。 */
+#selfPayModal .self-pay-panel {
+  border-color: var(--doubts-border) !important;
+  background: var(--doubts-panel) !important;
+}
+#selfPayModal .self-pay-header {
+  background: var(--doubts-primary) !important;
+  background-image: none !important;
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-header-label,
+#selfPayModal .self-pay-header h2,
+#selfPayModal .self-pay-header p,
+#selfPayModal .self-pay-close-btn {
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-close-btn {
+  background: rgba(255, 255, 255, .48) !important;
+}
+#selfPayModal .self-pay-toolbar,
+#selfPayModal .self-pay-footer {
+  background: var(--doubts-primary-tint) !important;
+  border-color: var(--doubts-border) !important;
+  color: var(--doubts-ink) !important;
+}
+#selfPayModal .self-pay-content {
+  background: var(--doubts-panel) !important;
+  background-image: none !important;
+}
+#selfPayModal .self-pay-category-card,
+#selfPayModal .self-pay-items-heading,
+#selfPayModal .self-pay-item-card {
+  background: var(--doubts-surface) !important;
+  border: 1px solid var(--doubts-border) !important;
+  box-shadow: 0 5px 17px rgba(31, 63, 82, .07) !important;
+}
+#selfPayModal .self-pay-category-card:hover,
+#selfPayModal .self-pay-item-card:hover {
+  border-color: var(--doubts-primary-hover) !important;
+  box-shadow: 0 7px 19px rgba(31, 63, 82, .10) !important;
+  transform: translateY(-1px);
+}
+#selfPayModal .self-pay-category-name,
+#selfPayModal .self-pay-items-heading h3,
+#selfPayModal .self-pay-item-name,
+#selfPayModal .self-pay-breadcrumb {
+  color: var(--doubts-ink) !important;
+}
+#selfPayModal .self-pay-category-action,
+#selfPayModal .self-pay-item-code,
+#selfPayModal .self-pay-category-count,
+#selfPayModal .self-pay-item-description,
+#selfPayModal .self-pay-items-heading p {
+  color: #4D6676 !important;
+}
+#selfPayModal .self-pay-back-btn,
+#selfPayModal .self-pay-detail-btn {
+  background: #FFFFFF !important;
+  border: 1.5px solid var(--doubts-primary) !important;
+  color: var(--doubts-ink) !important;
+}
+#selfPayModal .self-pay-back-btn:is(:hover, :focus-visible),
+#selfPayModal .self-pay-detail-btn:is(:hover, :focus-visible) {
+  background: var(--doubts-primary-tint) !important;
+  border-color: var(--doubts-primary-hover) !important;
+  color: var(--doubts-ink) !important;
+}
+#selfPayModal .self-pay-item-note {
+  background: #E9F2F6 !important;
+  color: var(--doubts-ink) !important;
+  border: 1px solid var(--doubts-border) !important;
+}
+#selfPayModal .self-pay-item-price.price-pending {
+  background: #E6EEF3 !important;
+  color: var(--doubts-ink) !important;
+  border: 1px dashed var(--doubts-primary) !important;
+}
+#selfPayModal .self-pay-item-price:not(.price-pending),
+#selfPayModal .self-pay-add-btn,
+#selfPayModal .self-pay-footer-close,
+#selfPayCartDialog .self-pay-add-btn,
+#selfPayCartDialog .self-pay-detail-close,
+.self-pay-summary-button,
+.self-pay-detail-close,
+.self-pay-detail-dialog .self-pay-add-btn {
+  background: var(--doubts-primary) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-add-btn:not(:disabled):hover,
+#selfPayModal .self-pay-footer-close:hover,
+#selfPayCartDialog .self-pay-add-btn:not(:disabled):hover,
+#selfPayCartDialog .self-pay-detail-close:hover,
+.self-pay-summary-button:hover,
+.self-pay-detail-close:hover {
+  background: var(--doubts-primary-hover) !important;
+  color: var(--doubts-on-primary) !important;
+}
+#selfPayModal .self-pay-add-btn:disabled {
+  background: #E5E9ED !important;
+  color: #68788E !important;
+  cursor: not-allowed;
+}
+#selfPayCartDialog .self-pay-cart-total {
+  background: var(--doubts-primary-tint) !important;
+  color: var(--doubts-ink) !important;
+}
+
+/* 5. 自費項目卡片價格不溢出：長品名可換行，極窄版型價格另起一行。 */
+#selfPayModal .self-pay-item-card {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+#selfPayModal .self-pay-item-top {
+  box-sizing: border-box;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+}
+#selfPayModal .self-pay-item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#selfPayModal .self-pay-item-price {
+  box-sizing: border-box;
+  position: static !important;
+  transform: none !important;
+  justify-self: end;
+  max-width: 100%;
+  padding: 7px 10px;
+  line-height: 1.3;
+  font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 6. 老年友善焦點及小螢幕微調。 */
+#chat-widget button:focus-visible,
+#selfPayModal button:focus-visible,
+#selfPayCartDialog button:focus-visible {
+  outline: 3px solid var(--doubts-focus) !important;
+  outline-offset: 3px !important;
+}
+@media (max-width: 700px) {
+  #chat-widget #chat-body .msg { max-width: 99%; }
+  #chat-widget #chat-body .bq-replies:not(.used) {
+    margin-top: 20px !important;
+    gap: 10px !important;
+  }
+  #chat-widget #chat-body .bq-replies button {
+    min-height: 44px;
+    padding: 9px 13px;
+    font-size: 18px;
+  }
+  #selfPayModal .self-pay-category-card { min-height: 140px; }
+  #selfPayModal .self-pay-item-card { min-height: 0; }
+}
+@media (max-width: 430px) {
+  #selfPayModal .self-pay-item-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  #selfPayModal .self-pay-item-price { justify-self: start; }
+}
+
+
+/* =========================================================
+   HOME-CAL-V8：已確認的純文字預約首頁。
+   尺寸沿用上方 HOME-HERO-SIZES；此區集中控制分欄與閱讀層級。
+   只套用 doubts-home-v8 首頁，不改語音／掃描／預約流程。
+   ========================================================= */
+body.doubts-home-v8 #main {
+  --home-body-size: clamp(24px, 1.9vw, 28px);
+  --home-note-size: 22px;
+  color: #193b4d;
+}
+body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  background: #fff !important;
+  padding-top: 56px !important;
+  padding-bottom: 56px !important;
+}
+body.doubts-home-v8 #scrollspyHero .senior-hero-column-v15 {
+  display: grid !important;
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  gap: clamp(32px, 4vw, 56px);
+  align-items: center;
+}
+body.doubts-home-v8 #scrollspyHero .home-hero-copy { min-width: 0; }
+body.doubts-home-v8 #scrollspyHero .home-hero-intro {
+  font-size: var(--home-body-size);
+  line-height: 1.65;
+  margin: 24px 0 0;
+  color: #193b4d;
+  overflow-wrap: anywhere;
+}
+body.doubts-home-v8 #scrollspyHero .doubts-identity {
+  gap: 8px 12px;
+  margin-bottom: 22px;
+}
+body.doubts-home-v8 #scrollspyHero .doubts-identity-name,
+body.doubts-home-v8 #scrollspyHero .doubts-identity-tagline {
+  font-size: 22px !important;
+  line-height: 1.6;
+}
+body.doubts-home-v8 #scrollspyHero .senior-hero-actions-v14 {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 16px !important;
+  margin-top: 0 !important;
+  min-width: 0;
+}
+body.doubts-home-v8 #scrollspyHero .senior-hero-actions-v14 > .btn {
+  flex-direction: column;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  text-align: left !important;
+  gap: 6px;
+}
+body.doubts-home-v8 #scrollspyHero .home-action-label {
+  display: block;
+  font-size: inherit;
+  font-weight: 800;
+  line-height: 1.35;
+}
+body.doubts-home-v8 #scrollspyHero .home-action-hint {
+  display: block;
+  font-size: var(--home-note-size);
+  font-weight: 500;
+  line-height: 1.6;
+}
+body.doubts-home-v8 #scrollspyAppointment.elderly-booking-v2 {
+  padding-top: 56px !important;
+  padding-bottom: 64px !important;
+  background: #eef5f8 !important;
+}
+body.doubts-home-v8 #scrollspyAppointment .elderly-section-heading p,
+body.doubts-home-v8 #scrollspyAppointment .elderly-plans-heading p,
+body.doubts-home-v8 #scrollspyAppointment .elderly-step-content p,
+body.doubts-home-v8 #scrollspyAppointment .elderly-plan-preview li,
+body.doubts-home-v8 #scrollspyAppointment .elderly-plan-full-list li,
+body.doubts-home-v8 #scrollspyAppointment .elderly-plan-details summary {
+  font-size: var(--home-body-size) !important;
+  line-height: 1.65 !important;
+  overflow-wrap: anywhere;
+}
+body.doubts-home-v8 #scrollspyAppointment .elderly-eligibility-note,
+body.doubts-home-v8 #scrollspyAppointment .elderly-plan-preview-label {
+  font-size: var(--home-note-size) !important;
+}
+body.doubts-home-v8 #scrollspyAppointment .elderly-step-number {
+  border-radius: 0;
+  background: transparent !important;
+  color: #193b4d !important;
+  font-size: 48px !important;
+  flex-basis: 40px;
+  width: 40px;
+  height: auto;
+  line-height: 1.25;
+}
+body.doubts-home-v8 #scrollspyAppointment .elderly-booking-step {
+  padding: 26px;
+  gap: 18px;
+  box-shadow: none !important;
+}
+body.doubts-home-v8 #scrollspyAppointment .elderly-plan-card {
+  background: #fff !important;
+  border: 2px solid #c8d9e2 !important;
+  box-shadow: none !important;
+}
+body.doubts-home-v8 #scrollspyFooter address,
+body.doubts-home-v8 #scrollspyFooter a[data-clinic-tel],
+body.doubts-home-v8 #scrollspyFooter p {
+  font-size: 24px !important;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+body.doubts-home-v8 #scrollspyNav .dm-site-language select {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #193b4d;
+  min-height: 48px;
+  min-width: 108px;
+  font-size: 20px;
+  padding: 8px 22px 8px 0;
+}
+body.doubts-home-v8 #scrollspyNav .dm-site-language select:focus-visible {
+  outline: 3px solid #193b4d;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+body.doubts-home-v8 #scrollspyNav .dm-site-language option {
+  background: #fff;
+  color: #193b4d;
+}
+body.doubts-home-v8 #open-chat-btn { display: none !important; }
+@media (max-width: 980px) {
+  body.doubts-home-v8 #scrollspyHero .senior-hero-column-v15 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+@media (max-width: 760px) {
+  body.doubts-home-v8 #main { --home-body-size: 24px; }
+  body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {
+    padding: 32px 0 48px !important;
+  }
+  body.doubts-home-v8 #scrollspyAppointment.elderly-booking-v2 {
+    padding-top: 48px !important;
+  }
+  body.doubts-home-v8 #scrollspyHero .senior-hero-container-v15 {
+    width: calc(100% - 32px) !important;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.doubts-home-v8 #scrollspyHero .senior-hero-container-v15 > .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  body.doubts-home-v8 #scrollspyHero .senior-hero-column-v15 {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.doubts-home-v8 #scrollspyAppointment .elderly-booking-step { padding: 22px; }
+  body.doubts-home-v8 #scrollspyAppointment .elderly-step-number {
+    font-size: 40px !important;
+    flex-basis: 32px;
+    width: 32px;
+  }
+}
+@media (max-width: 430px) {
+  body.doubts-home-v8 #scrollspyNav .navbar-brand,
+  body.doubts-home-v8 #scrollspyNav .navbar-brand span { font-size: 26px !important; }
+  body.doubts-home-v8 #scrollspyNav .dm-site-language { margin-left: auto; }
+  body.doubts-home-v8 #scrollspyNav .dm-site-language select {
+    min-width: 104px;
+    font-size: 18px;
+  }
+}
+
+
+/* BEGIN DOUBTS-MIST-THEME-INSTALLED-V2 */
+/* DOUBTS-MIST-THEME-V7 */
+html:root:root {--c-primary: #8BA8BA !important; --c-primary-active: #7798AD !important; --c-on-primary: #141413 !important; --c-link: #3D5F72 !important; --c-primary-tint: #E3ECF1 !important; --c-ink: #141413 !important; --c-body: #3d3d3a !important; --c-body-strong: #252523 !important; --c-muted: #6c6a64 !important; --c-hairline: #e6dfd8 !important; --c-canvas: #faf9f5 !important; --c-surface-soft: #f5f0e8 !important; --c-surface-card: #efe9de !important; --c-surface-cream-strong: #e8e0d2 !important; --c-dark: #1C3647 !important; --c-dark-elevated: #28495F !important; --c-on-dark: #faf9f5 !important; --c-on-dark-soft: #B9CBD6 !important; --c-error: #c64545 !important; --f-display: "Cormorant Garamond", "Noto Serif TC", "Songti TC", serif !important; --f-body: "Inter", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif !important; --r-md: 8px !important; --r-lg: 12px !important; --r-xl: 16px !important; --focus: 3px solid var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 {background: var(--c-canvas) !important; color: var(--c-body) !important; font-family: var(--f-body) !important;}
+
+html:root body.doubts-home-v8 :is(a, button, summary, input, select):focus-visible {outline: var(--focus) !important; outline-offset: 3px !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav.navbar {background: var(--c-primary) !important; border-bottom: 1px solid rgba(20, 20, 19, .12) !important; box-shadow: none !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav :is(.navbar-brand, .navbar-brand span, .navbar-nav .nav-link, .dm-site-language select) {font-family: var(--f-body) !important; font-weight: 600 !important; letter-spacing: .02em !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size: clamp(25px, 2vw, 29px) !important; background-color: transparent !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {text-decoration: none !important; background: linear-gradient(currentColor, currentColor) left bottom / 0 3px no-repeat !important; background-origin: content-box !important; transition: background-size .3s cubic-bezier(.16, 1, .3, 1) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link:is(:hover, :focus-visible, .active) {background-size: 100% 3px !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-toggler {color: var(--c-ink) !important; border: 1px solid rgba(20, 20, 19, .2) !important;}
+
+@keyframes dh-nav-in { 
+  from {opacity: 0; transform: translateY(-14px);} 
+  to {opacity: 1; transform: none;} 
+}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand {animation: dh-nav-in .7s cubic-bezier(.16, 1, .3, 1) both;}
+
+@media (min-width: 992px) {html:root body.doubts-home-v8 #scrollspyNav :is(.nav-item, .dm-site-language) {animation: dh-nav-in .7s cubic-bezier(.16, 1, .3, 1) both;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(1) {animation-delay: .08s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(2) {animation-delay: .14s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(3) {animation-delay: .20s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(4) {animation-delay: .26s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(5) {animation-delay: .32s;}html:root body.doubts-home-v8 #scrollspyNav .dm-site-language {animation-delay: .38s;}}
+
+@media (max-width: 991.98px) {html:root body.doubts-home-v8 #offcanvasNavbar {background: var(--c-canvas) !important;}}
+
+@media (min-width: 992px) {html:root body.doubts-home-v8 #offcanvasNavbar {background: transparent !important;}}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #scrollspyNav :is(.navbar-brand, .nav-item, .dm-site-language) {animation: none !important;}html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {transition: none !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {background: var(--c-primary) !important; padding-top: 96px !important; padding-bottom: 96px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity,
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-name,
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-tagline {font-family: var(--f-body) !important; font-weight: 500 !important; letter-spacing: .02em !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-divider {background: var(--c-canvas) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero #home-hero-title,
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 #home-hero-title {font-family: var(--f-display) !important; font-weight: 500 !important; letter-spacing: 0 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-title-row:last-child .dh-title-words::before {background: var(--c-canvas) !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-general, #home-action-senior, #home-action-selfpay).btn {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-canvas) !important; border-radius: var(--r-lg) !important; box-shadow: 0 1px 3px rgba(20, 20, 19, .08) !important; font-family: var(--f-body) !important; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease, background-color .2s ease !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn {background: var(--c-dark) !important; border-color: var(--c-dark) !important; color: var(--c-on-dark) !important;}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:hover {background: var(--c-primary-tint) !important; color: var(--c-ink) !important; transform: translateY(-4px) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .18) !important;}html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:hover {background: var(--c-dark-elevated) !important; color: var(--c-on-dark) !important; transform: translateY(-4px) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .28) !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:focus-visible {background: var(--c-primary-tint) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:focus-visible {background: var(--c-dark-elevated) !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-general, #home-action-senior, #home-action-selfpay).btn:active {transform: translateY(1px) !important; box-shadow: 0 1px 2px rgba(20, 20, 19, .1) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:active {background: var(--c-surface-cream-strong) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:active {background: var(--c-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn .home-action-label::after {content: " →" / ""; display: inline-block; transition: transform .25s cubic-bezier(.16, 1, .3, 1);}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:hover .home-action-label::after {transform: translateX(6px);}}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay),
+  html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay):is(:hover, :active),
+  html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay) .home-action-label::after {transition: none !important; transform: none !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 :is(.dh-entry-number, .home-action-label) {font-family: var(--f-display) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 24px !important; font-weight: 400 !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 :is(#home-action-senior, #home-action-selfpay) .dh-entry-number {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment.elderly-booking-v2 {background: var(--c-primary-tint) !important; color: var(--c-body) !important; padding-top: 96px !important; padding-bottom: 96px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2, .elderly-step-content h3, .elderly-plan-card h3) {font-family: var(--f-display) !important; font-weight: 500 !important; letter-spacing: 0 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading p, .elderly-plans-heading p, .elderly-step-content p, .elderly-eligibility-note, .elderly-plan-preview-label) {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-booking-step {background: var(--c-canvas) !important; border: 0 !important; border-left: 6px solid var(--c-primary) !important; border-radius: var(--r-lg) !important; box-shadow: none !important; padding: 32px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-step-number {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-link) !important; background: transparent !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-card {background: var(--c-canvas) !important; border: 0 !important; border-top: 6px solid var(--c-primary) !important; border-radius: var(--r-lg) !important; box-shadow: none !important; padding: 32px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-code {align-self: flex-start; padding: 4px 14px; border-radius: 9999px; background: var(--c-primary-tint) !important; color: var(--c-ink) !important; font-family: var(--f-body) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-plan-preview li, .elderly-plan-full-list li) {color: var(--c-body-strong) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-details summary {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action,
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action:is(:hover, :focus-visible) {background: var(--c-primary) !important; border-color: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important; font-family: var(--f-body) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action:active {background: var(--c-primary-active) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter {background: var(--c-dark) !important; border: 0 !important; padding-top: 64px !important; padding-bottom: 64px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .widget-title {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :is(address, a, p) {color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter a[data-clinic-tel] {text-decoration: underline !important; text-underline-offset: .25em;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .copyright {color: var(--c-on-dark-soft) !important; font-size: 18px;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :focus-visible {outline-color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget {background: var(--c-canvas) !important; color: var(--c-ink) !important; font-family: var(--f-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-header {background: var(--c-primary) !important; border-bottom: 1px solid var(--c-hairline) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-title {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-header .chat-close-btn {color: var(--c-ink) !important; background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: 9999px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 {background: var(--c-canvas) !important; border-bottom: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 .dv-caption {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role],
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role]:hover,
+html:root body.doubts-home-v8 #chat-widget :is(.quick-actions, .voice-actions) .action-btn,
+html:root body.doubts-home-v8 #chat-widget :is(.quick-actions, .voice-actions) .action-btn:hover {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important; box-shadow: none !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-active="true"] {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border-color: var(--c-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role="stop"] {background: var(--c-canvas) !important; color: var(--c-error) !important; border-color: var(--c-error) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > .quick-actions,
+html:root body.doubts-home-v8 #chat-widget > .voice-actions {background: var(--c-canvas) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-body {background: var(--c-primary-tint) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg.ai-msg {background: var(--c-canvas) !important; border: 0 !important; color: var(--c-ink) !important; box-shadow: none !important; border-radius: var(--r-lg) var(--r-lg) var(--r-lg) 4px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg.user-msg {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border-radius: var(--r-lg) var(--r-lg) 4px var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 #chat-widget :is(.plan-letter, .pid-candidate) {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #chat-widget :is(.chat-error, .bq-error) {color: var(--c-error) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-notice {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .bq-tag {background: var(--c-surface-card) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-body :is(.pid-letter-picker, .pid-confirm-picker, .bq-replies) button,
+html:root body.doubts-home-v8 #chat-body :is(.pid-letter-picker, .pid-confirm-picker, .bq-replies) button:is(:hover, :focus-visible),
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-btn {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #chat-body .pid-confirm-picker .pid-accept,
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-btn.doubts-idscan-choice-camera {background: var(--c-primary) !important; border-color: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-help {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-footer {background: var(--c-canvas) !important; border-top: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chat-input {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chat-input:focus-visible {border-color: var(--c-primary) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(139, 168, 186, .45) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatSendBtn {background: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatMicBtn {background: var(--c-dark) !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatMicBtn.recording {background: var(--c-error) !important; color: #fff !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-calendar .flatpickr-day.chat-day-open {background: var(--c-surface-card) !important; border-color: var(--c-primary) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-calendar .flatpickr-day.chat-day-open:is(:hover, .selected) {background: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-cal-legend i.ok {background: var(--c-surface-card) !important; border-color: var(--c-primary) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-panel {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-xl) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header {background: var(--c-primary) !important; border-bottom: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-header h2, .self-pay-header-label, .self-pay-header p, .self-pay-close-btn) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header h2 {font-family: var(--f-display) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header-label {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-close-btn {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-toolbar, .self-pay-footer, .self-pay-content) {background: var(--c-primary-tint) !important; border-color: var(--c-hairline) !important; color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-lg) !important; box-shadow: 0 1px 3px rgba(20, 20, 19, .06) !important; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease, border-color .2s ease !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-name, .self-pay-items-heading h3, .self-pay-item-name, .self-pay-breadcrumb) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-count, .self-pay-item-code, .self-pay-item-description, .self-pay-items-heading p) {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-action {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-item-price, .self-pay-item-price.price-pending, .self-pay-item-note) {background: var(--c-surface-card) !important; color: var(--c-ink) !important; border: 0 !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close),
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close):is(:hover, :focus-visible) {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayModal, #selfPayCartDialog, .self-pay-detail-dialog) .self-pay-add-btn:not(:disabled),
+html:root body.doubts-home-v8 :is(#selfPayModal, #selfPayCartDialog, .self-pay-detail-dialog) .self-pay-add-btn:not(:disabled):hover {background: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border: 0 !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary-info :is(strong, span) {color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary-button,
+html:root body.doubts-home-v8 .self-pay-summary-button:hover {background: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary :focus-visible {outline-color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) {background: var(--c-canvas) !important; color: var(--c-body) !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) h3 {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog :is(.self-pay-cart-bottom) {background: var(--c-canvas) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .self-pay-cart-total {background: var(--c-surface-card) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog :is(.cart-item-name, .cart-item-price) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .cart-item {border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) .self-pay-detail-close,
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) .self-pay-detail-close:hover {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .cart-item-remove {color: var(--c-error) !important; border-color: var(--c-error) !important; background: var(--c-canvas) !important;}
+
+@media (hover: hover) and (pointer: fine) {html:root body.doubts-home-v8,
+  html:root body.doubts-home-v8 * {cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 32 32'%3E%3Cpath d='M4 2v24l6-6 4 9 4-2-4-9h8z' fill='%231C3647' stroke='%23FAF9F5' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, auto;}html:root body.doubts-home-v8 :is(a, button, summary, select, label, [role="button"], [onclick], .flatpickr-day:not(.flatpickr-disabled)),
+  html:root body.doubts-home-v8 :is(a, button, summary, select, label, [role="button"], [onclick]) * {cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 32 32'%3E%3Cpath d='M11 3.5a2.5 2.5 0 0 1 5 0V13h1v-1.5a2.5 2.5 0 0 1 5 0V14h0a2.5 2.5 0 0 1 5 0v8c0 5-3 8-8 8h-3c-3 0-5-1.5-6.5-4L5 19a2.4 2.4 0 0 1 4-2.6l2 2.6z' fill='%231C3647' stroke='%23FAF9F5' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 20 2, pointer;}html:root body.doubts-home-v8 :is(input[type="text"], input[type="tel"], input:not([type]), textarea) {cursor: text;}}
+
+html:root body.doubts-home-v8 #main {--home-body-size: clamp(28px, 2.2vw, 32px); --home-note-size: 25px;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand,
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand span {font-size: clamp(34px, 2.9vw, 42px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {font-size: clamp(25px, 2vw, 29px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size: 22px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero :is(.doubts-identity-name, .doubts-identity-tagline) {font-size: 25px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {font-size: clamp(28px, 2.3vw, 34px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-label {font-size: clamp(34px, 2.8vw, 42px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 26px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-entry-number {font-size: 40px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2) {font-size: clamp(48px, 4vw, 60px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-step-content h3 {font-size: clamp(32px, 2.6vw, 38px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-card h3 {font-size: clamp(36px, 2.9vw, 44px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-code {font-size: 26px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action {font-size: 32px !important; min-height: 84px;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .widget-title {font-size: 38px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :is(address, a[data-clinic-tel], p) {font-size: 28px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .copyright {font-size: 20px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg {font-size: clamp(24px, 2vw, 30px) !important; line-height: 1.7 !important;}
+
+@media (min-width: 761px) {html:root body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {--home-title-size: clamp(88px, 7vw, 112px);}}
+
+@media (max-width: 760px) {html:root body.doubts-home-v8 #main {--home-body-size: 26px; --home-note-size: 23px;}html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {font-size: 26px !important;}html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2) {font-size: 42px !important;}html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action {font-size: 28px !important;}html:root body.doubts-home-v8 #scrollspyFooter :is(address, a[data-clinic-tel], p) {font-size: 25px !important;}}
+
+@media (max-width: 600px) {html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-label {font-size: 28px !important;}html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 22px !important;}html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-entry-number {font-size: 30px !important;}html:root body.doubts-home-v8 #chat-widget #chat-body .msg {font-size: 22px !important;}}
+
+@media (max-width: 430px) {html:root body.doubts-home-v8 #scrollspyNav .navbar-brand,
+  html:root body.doubts-home-v8 #scrollspyNav .navbar-brand span {font-size: 28px !important;}}
+
+@keyframes dh-fade-in { 
+  from {opacity: 0;} 
+  to {opacity: 1;} 
+}
+
+@keyframes dh-panel-in { 
+  from {opacity: 0; transform: translateY(28px) scale(.98);} 
+  to {opacity: 1; transform: none;} 
+}
+
+@keyframes dh-card-in { 
+  from {opacity: 0; transform: translateY(20px);} 
+  to {opacity: 1; transform: none;} 
+}
+
+html:root body.doubts-home-v8 #selfPayModal.is-open .self-pay-backdrop {animation: dh-fade-in .3s ease both;}
+
+html:root body.doubts-home-v8 #selfPayModal.is-open .self-pay-panel {animation: dh-panel-in .45s cubic-bezier(.16, 1, .3, 1) both;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {animation: dh-card-in .5s cubic-bezier(.16, 1, .3, 1) both;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(1) {animation-delay: .12s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(2) {animation-delay: .18s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(3) {animation-delay: .24s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(4) {animation-delay: .30s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(5) {animation-delay: .36s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(6) {animation-delay: .42s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(7) {animation-delay: .48s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(n+8) {animation-delay: .54s;}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover,
+  html:root body.doubts-home-v8 #selfPayModal .self-pay-item-card:hover {transform: translateY(-4px) !important; border-color: var(--c-primary) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .14) !important;}html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover .self-pay-category-action {transform: translateX(6px);}html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close, .self-pay-close-btn):hover {background: var(--c-primary-tint) !important; border-color: var(--c-primary) !important;}}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-action {display: inline-block; transition: transform .25s cubic-bezier(.16, 1, .3, 1);}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:focus-visible {border-color: var(--c-primary) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .14) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:active {transform: translateY(1px) !important; box-shadow: 0 1px 2px rgba(20, 20, 19, .1) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close, .self-pay-close-btn) {transition: background-color .2s ease, border-color .2s ease !important;}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-backdrop, .self-pay-panel, .self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {animation: none !important;}html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-category-action) {transition: none !important; transform: none !important;}}
+
+/* Preserve the already approved compact mobile hero. */
+@media(max-width:600px){
+ html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 {padding-top:16px!important;padding-bottom:28px!important;}
+}
+/* Match the menu size; supersede the old 22px large-type rule. */
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size:clamp(25px,2vw,29px)!important;}
+@media (hover:hover) and (pointer:fine) {
+ html:root body.doubts-home-v8 :is(input:not([type]),input[type=text],input[type=tel],input[type=email],input[type=password],input[type=search],input[type=url],input[type=number],textarea,[contenteditable=true]) {cursor:text!important;}
+ html:root body.doubts-home-v8 :is(button:disabled,input:disabled,[aria-disabled=true]) {cursor:not-allowed!important;}
+}
+
+/* Reduced motion must also beat hover/active specificity. */
+@media(prefers-reduced-motion:reduce){
+ html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card,.self-pay-item-card,.self-pay-category-action):is(:hover,:active,:focus-visible){transform:none!important;transition:none!important;}
+ html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover .self-pay-category-action{transform:none!important;}
+ html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn,.self-pay-detail-btn,.self-pay-footer-close,.self-pay-close-btn){transition:none!important;}
+}
+/* The item card contains focusable detail controls. */
+html:root body.doubts-home-v8 #selfPayModal .self-pay-item-card:focus-within{border-color:var(--c-primary)!important;}
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card,.self-pay-item-card):focus-within{animation:none!important;}
+/* END DOUBTS-MIST-THEME-INSTALLED-V2 */
+
+
+/* HOME-NAV-COLOR-V1 */
+html:root body.doubts-home-v8 #scrollspyNav.navbar{
+ --c-primary:#7899AD!important;
+ background:#7899AD!important;
+ border-bottom:1px solid rgba(20,20,19,.18)!important;
+}

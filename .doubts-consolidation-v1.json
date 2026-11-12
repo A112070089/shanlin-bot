@@ -1,0 +1,10 @@
+{
+  "files": {
+    "start_doubts.py": "8fcf40388cdc104dc6d242a2b30a0572731dcd14266c4fd4ed8f84c574be4959",
+    "啟動 DOUBTS.command": "3b83f78ae9466e6c9d0f8e8f3b64a9097345f41720dd6af27bbd42c8e04fc35e",
+    "安裝桌面捷徑.command": "06fcf49c9c958e59183ab834cc3b786609747a9a3e56708d8fa9d29a49147be6",
+    "設定測試資料庫.command": "970b5e18c5e7be25b84b6f2b8939e239fcba71eb637056aef564f4eee5a9aeb2",
+    "停止 DOUBTS.command": "430dbe2a09104d96a5ea9e4c7b4dcf1ea7861e136e640d498d9a430bf8736693"
+  },
+  "tts_moved": false
+}

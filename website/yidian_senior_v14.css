@@ -1,0 +1,232 @@
+/* V15 - senior accessibility on homepage. File name preserved for drop-in update.
+   Only the elderly booking dialogue is expanded, other clinic dialogs untouched. */
+
+/* Buttons are genuine page-wide actions; do not inherit the old half-width hero. */
+.senior-hero-container-v15,
+.senior-hero-column-v15 { width: 100% !important; max-width: 100% !important; }
+.senior-hero-actions-v14 {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch !important;
+  gap: clamp(16px, 1.6vw, 26px) !important;
+  margin-top: 30px !important;
+}
+.senior-hero-actions-v14 > .btn {
+  box-sizing: border-box;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: clamp(110px, 10vw, 155px) !important;
+  padding: 22px 22px !important;
+  white-space: normal !important;
+  line-height: 1.28 !important;
+  font-size: clamp(27px, 2.6vw, 43px) !important;
+  font-weight: 800 !important;
+  border-width: 2.5px !important;
+  border-radius: 28px !important;
+  overflow-wrap: anywhere;
+}
+.senior-hero-actions-v14 > .btn:focus-visible {
+  outline: 5px solid #f59e0b !important;
+  outline-offset: 4px !important;
+}
+
+/* Give the older user the entire screen for reading the dialog. JS adds this
+   class reliably on openChat(), irrespective of optional external voice scripts. */
+#chat-widget.elderly-readable-v15 {
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 12px !important;
+  top: 12px !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  left: 12px !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  flex-direction: column !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  z-index: 1055 !important;
+  box-shadow: 0 18px 65px rgba(10,25,55,.24) !important;
+}
+#chat-widget.elderly-readable-v15 #chat-header {
+  box-sizing: border-box;
+  flex: 0 0 auto !important;
+  min-height: 80px !important;
+  padding: 16px clamp(18px, 3vw, 42px) !important;
+}
+#chat-widget.elderly-readable-v15 #chat-title {
+  font-size: clamp(27px, 2.25vw, 37px) !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+}
+#chat-widget.elderly-readable-v15 .chat-close-btn {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 40px !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+#chat-widget.elderly-readable-v15 #chat-body {
+  box-sizing: border-box !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: clamp(18px, 2.4vw, 38px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+}
+#chat-widget.elderly-readable-v15 #chat-body .msg {
+  box-sizing: border-box !important;
+  width: fit-content;
+  max-width: min(96%, 1080px) !important;
+  padding: clamp(17px, 1.9vw, 28px) clamp(20px, 2.3vw, 36px) !important;
+  margin-bottom: 18px !important;
+  font-size: clamp(24px, 2.15vw, 35px) !important;
+  line-height: 1.66 !important;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+#chat-widget.elderly-readable-v15 #chat-body .msg strong {
+  font-weight: 800 !important;
+}
+#chat-widget.elderly-readable-v15 #chat-body .msg p {
+  line-height: 1.55;
+  margin: 0 0 .65em;
+}
+#chat-widget.elderly-readable-v15 #chat-body .msg p:last-child { margin-bottom: 0; }
+#chat-widget.elderly-readable-v15 .elderly-plan-explain,
+#chat-widget.elderly-readable-v15 .elderly-plan-explain-row {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+#chat-widget.elderly-readable-v15 .elderly-plan-explain-row {
+  border: 2px solid #dae4fb !important;
+  background: #f7faff !important;
+  padding: clamp(14px, 1.6vw, 24px) !important;
+  margin: 14px 0 !important;
+  border-radius: 16px !important;
+}
+#chat-widget.elderly-readable-v15 .elderly-plan-explain-row strong { display: block; margin-bottom: 8px; }
+#chat-widget.elderly-readable-v15 .elderly-plan-urgent-v15 {
+  border-left: 7px solid #b91c1c;
+  padding: 14px 18px;
+  background: #fff4f3;
+}
+#chat-widget.elderly-readable-v15 #elderly-voice-panel {
+  box-sizing: border-box;
+  flex: 0 0 auto !important;
+  padding: 14px clamp(16px, 2.5vw, 36px) !important;
+  max-height: 33vh;
+  overflow-y: auto;
+}
+#chat-widget.elderly-readable-v15 #elderly-voice-panel button,
+#chat-widget.elderly-readable-v15 #elderly-voice-panel .elderly-voice-actions button {
+  box-sizing: border-box;
+  min-height: 54px !important;
+  font-size: clamp(18px, 1.55vw, 24px) !important;
+  padding: 10px 14px !important;
+  line-height: 1.25 !important;
+}
+#chat-widget.elderly-readable-v15 .quick-actions,
+#chat-widget.elderly-readable-v15 .voice-actions {
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  gap: 14px !important;
+  padding: 12px clamp(14px, 2vw, 30px) !important;
+}
+#chat-widget.elderly-readable-v15 .quick-actions { display: flex !important; }
+/* Do not force the legacy voice-actions row to appear if V11 hides it. */
+#chat-widget.elderly-readable-v15 .quick-actions > button,
+#chat-widget.elderly-readable-v15 .voice-actions > button {
+  flex: 1 1 0 !important;
+  min-height: 66px !important;
+  font-size: clamp(21px, 1.7vw, 28px) !important;
+  padding: 12px 18px !important;
+  line-height: 1.28 !important;
+  white-space: normal !important;
+}
+#chat-widget.elderly-readable-v15 #chat-footer {
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  min-height: 106px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 14px clamp(16px, 2vw, 30px) !important;
+}
+#chat-widget.elderly-readable-v15 #chat-footer #chat-input {
+  box-sizing: border-box;
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  font-size: clamp(24px, 1.9vw, 30px) !important;
+  padding: 12px 22px !important;
+}
+#chat-widget.elderly-readable-v15 #chat-footer button {
+  flex: 0 0 auto !important;
+  min-width: 74px !important;
+  min-height: 74px !important;
+  font-size: 30px !important;
+  padding: 10px !important;
+}
+#chat-widget.elderly-readable-v15 #chat-footer button:focus-visible,
+#chat-widget.elderly-readable-v15 .quick-actions button:focus-visible {
+  outline: 4px solid #f59e0b !important;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .senior-hero-actions-v14 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .senior-hero-actions-v14 > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .senior-hero-actions-v14 { grid-template-columns: minmax(0, 1fr); gap: 14px !important; }
+  .senior-hero-actions-v14 > :last-child { grid-column: auto; }
+  .senior-hero-actions-v14 > .btn {
+    min-height: 92px !important;
+    padding: 18px 15px !important;
+    font-size: clamp(23px, 6.2vw, 33px) !important;
+    border-radius: 22px !important;
+  }
+  #chat-widget.elderly-readable-v15 {
+    inset: 4px !important;
+    top: 4px !important; right: 4px !important;
+    bottom: 4px !important; left: 4px !important;
+    border-radius: 16px !important;
+  }
+  #chat-widget.elderly-readable-v15 #chat-header { min-height: 68px !important; padding: 12px 16px !important; }
+  #chat-widget.elderly-readable-v15 #chat-title { font-size: 25px !important; }
+  #chat-widget.elderly-readable-v15 #chat-body { padding: 16px 12px !important; }
+  #chat-widget.elderly-readable-v15 #chat-body .msg {
+    max-width: 99% !important;
+    padding: 16px !important;
+    font-size: clamp(20px, 5.7vw, 26px) !important;
+    line-height: 1.55 !important;
+  }
+  #chat-widget.elderly-readable-v15 #elderly-voice-panel { padding: 8px 10px !important; max-height: 34vh; }
+  #chat-widget.elderly-readable-v15 #elderly-voice-panel button { font-size: 16px !important; min-height: 44px !important; padding: 8px !important; }
+  #chat-widget.elderly-readable-v15 .quick-actions,
+  #chat-widget.elderly-readable-v15 .voice-actions { padding: 7px 10px !important; gap: 8px !important; }
+  #chat-widget.elderly-readable-v15 .quick-actions > button,
+  #chat-widget.elderly-readable-v15 .voice-actions > button { font-size: 18px !important; min-height: 52px !important; padding: 8px 10px !important; }
+  #chat-widget.elderly-readable-v15 #chat-footer { min-height: 80px !important; gap: 8px !important; padding: 8px 10px !important; }
+  #chat-widget.elderly-readable-v15 #chat-footer #chat-input { font-size: 19px !important; min-height: 56px !important; padding: 8px 13px !important; }
+  #chat-widget.elderly-readable-v15 #chat-footer button { min-width: 53px !important; min-height: 53px !important; font-size: 23px !important; padding: 6px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .senior-hero-actions-v14 > .btn { transition: none !important; }
+}

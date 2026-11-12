@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>頤典｜雙診所公版管理 v2</title>
+  <link rel="stylesheet" href="/pilot/assets/pilot.css">
+  <script src="/pilot/assets/pilot.js" defer></script>
+</head>
+<body>
+<div class="demo-ribbon"><strong>公版展示環境</strong><span>不收集真實病患資料、不連動既有正式預約</span></div>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/pilot"><span class="brand-mark">✚</span><span>頤典 <small>DOUBTS / Clinic Platform</small></span></a>
+    <nav class="head-actions" aria-label="主要導覽">
+      <button id="navClinics" class="plain-button">切換診所</button>
+      <button id="navHome" class="plain-button">診所前台</button>
+      <button id="navAdmin" class="outline-button">診所管理後台</button>
+      <button id="navPlatform" class="plain-button">頤典平台管理</button>
+    </nav>
+  </div>
+</header>
+<main class="page-shell">
+  <section id="chooser" class="chooser">
+    <div class="eyebrow">MULTI-TENANT PILOT</div>
+    <h1>同一個站台，服務不同診所</h1>
+    <p class="lead">選擇一家示範診所。頁面程式完全相同；資料、價格表與後台帳號各自獨立。</p>
+    <div class="clinic-grid">
+      <button class="clinic-choice" data-select-clinic="shanlin"><span class="clinic-icon">✚</span><strong>山林診所</strong><span>合作診所｜試行環境</span><em>進入示範網站 →</em></button>
+      <button class="clinic-choice" data-select-clinic="yidian"><span class="clinic-icon">✚</span><strong>頤典診所</strong><span>公版展示｜Excel 匯入驗證</span><em>進入示範網站 →</em></button>
+    </div>
+    <div class="setup-callout"><strong>平台開通管理</strong><p>頤典平台總管理員可在此建立頤典診所帳號。山林既有密碼不在本平台重新建立。</p><button id="chooserPlatform" class="outline-button">進入平台管理員後台</button></div>
+    <p class="small-note">此頁與現有正式病患預約系統分開運作。兩家診所的正式 Firebase 專案需完成開通後才可切換雲端儲存。</p>
+  </section>
+
+  <section id="clinicView" hidden>
+    <div class="hero">
+      <div>
+        <span class="eyebrow">頤典智慧健檢預約平台 · 公版展示</span>
+        <h1 id="publicClinicName">診所名稱</h1>
+        <p id="publicIntro">請選擇服務。</p>
+      </div>
+      <div class="hero-logo">✚</div>
+    </div>
+    <div class="split-sections">
+      <section class="panel">
+        <div class="panel-head"><h2>診所基本資料</h2><span class="chip">此頁依診所設定顯示</span></div>
+        <div class="info-grid"><div><small>聯絡電話</small><strong id="publicPhone">尚未設定</strong></div><div><small>地址</small><strong id="publicAddress">尚未設定</strong></div><div><small>服務時間</small><strong id="publicHours">尚未設定</strong></div><div><small>交通資訊</small><strong id="publicDirections">尚未設定</strong></div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>展示預約</h2><span class="chip">只產生虛構預約</span></div>
+        <form id="demoBookingForm" class="demo-form">
+          <label>老人健檢方案<select id="demoPlan" required><option value="A">A 方案</option><option value="B">B 方案</option><option value="C">C 方案</option></select></label>
+          <div class="two-inputs"><label>日期<select id="demoDate" required></select></label><label>時段<select id="demoTime" required></select></label></div>
+          <div id="bookingSelfPay" class="checkbox-stack"></div>
+          <button type="submit" class="primary-button" id="demoSubmit">建立展示預約</button>
+          <p class="small-note">不需要姓名、電話、身分證或病歷。按鈕不會完成真正的健康檢查預約。</p>
+        </form>
+      </section>
+    </div>
+    <section class="panel catalog-public">
+      <div class="panel-head"><div><h2>自費健康檢查目錄</h2><p>診所核對並發布後，才會顯示在此。</p></div><span class="chip" id="catalogBadge">未發布</span></div>
+      <div id="publicCatalog"></div>
+    </section>
+  </section>
+
+  <section id="adminLogin" class="admin-login" hidden>
+    <div class="login-shell">
+      <div class="eyebrow">CLINIC ADMIN</div>
+      <h1 id="adminLoginTitle">診所管理員登入</h1>
+      <p id="clinicLoginNote">使用診所專屬帳號及密碼登入，僅能管理所屬診所的資料。</p>
+      <form id="loginForm"><label>登入帳號<input id="adminUsername" type="text" maxlength="80" autocomplete="username" required placeholder="例如 yidian_admin"></label><label>管理密碼<input id="adminPassword" type="password" minlength="12" autocomplete="current-password" required placeholder="輸入管理密碼"></label><button class="primary-button" type="submit">登入診所管理後台</button></form>
+      <p class="small-note">頤典診所由平台總管理員建立帳號。山林診所沿用原系統密碼，本機橋接需同時啟動 8000。正式 SaaS 版本將採標準身分驗證。</p>
+    </div>
+  </section>
+
+  <section id="platformLogin" class="admin-login" hidden>
+    <div class="login-shell">
+      <div class="eyebrow">PLATFORM ADMIN</div>
+      <h1>頤典平台總管理員登入</h1>
+      <p>只有平台開發團隊可使用。登入後能建立及管理診所帳號，但不會自動取得診所病患資料。</p>
+      <form id="platformLoginForm">
+        <label>平台管理帳號<input id="platformUsername" type="text" minlength="4" maxlength="64" autocomplete="username" required></label>
+        <label>平台管理密碼<input id="platformPassword" type="password" minlength="12" maxlength="256" autocomplete="current-password" required></label>
+        <button class="primary-button" type="submit">登入平台管理後台</button>
+      </form>
+      <p class="small-note">平台第一組帳密由本機 Terminal 首次開通；不提供網頁公開註冊。</p>
+    </div>
+  </section>
+
+  <section id="platformView" hidden>
+    <div class="admin-top"><div><div class="eyebrow">PLATFORM CONTROL</div><h1>頤典平台｜診所開通管理</h1><p>同一套公版，依帳號確認診所權限。平台管理員不直接存取病患預約內容。</p></div><div class="admin-top-actions"><span class="chip">本機展示管理</span><button class="outline-button" id="platformLogout">登出平台</button></div></div>
+    <section class="panel">
+      <div class="panel-head"><div><h2>目前啟用的兩家診所</h2><p>山林沿用舊後台驗證；頤典由平台總管理員建立新帳號。</p></div></div>
+      <div id="platformClinicRows" class="platform-clinics" aria-live="polite"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h2>開通／重設頤典診所管理帳號</h2><p>由頤典平台管理員指定帳號及初始密碼，第一次登入必須修改密碼。</p></div></div>
+      <form id="provisionForm" class="settings-form">
+        <label>頤典診所登入帳號<input id="newClinicUsername" type="text" minlength="4" maxlength="64" autocomplete="off" required placeholder="例如 yidian_admin"></label>
+        <div class="two-inputs"><label>初始密碼（至少 12 字元）<input id="newClinicPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+        <label>再輸入一次初始密碼<input id="confirmClinicPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required></label></div>
+        <div class="form-footer"><button class="primary-button" type="submit" id="provisionBtn">建立頤典診所帳號</button><span class="small-note">如已開通，再次建立需要確認「重設」，原登入階段會立即失效。</span></div>
+      </form>
+    </section>
+    <p class="small-note">本機試行版不會寫入正式山林 Firebase，也不修改原本的山林帳密。僅顯示帳號開通狀態，不展示密碼。</p>
+  </section>
+
+  <section id="changePasswordView" class="admin-login" hidden>
+    <div class="login-shell">
+      <div class="eyebrow">FIRST LOGIN</div><h1>變更頤典診所初始密碼</h1>
+      <p>為避免長期使用平台人員交付的初始密碼，第一次登入須先設定自己的密碼。</p>
+      <form id="changePasswordForm">
+        <label>目前的初始密碼<input type="password" id="oldClinicPassword" autocomplete="current-password" required></label>
+        <label>新的管理密碼<input type="password" id="newClinicOwnPassword" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+        <label>再次確認新密碼<input type="password" id="newClinicOwnPassword2" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+        <button class="primary-button" type="submit">更新密碼並重新登入</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="adminView" hidden>
+    <div class="admin-top"><div><div class="eyebrow">CLINIC CONSOLE</div><h1 id="adminTitle">診所設定</h1><p>修改後台設定，預覽及發布各自的健檢項目。</p></div><div class="admin-top-actions"><span id="adminStorage" class="chip"></span><button id="logoutBtn" class="outline-button">登出</button></div></div>
+    <div class="metric-row"><div><small>展示預約</small><strong id="metricBookings">0</strong></div><div><small>草稿項目</small><strong id="metricDraft">0</strong></div><div><small>正式發布</small><strong id="metricPublished">0</strong></div></div>
+    <section class="panel">
+      <div class="panel-head"><div><h2>第一步：診所基本資料</h2><p>兩家診所使用同一份畫面，但儲存到不同資料區。</p></div></div>
+      <form id="configForm" class="settings-form">
+        <div class="two-inputs"><label>診所名稱<input id="cfgName" maxlength="80" required></label><label>電話<input id="cfgPhone" maxlength="60"></label></div>
+        <div class="two-inputs"><label>診所地址<input id="cfgAddress" maxlength="250"></label><label>交通資訊<input id="cfgDirections" maxlength="500"></label></div>
+        <label>服務時間<textarea id="cfgHours" rows="2" maxlength="800"></textarea></label>
+        <label>簡短介紹<textarea id="cfgIntro" rows="2" maxlength="600"></textarea></label>
+        <div class="two-inputs"><label>展示預約日期（每行一個 YYYY-MM-DD）<textarea id="cfgDates" rows="4" placeholder="2026-11-02"></textarea></label><label>預約時段（每行一個 HH:MM）<textarea id="cfgTimes" rows="4" placeholder="08:00"></textarea></label></div>
+        <div class="form-footer"><button type="submit" class="primary-button">儲存本診所設定</button><span id="configStatus" role="status"></span></div>
+      </form>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h2>第二步：匯入 Excel 健檢價目表</h2><p>辨識不同欄位順序、名稱、工作表與套組；價格有疑義的項目需核對。</p></div><span class="chip">人工審核後發布</span></div>
+      <div class="import-bar"><label class="upload-button">選取 Excel (.xlsx)<input id="excelFile" type="file" accept=".xlsx"></label><button id="saveDraftBtn" class="outline-button" disabled>儲存草稿</button><button id="publishBtn" class="primary-button" disabled>發布已核對的項目</button><button id="downloadDraftBtn" class="plain-button" disabled>下載草稿 JSON</button></div>
+      <div id="importSummary" class="summary-line" role="status">尚未匯入健檢價目表。</div>
+      <p class="small-note">價格為 Excel 公式、合併套組或科別推測時，必須人工核對。沒有完成核對的項目不會發布到診所前台。</p>
+      <div class="list-tools"><input id="searchItems" type="search" placeholder="搜尋檢查項目 / 原始群組"><select id="filterItems"><option value="all">全部項目</option><option value="enabled">待發布（已啟用）</option><option value="issues">價格待確認</option></select></div>
+      <div id="editCatalog" class="edit-catalog"></div>
+    </section>
+    <section class="panel"><div class="panel-head"><h2>第三步：檢查本診所展示預約</h2><span class="chip">資料隔離驗證</span></div><div id="bookingRecords" class="booking-records"></div></section>
+  </section>
+  <div id="notification" class="notification" role="status" aria-live="polite" hidden></div>
+</main>
+<footer class="foot">頤典 DOUBTS · 科技，讓醫療更有溫度 · 雙診所公版試行 · 僅供展示</footer>
+</body>
+</html>

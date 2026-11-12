@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>頤典｜本機台語音訊播放診斷</title>
+<style>
+body{font:16px/1.65 system-ui,-apple-system,sans-serif;max-width:760px;margin:3rem auto;padding:0 1.25rem;color:#193347}
+h1{font-size:1.7rem}p{color:#456071}button{border:0;background:#315e78;color:white;border-radius:9px;padding:13px 22px;font-size:1rem;font-weight:600;cursor:pointer}button:disabled{opacity:.5;cursor:wait}ol{padding-left:1.75rem}li{padding:.6rem .2rem;border-bottom:1px solid #d7e4ec}.good{color:#116a49}.bad{color:#a32424}#summary{font-weight:700}code{word-break:break-word}a{color:#315e78}
+</style>
+</head>
+<body>
+<h1>台語音訊播放診斷（本機測試）</h1>
+<p>本頁會用固定的三句公開測試文字，逐段驗證「8006 回傳 WAV → Chrome 播放音訊 → 播放完畢」。不使用病人資料，也不錄音、不送出預約。</p>
+<button type="button" id="start">播放三段台語測試</button>
+<p id="summary" role="status" aria-live="polite">尚未開始</p>
+<ol id="log"></ol>
+<p><a href="/appointment2.html?p=SELF_PAY&amp;directSelfPay=1">返回自費健檢測試頁</a></p>
+<script>
+(() => {
+  "use strict";
+  const texts = [
+    "了解您的健康需求 您可以先參考 肝臟與腸胃",
+    "這只是協助挑選要了解的檢查分類 不代表疾病診斷或必須接受檢查",
+    "請點選下方想先了解的分類",
+  ];
+  const btn = document.getElementById("start");
+  const output = document.getElementById("log");
+  const summary = document.getElementById("summary");
+  function emit(s, failed = false) {
+    const li = document.createElement("li");
+    li.textContent = s;
+    li.className = failed ? "bad" : "good";
+    output.appendChild(li);
+  }
+  async function playOne(text, number) {
+    const start = performance.now();
+    const res = await fetch("/api/taigi_tts/text", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({text,source:"ai_reply"}),
+    });
+    if (!res.ok) {
+      throw new Error(`第 ${number} 段：HTTP ${res.status}（台語 API 回傳非成功狀態）`);
+    }
+    const type = res.headers.get("Content-Type") || "";
+    if (!type.includes("audio/")) throw new Error(`第 ${number} 段：音訊類型不正確 ${type}`);
+    const blob = await res.blob();
+    if (!blob.size) throw new Error(`第 ${number} 段：音訊內容為空`);
+    const generated = ((performance.now()-start)/1000).toFixed(2);
+    const url = URL.createObjectURL(blob);
+    let player;
+    try {
+      player = new Audio(url);
+      player.playbackRate = 0.8;
+      const playback = new Promise((resolve,reject) => {
+        player.addEventListener("ended", resolve, {once:true});
+        player.addEventListener("error", () => reject(new Error("HTMLAudioElement error")), {once:true});
+      });
+      try { await player.play(); }
+      catch(e) { throw new Error(`第 ${number} 段：Chrome audio.play() ${e.name}`); }
+      let timer;
+      try {
+        await Promise.race([
+          playback,
+          new Promise((_,reject) => {
+            timer = setTimeout(() => reject(new Error(`第 ${number} 段：播放超過 45 秒`)), 45000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+      emit(`第 ${number} 段：PASS｜HTTP 200｜WAV ${blob.size} bytes｜產生 ${generated} 秒｜Chrome 播放完成`);
+    } finally {
+      if (player) {player.pause();player.removeAttribute("src");player.load();}
+      URL.revokeObjectURL(url);
+    }
+  }
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    output.replaceChildren();
+    let successes = 0;
+    try {
+      for (let i=0;i<texts.length;i++) {
+        summary.textContent = `正在播放第 ${i+1}/3 段……`;
+        await playOne(texts[i], i+1);
+        successes++;
+      }
+      summary.textContent = "PASS：三段均由 Chrome 播放完成";
+    } catch(e) {
+      emit(String(e.message||e),true);
+      summary.textContent = `部分未通過：${successes}/3 段播放完成`;
+    } finally {btn.disabled=false;}
+  });
+})();
+</script>
+</body>
+</html>

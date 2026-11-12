@@ -1,0 +1,136 @@
+/* YIDIAN-ELDERLY-VOICE-V9: flex layout, non-overlapping voice toolbar */
+#chat-widget.elderly-taigi-v9 { overflow: hidden; }
+#chat-widget.elderly-taigi-v9 #chat-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+#chat-widget.elderly-taigi-v9 .voice-actions { display:none !important; }
+#chat-widget.elderly-taigi-v9 #elderly-voice-panel {
+  flex: 0 0 auto; background: #f7f9ff; border-bottom: 1px solid #dce5f8;
+  padding: 7px 11px 5px; color:#17345c; box-sizing:border-box;
+  font-size: .89rem; line-height:1.45; z-index:1;
+}
+#elderly-voice-panel .elderly-voice-line { display:flex; flex-wrap: wrap; align-items:center; gap:5px; }
+#elderly-voice-panel .elderly-voice-line + .elderly-voice-line { margin-top:5px; }
+#elderly-voice-panel .elderly-voice-label { font-weight:700; white-space:nowrap; }
+#elderly-voice-panel button {
+  border: 1px solid #4056c5; color:#243f9b; background:#fff;
+  border-radius:7px; padding:5px 8px; font-size:.9rem; font-weight:700;
+  cursor:pointer; min-height:34px; line-height:1.25;
+}
+#elderly-voice-panel button[aria-pressed="true"] { background:#4056c5; color:white; }
+#elderly-voice-panel button:disabled { opacity:.45; cursor:not-allowed; }
+#elderly-voice-panel button:focus-visible { outline:2px solid #ffb52d; outline-offset:2px; }
+#elderly-voice-panel #elderly-voice-settings-toggle { margin-left:auto; }
+#elderly-voice-panel .elderly-voice-actions button { flex:1 1 0; white-space:nowrap; font-size:.83rem; padding:5px 4px; }
+#elderly-voice-panel #elderly-voice-stop { border-color:#aa4552; color:#7d1523; }
+#elderly-voice-panel .elderly-voice-speed-line:not([hidden]) { display:flex; align-items:center; gap:8px; padding-top:6px; }
+#elderly-voice-panel .elderly-voice-speed-line input { width:100%; flex:1; accent-color:#4056c5; }
+#elderly-voice-panel .elderly-voice-speed-line output { width:40px; font-weight:700; }
+#elderly-voice-panel #elderly-voice-status,
+#elderly-voice-panel #elderly-stt-status { font-size:.8rem; min-height:0; color:#78510f; }
+#elderly-voice-panel #elderly-voice-status:not(:empty),
+#elderly-voice-panel #elderly-stt-status:not(:empty) { margin-top:4px; }
+#elderly-voice-panel [data-error="true"] { color:#a4222e !important; }
+@media(max-width:600px) {
+  #chat-widget.elderly-taigi-v9 { max-width:calc(100vw - 12px); }
+  #chat-widget.elderly-taigi-v9 #elderly-voice-panel { padding:6px 8px; }
+  #elderly-voice-panel button { font-size:.81rem; }
+}
+
+/* YIDIAN-ELDERLY-VOICE-V11: senior-readable desktop/mobile conversation layout.
+   This overrides ONLY the elderly chat widget, never the self-pay modal. */
+#chat-widget.elderly-taigi-v11 {
+  /* Preserve existing hidden-by-default behavior; openChat controls display. */
+  flex-direction:column; overflow:hidden;
+  width:min(620px, calc(100vw - 28px)) !important;
+  max-width:calc(100vw - 28px) !important;
+  height:min(790px, calc(100dvh - 36px)) !important;
+  max-height:calc(100dvh - 36px) !important;
+  bottom:16px !important; right:14px !important;
+  border-radius:20px !important;
+  box-shadow:0 12px 42px rgba(14,31,67,.22) !important;
+}
+#chat-widget.elderly-taigi-v11 #chat-header {
+  flex:0 0 auto; min-height:68px; height:auto !important;
+  padding:15px 21px !important;
+  display:flex; align-items:center; justify-content:space-between;
+}
+#chat-widget.elderly-taigi-v11 #chat-title {font-size:21px !important; font-weight:750;}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel {
+  flex:0 0 auto; padding:11px 18px 9px !important;
+  font-size:15px; line-height:1.45;
+}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel .elderly-voice-line {gap:9px;}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel .elderly-voice-label {font-size:15px;}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel button {
+  min-height:40px; padding:7px 12px; font-size:15px; border-radius:10px;
+}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel .elderly-voice-actions button {
+  padding:7px 8px; font-size:14px; min-width:0; white-space:normal;
+}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel #elderly-voice-settings-toggle {margin-left:auto;}
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel #elderly-voice-status,
+#chat-widget.elderly-taigi-v11 #elderly-voice-panel #elderly-stt-status {
+  font-size:13px; line-height:1.35; max-height:42px; overflow-y:auto;
+}
+#chat-widget.elderly-taigi-v11 #chat-body {
+  flex:1 1 auto !important; min-height:145px !important;
+  overflow-y:auto !important; padding:19px 21px !important;
+  scroll-behavior:smooth;
+}
+#chat-widget.elderly-taigi-v11 #chat-body .msg {
+  font-size:18px !important; line-height:1.65 !important;
+  max-width:92% !important; overflow-wrap:anywhere;
+  padding:14px 16px !important; margin-bottom:14px !important;
+}
+#chat-widget.elderly-taigi-v11 #chat-body .chat-hint {font-size:15px !important;}
+#chat-widget.elderly-taigi-v11 .quick-actions {
+  flex:0 0 auto; display:flex !important; gap:10px !important;
+  padding:10px 16px !important; margin:0 !important;
+  background:#fff; border-top:1px solid #e1e8f2;
+}
+#chat-widget.elderly-taigi-v11 .quick-actions button {
+  flex:1; min-height:44px; font-size:16px !important;
+  padding:8px !important; border-radius:11px;
+}
+#chat-widget.elderly-taigi-v11 #chat-footer {
+  flex:0 0 auto; display:flex !important; gap:10px !important;
+  padding:10px 16px 16px !important; align-items:center;
+  background:#fff; box-sizing:border-box;
+}
+#chat-widget.elderly-taigi-v11 #chat-footer #chat-input {
+  flex:1 1 auto; min-width:0; font-size:17px !important;
+  min-height:48px !important; padding:8px 15px !important;
+}
+#chat-widget.elderly-taigi-v11 #chat-footer button {
+  flex:0 0 auto; min-width:48px !important; min-height:48px !important;
+  font-size:20px !important;
+}
+#chat-widget.elderly-taigi-v11 .elderly-plan-explain {font-size:17px;}
+#chat-widget.elderly-taigi-v11 .elderly-plan-explain p {margin:0 0 10px;}
+#chat-widget.elderly-taigi-v11 .elderly-plan-explain-row {
+  border:1px solid #dce6fa; border-radius:12px; background:#f9fbff;
+  padding:11px 13px; margin:10px 0;
+}
+#chat-widget.elderly-taigi-v11 .elderly-plan-explain-row strong {display:block; color:#1f479b; margin-bottom:5px;}
+#chat-widget.elderly-taigi-v11 .elderly-plan-explain .plan-letter {font-family:Arial,sans-serif; font-weight:800; color:#294fc0;}
+#chat-widget.elderly-taigi-v11 .elderly-plan-followup {margin-top:13px !important; font-weight:600; color:#25456d;}
+@media(max-width:650px) {
+  #chat-widget.elderly-taigi-v11 {
+    width:calc(100vw - 12px) !important; max-width:calc(100vw - 12px) !important;
+    height:min(92dvh, 780px) !important; max-height:92dvh !important;
+    right:6px !important; bottom:6px !important;
+  }
+  #chat-widget.elderly-taigi-v11 #chat-title {font-size:18px !important;}
+  #chat-widget.elderly-taigi-v11 #chat-header {min-height:58px; padding:12px !important;}
+  #chat-widget.elderly-taigi-v11 #elderly-voice-panel {padding:9px 10px 8px !important;}
+  #chat-widget.elderly-taigi-v11 #elderly-voice-panel button {font-size:13px; padding:6px 8px; min-height:36px;}
+  #chat-widget.elderly-taigi-v11 #elderly-voice-panel .elderly-voice-actions button {font-size:12px; padding:6px 4px;}
+  #chat-widget.elderly-taigi-v11 #chat-body {padding:13px !important;}
+  #chat-widget.elderly-taigi-v11 #chat-body .msg {font-size:16px !important; max-width:98% !important; padding:11px 12px !important;}
+  #chat-widget.elderly-taigi-v11 .quick-actions {padding:8px 9px !important;}
+  #chat-widget.elderly-taigi-v11 #chat-footer {padding:7px 9px 12px !important; gap:7px !important;}
+  #chat-widget.elderly-taigi-v11 #chat-footer #chat-input {font-size:16px !important;}
+}
+@media(max-height:630px) {
+  #chat-widget.elderly-taigi-v11 {max-height:calc(100dvh - 10px) !important; height:calc(100dvh - 10px) !important; bottom:5px !important;}
+  #chat-widget.elderly-taigi-v11 #elderly-voice-panel {padding-top:6px !important; padding-bottom:5px !important;}
+}

@@ -1,0 +1,374 @@
+/* 頤典雙診所試行版：同一份頁面程式；後端確認每次讀寫所屬診所。 */
+(() => {
+  'use strict';
+  const CLINIC = { shanlin:'山林診所', yidian:'頤典診所' };
+  const CATEGORY = [
+    ['cardiovascular','心臟與血管'],
+    ['pulmonary','肺部與呼吸'],
+    ['hepatobiliary_gastrointestinal','肝膽與腸胃'],
+    ['renal_urology','腎臟與泌尿'],
+    ['other_value_added','抽血與全身健康']
+  ];
+  const $ = id => document.getElementById(id);
+  const api='/api/pilot';
+  let clinic=null, publicData=null, csrf='', draft=null, savedDraft=false;
+  let adminState=null, screen='chooser';
+  const money=n=>Number.isInteger(n)?'NT$'+n.toLocaleString('zh-TW'):'價格待確認';
+  const escapeHTML=value=>String(value ?? '').replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#39;'}[ch]));
+  const text=(id,value)=>{ if($(id)) $(id).textContent=String(value??''); };
+  const isKnown=id=>Object.hasOwn(CLINIC,id);
+  let toastTimer;
+  function toast(message,error=false){
+    const el=$('notification');clearTimeout(toastTimer);
+    el.textContent=message;el.classList.toggle('error',error);el.hidden=false;
+    toastTimer=setTimeout(()=>{el.hidden=true;},5200);
+  }
+  async function request(path,options={}){
+    const h=new Headers(options.headers||{});
+    if(options.body instanceof FormData){ /* browser manages multipart */ }
+    else if(options.body && typeof options.body==='object'){
+      h.set('Content-Type','application/json');options.body=JSON.stringify(options.body);
+    }
+    if(options.method && options.method.toUpperCase()!=='GET' && csrf){h.set('X-Pilot-CSRF',csrf);}
+    const r=await fetch(api+path,{credentials:'same-origin',cache:'no-store',...options,headers:h});
+    const obj=await r.json().catch(()=>({}));
+    if(!r.ok){
+      const detail=typeof obj.detail==='string'?obj.detail:`操作失敗（HTTP ${r.status}）`;
+      throw new Error(detail);
+    }
+    return obj;
+  }
+  const show=(name)=>{
+    screen=name;
+    for(const view of ['chooser','clinicView','adminLogin','adminView','platformLogin','platformView','changePasswordView']) $(view).hidden=(view!==name);
+    document.title=(clinic?CLINIC[clinic]+'｜':'')+'頤典公版示範';
+    window.scrollTo({top:0,behavior:'instant'});
+  };
+  function goChooser(){
+    clinic=null;publicData=null;csrf='';draft=null;savedDraft=false;adminState=null;
+    history.pushState({},'', '/pilot');show('chooser');
+  }
+  async function pickClinic(id,mode='public'){
+    if(!isKnown(id)){goChooser();return;}
+    clinic=id;csrf='';draft=null;adminState=null;
+    const url=new URL(location.href);url.pathname='/pilot';url.searchParams.set('clinic',id);
+    if(mode==='admin')url.searchParams.set('view','admin');else url.searchParams.delete('view');
+    history.pushState({},'',url.pathname+url.search);
+    if(mode==='admin')await openAdmin();else await openPublic();
+  }
+  function updateViewQuery(view){
+    if(!clinic)return;
+    const url=new URL(location.href);url.searchParams.set('clinic',clinic);
+    if(view==='admin')url.searchParams.set('view','admin');else url.searchParams.delete('view');
+    history.replaceState({},'',url.pathname+url.search);
+  }
+  async function openPublic(){
+    if(!clinic){goChooser();return;}
+    updateViewQuery('public');show('clinicView');
+    try{
+      publicData=await request('/clinics/'+clinic+'/public');
+      text('publicClinicName',publicData.clinic.name);
+      text('publicIntro',publicData.clinic.intro||'歡迎使用頤典公版展示網站');
+      for(const [id,key] of [['publicPhone','phone'],['publicAddress','address'],['publicHours','hours'],['publicDirections','directions']]){
+        text(id,publicData.clinic[key]||'尚未設定');
+      }
+      const date=$('demoDate'),times=$('demoTime');
+      date.replaceChildren();times.replaceChildren();
+      for(const d of publicData.clinic.elderlyDates||[]){ const op=new Option(d,d);date.append(op); }
+      for(const t of publicData.clinic.timeSlots||[]){ const op=new Option(t,t);times.append(op); }
+      const hasOptions=!!date.options.length&&!!times.options.length;
+      $('demoSubmit').disabled=!hasOptions;
+      if(!hasOptions)toast('此診所尚未設定展示日期或時段',true);
+      renderPublicCatalog();
+    }catch(err){toast(err.message,true);}
+  }
+  function renderPublicCatalog(){
+    const data=publicData;const items=data?.items||[];text('catalogBadge',items.length+' 個已發布項目');
+    const container=$('publicCatalog');const checkbox=$('bookingSelfPay');container.replaceChildren();checkbox.replaceChildren();
+    if(!items.length){ container.innerHTML='<div class="empty-state">此診所尚未發布任何自費檢查項目。請管理員先匯入 Excel，核對後發布。</div>';return;}
+    for(const [cat,name] of CATEGORY){
+      const list=items.filter(x=>x.categoryId===cat);
+      if(!list.length)continue;
+      const section=document.createElement('section');section.className='catalog-category';
+      const title=document.createElement('h3');title.textContent=name;section.appendChild(title);
+      const cards=document.createElement('div');cards.className='catalog-cards';
+      for(const item of list){
+        const card=document.createElement('article');card.className='catalog-card';
+        card.innerHTML=`<strong>${escapeHTML(item.name)}</strong><p>${escapeHTML(item.description||'請洽詢診所了解檢查內容')}</p><span class="price">${money(item.price)}</span>`;
+        cards.appendChild(card);
+        const label=document.createElement('label');
+        const ck=document.createElement('input');ck.type='checkbox';ck.name='demoSelfPay';ck.value=item.id;
+        label.append(ck,document.createTextNode(item.name+'（'+money(item.price)+'）'));
+        checkbox.append(label);
+      }
+      section.appendChild(cards);container.appendChild(section);
+    }
+    const heading=document.createElement('strong');heading.textContent='可選擇已發布的自費項目（示範用）';
+    checkbox.prepend(heading);
+  }
+  async function submitDemo(event){
+    event.preventDefault();if(!clinic)return;
+    const itemIds=[...document.querySelectorAll('input[name="demoSelfPay"]:checked')].map(n=>n.value);
+    try{
+      const result=await request('/clinics/'+clinic+'/demo-booking',{
+        method:'POST',body:{plan:$('demoPlan').value,date:$('demoDate').value,time:$('demoTime').value,itemIds}
+      });
+      toast('建立展示紀錄：'+result.bookingId+'；此操作不是真實預約。');
+    }catch(err){toast(err.message,true);}
+  }
+  async function openAdmin(){
+    if(!clinic){goChooser();return;}
+    updateViewQuery('admin');text('adminLoginTitle',CLINIC[clinic]+'｜管理員登入');
+    $('adminUsername').value=clinic==='shanlin'?'shanlin_legacy':'yidian_admin';
+    $('adminUsername').readOnly=clinic==='shanlin';
+    $('adminPassword').minLength=clinic==='shanlin'?1:12;
+    text('clinicLoginNote',clinic==='shanlin'
+      ? '沿用原本山林診所管理密碼，由本機 8000 驗證。不會把密碼複製到公版帳號資料。'
+      : '頤典診所請輸入平台總管理員開通的帳號及密碼。');
+    try{
+      const s=await request('/admin/session');
+      if(s.clinicId===clinic && s.role==='clinic_admin'){csrf=s.csrf;if(s.mustChangePassword){show('changePasswordView');return;}await loadAdminState();return;}
+    }catch(_){/* no session */}
+    csrf='';show('adminLogin');
+  }
+  async function login(event){
+    event.preventDefault();if(!clinic)return;
+    try{
+      const p=$('adminPassword').value;
+      const s=clinic==='shanlin'
+        ? await request('/admin/legacy-shanlin-login',{method:'POST',body:{password:p}})
+        : await request('/admin/login',{method:'POST',body:{clinicId:clinic,username:$('adminUsername').value.trim(),password:p}});
+      $('adminPassword').value='';csrf=s.csrf;
+      if(s.mustChangePassword){show('changePasswordView');toast('請先修改頤典診所的初始密碼');return;}
+      await loadAdminState();toast('已登入 '+CLINIC[clinic]+' 的獨立後台');
+    }catch(err){toast(err.message,true);}
+  }
+  async function openPlatform(){
+    clinic=null;publicData=null;draft=null;adminState=null;
+    history.pushState({},'', '/pilot?view=platform');
+    try{
+      const sess=await request('/admin/session');
+      if(sess.role==='platform_admin'){
+        csrf=sess.csrf;await loadPlatformState();return;
+      }
+    }catch(_){/* no platform session */}
+    csrf='';show('platformLogin');
+  }
+  async function platformLogin(event){
+    event.preventDefault();
+    try{
+      const sess=await request('/platform/login',{method:'POST',body:{
+        username:$('platformUsername').value.trim(),password:$('platformPassword').value}});
+      $('platformPassword').value='';csrf=sess.csrf;
+      await loadPlatformState();toast('已登入頤典平台總管理後台');
+    }catch(err){toast(err.message,true);}
+  }
+  let yidianProvisioned=false;
+  async function loadPlatformState(){
+    try{
+      const state=await request('/platform/state');
+      yidianProvisioned=!!state.clinics.find(x=>x.clinicId==='yidian')?.provisioned;
+      $('provisionBtn').textContent=yidianProvisioned?'重設頤典診所帳號':'建立頤典診所帳號';
+      const rows=$('platformClinicRows');rows.replaceChildren();
+      for(const item of state.clinics){
+        const card=document.createElement('div');card.className='platform-clinic-card';
+        const title=document.createElement('strong');title.textContent=item.name;
+        const desc=document.createElement('p');desc.textContent=item.clinicId==='shanlin'
+          ? '使用原山林後台密碼（8000 本機驗證），無須重新設定。'
+          : item.provisioned?('已開通帳號：'+item.username):'尚未開通，請使用下方表單建立帳號。';
+        const chip=document.createElement('span');chip.className='chip';chip.textContent=item.clinicId==='shanlin'
+          ? (item.bridgeEnabled?'橋接設定已啟用（須啟動原後端）':'舊驗證橋接未啟用')
+          : (item.provisioned?'已開通':'未開通');
+        card.append(title,desc,chip);rows.append(card);
+      }
+      show('platformView');
+    }catch(err){toast(err.message,true);}
+  }
+  async function provision(event){
+    event.preventDefault();
+    const username=$('newClinicUsername').value.trim();
+    const password=$('newClinicPassword').value;
+    if(password!==$('confirmClinicPassword').value){toast('兩次輸入的初始密碼不一致',true);return;}
+    if(password.length<12){toast('初始密碼至少需要 12 字元',true);return;}
+    if(yidianProvisioned&&!confirm('頤典診所已經有帳號。確定重設？原本的公版管理員登入將立即失效。'))return;
+    try{
+      await request('/platform/clinics/yidian/account',{method:'POST',body:{username,password,reset:yidianProvisioned}});
+      $('newClinicPassword').value='';$('confirmClinicPassword').value='';
+      await loadPlatformState();toast('頤典診所管理帳號已建立；請以安全管道交付初始密碼。');
+    }catch(err){toast(err.message,true);}
+  }
+  async function changeClinicPassword(event){
+    event.preventDefault();
+    const oldPassword=$('oldClinicPassword').value;
+    const newPassword=$('newClinicOwnPassword').value;
+    if(newPassword!==$('newClinicOwnPassword2').value){toast('兩次輸入的新密碼不一致',true);return;}
+    try{
+      await request('/admin/change-password',{method:'POST',body:{oldPassword,newPassword}});
+      for(const id of ['oldClinicPassword','newClinicOwnPassword','newClinicOwnPassword2'])$(id).value='';
+      csrf='';show('adminLogin');toast('密碼已更新，請使用新的密碼重新登入。');
+    }catch(err){toast(err.message,true);}
+  }
+  async function platformLogout(){
+    try{if(csrf)await request('/admin/logout',{method:'POST'});}catch(_){}
+    csrf='';goChooser();toast('已登出平台管理');
+  }
+  async function logout(){
+    try{if(csrf) await request('/admin/logout',{method:'POST'});}catch(_){}
+    csrf='';adminState=null;draft=null;
+    if(clinic){await openAdmin();}else show('chooser');
+  }
+  async function loadAdminState(){
+    try{
+      const state=await request('/admin/state');
+      if(state.clinicId!==clinic){csrf='';show('adminLogin');toast('這是其他診所的登入狀態，請登出後改用本診所帳號。',true);return;}
+      adminState=state;draft=JSON.parse(JSON.stringify(state.catalogDraft||{items:[]}));savedDraft=!!state.catalogDraft?.items?.length;
+      show('adminView');text('adminTitle',state.config.name+'｜診所管理');
+      text('adminStorage',state.storage==='firebase'?'專屬 Firebase（展示資料）':'本機展示資料庫');
+      text('metricBookings',state.bookings.length);
+      text('metricDraft',draft.items?.length||0);
+      text('metricPublished',(state.catalogPublished.items||[]).filter(i=>i.enabled).length);
+      showConfig(state.config);renderDraft();renderBookings(state.bookings);
+    }catch(err){toast(err.message,true);}
+  }
+  function showConfig(c){
+    for(const [id,key] of [['cfgName','name'],['cfgPhone','phone'],['cfgAddress','address'],['cfgDirections','directions'],['cfgHours','hours'],['cfgIntro','intro']]) $(id).value=c[key]||'';
+    $('cfgDates').value=(c.elderlyDates||[]).join('\n');$('cfgTimes').value=(c.timeSlots||[]).join('\n');
+  }
+  function splitLines(str){return str.split(/[\n,，、]+/).map(s=>s.trim()).filter(Boolean);}
+  async function saveConfig(event){
+    event.preventDefault();
+    const body={name:$('cfgName').value.trim(),phone:$('cfgPhone').value.trim(),address:$('cfgAddress').value.trim(),
+      directions:$('cfgDirections').value.trim(),hours:$('cfgHours').value.trim(),intro:$('cfgIntro').value.trim(),
+      elderlyDates:splitLines($('cfgDates').value),timeSlots:splitLines($('cfgTimes').value)};
+    try{await request('/admin/config',{method:'PUT',body});text('configStatus','已儲存 '+new Date().toLocaleTimeString('zh-TW'));toast('已更新 '+CLINIC[clinic]+' 專屬資料');}
+    catch(err){toast(err.message,true);}
+  }
+  function countEnabled(){return (draft?.items||[]).filter(x=>x.enabled).length;}
+  function countIssues(){return (draft?.items||[]).filter(x=>x.price===null || x.issue && !x.reviewed).length;}
+  function renderSummary(){
+    const all=draft?.items||[];text('metricDraft',all.length);
+    text('importSummary',all.length
+      ? '草稿 '+all.length+' 項｜已啟用 '+countEnabled()+' 項｜價格待確認 '+countIssues()+' 項。先逐項核對，再儲存草稿並發布。'
+      : '尚無健檢項目；可以上傳 Excel（.xlsx）。');
+    $('saveDraftBtn').disabled=!all.length;
+    $('publishBtn').disabled=!all.length||!savedDraft;
+    $('downloadDraftBtn').disabled=!all.length;
+  }
+  function renderDraft(){
+    renderSummary();
+    const holder=$('editCatalog');
+    holder.innerHTML='';const all=draft?.items||[];
+    const query=$('searchItems').value.trim().toLowerCase();const filter=$('filterItems').value;
+    const filtered=all.map((entry,index)=>({entry,index})).filter(({entry})=>
+      (!query || [entry.name,entry.originalGroup,entry.sourceSheet,entry.description].join(' ').toLowerCase().includes(query))&&
+      (filter==='all'||filter==='enabled'&&entry.enabled||filter==='issues'&&entry.price===null));
+    if(!filtered.length){holder.innerHTML='<div class="empty-state">沒有符合條件的項目</div>';return;}
+    for(const {entry:e,index:i} of filtered){
+      const options=CATEGORY.map(([id,name])=>`<option value="${id}" ${id===e.categoryId?'selected':''}>${escapeHTML(name)}</option>`).join('');
+      const price=e.price===null||e.price===undefined?'':escapeHTML(e.price);
+      const comps=e.components?.length?`<details><summary>查看套組細項（${e.components.length}）</summary><ul>${e.components.map(x=>`<li>${escapeHTML(x.name)}</li>`).join('')}</ul></details>`:'';
+      const elt=document.createElement('article');elt.className='entry';elt.dataset.index=i;
+      elt.innerHTML=`
+        <div class="entry-top"><strong>${escapeHTML(e.name)}</strong><span class="entry-kind">${e.type==='package'?'套組':'單項'}</span></div>
+        <div class="entry-source">來源：${escapeHTML(e.sourceSheet||'手動資料')}　${escapeHTML(e.sourceRows||'')}</div>
+        <div class="entry-grid"><label>檢查分類<select data-field="categoryId">${options}</select></label><label>定價（NT$）<input data-field="price" type="number" min="0" step="1" value="${price}" placeholder="待確認"></label></div>
+        ${e.issue?`<div class="issue">${escapeHTML(e.issue)}</div>`:''}${comps}
+        <details><summary>檢查內容與說明</summary><textarea data-field="description" rows="3">${escapeHTML(e.description||'')}</textarea></details>
+        <div class="checks"><label><input type="checkbox" data-field="reviewed" ${e.reviewed?'checked':''}> 人工已核對</label><label><input type="checkbox" data-field="enabled" ${e.enabled?'checked':''}> 啟用於網站</label></div>`;
+      holder.appendChild(elt);
+    }
+  }
+  function catalogChanged(event){
+    const target=event.target;if(!target?.dataset.field)return;
+    const row=target.closest('[data-index]');if(!row)return;
+    const i=Number(row.dataset.index),e=draft?.items[i];if(!e)return;
+    const f=target.dataset.field;
+    if(f==='categoryId')e.categoryId=target.value;
+    if(f==='price'){
+      const v=target.value.trim(),num=Number(v);
+      e.price=v!==''&&Number.isInteger(num)&&num>=0&&num<=10000000?num:null;
+      e.reviewed=false;const ck=row.querySelector('[data-field="reviewed"]');if(ck)ck.checked=false;
+      if(e.price!==null)e.issue='';
+    }
+    if(f==='description'){e.description=target.value;e.reviewed=false;const ck=row.querySelector('[data-field="reviewed"]');if(ck)ck.checked=false;}
+    if(f==='reviewed'){e.reviewed=target.checked&&Number.isInteger(e.price);target.checked=e.reviewed;if(!e.reviewed&&e.enabled){e.enabled=false;const ck=row.querySelector('[data-field="enabled"]');if(ck)ck.checked=false;}}
+    if(f==='enabled'){
+      if(target.checked && (!e.reviewed||e.price===null)){target.checked=false;toast('請先確認名稱、內容及價格，再勾選「人工已核對」。',true);return;}
+      e.enabled=target.checked;
+    }
+    savedDraft=false;renderSummary();
+  }
+  async function importExcel(event){
+    const file=event.target.files?.[0];if(!file)return;
+    const form=new FormData();form.append('file',file);
+    try{
+      toast('正在解析 '+file.name+'…');
+      const parsed=await request('/admin/import-excel',{method:'POST',body:form});
+      if(!confirm('匯入的新檔案會取代目前尚未儲存的草稿預覽。確定繼續嗎？'))return;
+      draft=parsed;savedDraft=false;
+      $('searchItems').value='';$('filterItems').value='all';renderDraft();
+      toast('解析完成：'+parsed.statistics.count+' 項、'+parsed.statistics.packages+' 套組。請人工核對並儲存。');
+      if(parsed.warnings.length)toast(parsed.warnings.join('；'),true);
+    }catch(err){toast(err.message,true);}
+  }
+  async function saveDraft(){
+    if(!draft?.items?.length)return;
+    try{
+      const result=await request('/admin/catalog/draft',{method:'PUT',body:draft});savedDraft=true;
+      renderSummary();toast(result.message);
+    }catch(err){toast(err.message,true);}
+  }
+  async function publish(){
+    if(!savedDraft){toast('有未儲存的修改，請先儲存草稿',true);return;}
+    if(!confirm('只會發布已啟用且已人工核對的項目。是否確定更新本診所的自費選單？'))return;
+    try{
+      const v=await request('/admin/catalog/publish',{method:'POST'});
+      toast('發布成功：'+v.publishedCount+' 項，版本 '+v.version);
+      await loadAdminState();
+    }catch(err){toast(err.message,true);}
+  }
+  function downloadDraft(){
+    if(!draft)return;
+    const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=clinic+'_catalog_draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+  }
+  function renderBookings(items){
+    const area=$('bookingRecords');area.innerHTML='';
+    if(!items?.length){area.innerHTML='<div class="empty-state">尚無此診所的虛構展示預約。可先到診所前台建立一筆示範紀錄。</div>';return;}
+    for(const e of items){
+      const div=document.createElement('div');div.className='booking-row';
+      div.innerHTML=`<div><strong>${escapeHTML(e.date)}　${escapeHTML(e.time)}　${escapeHTML(e.plan)} 方案</strong><small>${escapeHTML(e.alias||'虛構訪客')} · ${escapeHTML(e.id)}</small></div><strong>${money(e.selfPayTotal)}</strong>`;
+      area.appendChild(div);
+    }
+  }
+  function bind(){
+    document.querySelectorAll('[data-select-clinic]').forEach(btn=>btn.addEventListener('click',()=>pickClinic(btn.dataset.selectClinic)));
+    $('navClinics').addEventListener('click',goChooser);
+    $('navHome').addEventListener('click',()=>clinic?openPublic():goChooser());
+    $('navAdmin').addEventListener('click',()=>clinic?openAdmin():toast('請先選擇診所',true));
+    $('navPlatform').addEventListener('click',openPlatform);
+    $('chooserPlatform').addEventListener('click',openPlatform);
+    $('platformLoginForm').addEventListener('submit',platformLogin);
+    $('provisionForm').addEventListener('submit',provision);
+    $('platformLogout').addEventListener('click',platformLogout);
+    $('changePasswordForm').addEventListener('submit',changeClinicPassword);
+    $('demoBookingForm').addEventListener('submit',submitDemo);
+    $('loginForm').addEventListener('submit',login);
+    $('logoutBtn').addEventListener('click',logout);
+    $('configForm').addEventListener('submit',saveConfig);
+    $('excelFile').addEventListener('change',importExcel);
+    $('saveDraftBtn').addEventListener('click',saveDraft);
+    $('publishBtn').addEventListener('click',publish);
+    $('downloadDraftBtn').addEventListener('click',downloadDraft);
+    $('searchItems').addEventListener('input',renderDraft);
+    $('filterItems').addEventListener('change',renderDraft);
+    $('editCatalog').addEventListener('input',catalogChanged);
+    $('editCatalog').addEventListener('change',catalogChanged);
+    window.addEventListener('popstate',()=>{const params=new URLSearchParams(location.search);const id=params.get('clinic');if(isKnown(id)){clinic=id;params.get('view')==='admin'?openAdmin():openPublic();}else if(params.get('view')==='platform')openPlatform();else goChooser();});
+  }
+  bind();
+  const args=new URLSearchParams(location.search),initial=args.get('clinic');
+  if(isKnown(initial)){clinic=initial;args.get('view')==='admin'?openAdmin():openPublic();}
+  else if(args.get('view')==='platform')openPlatform();
+  else show('chooser');
+})();

@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>山林診所 (V45 完美抗音偏版)</title>
+  <meta name="description" content="山林診所－提供之服務：1.心臟內科及一般內科健保&自費醫療門診服務 2.非侵入性心血管重建治療/心血管震波治療 3.心血管疾病與代謝症候群運動處方 4.台北市老人健康檢查">
+  <meta name="author" content="山林診所">
+  <meta name="keywords" content="山林診所,山林,診所,門診服務,心臟內科,台北市老人健康檢查,台北市文山區,內科,一般內科,心臟內科,心血管疾病,健保,辦理勞工體格與健康檢查之醫療機構,運動營養諮詢,復健科,全心醫學聯合診所,健保特約醫事機構">
+
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/favicon/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Satisfy&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/main.css">
+
+  <style>
+    #chat-widget { position: fixed; bottom: 20px; right: 20px; width: 350px; height: 520px; z-index: 100000; display: none; flex-direction: column; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid #ccc; overflow: hidden; transition: all 0.3s ease; }
+    #chat-widget.large-mode { width: 90vw; height: 85vh; max-width: 500px; bottom: 5vh; right: 5vw; }
+    #chat-widget.large-mode .msg { font-size: 1.3rem; padding: 15px 20px; }
+    #chat-widget.large-mode #chat-header { font-size: 1.3rem; padding: 20px; }
+    #chat-widget.large-mode #chat-input { font-size: 1.2rem; padding: 12px 20px; }
+    #chat-widget.large-mode .mic-btn-chat { width: 60px; height: 60px; font-size: 1.8rem; }
+    #chat-widget.large-mode .action-btn { font-size: 1.1rem; padding: 8px 15px; }
+
+    #chat-header { background: #0d6efd; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .header-icons { display: flex; gap: 15px; align-items: center; }
+    #chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; }
+    .msg { margin-bottom: 12px; max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; line-height: 1.5; }
+    .ai-msg { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .user-msg { background: #0d6efd; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    
+    .quick-actions { display: flex; gap: 10px; padding: 8px 15px; background: white; border-top: 1px solid #eee; justify-content: center; }
+    .action-btn { background: #f1f3f5; border: 1px solid #ccc; border-radius: 20px; padding: 5px 12px; font-size: 0.85rem; cursor: pointer; color: #333; transition: background 0.2s; }
+    .action-btn:hover { background: #e2e6ea; }
+
+    #chat-footer { padding: 10px 15px; background: white; display: flex; align-items: center; }
+    #chat-input { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 8px 15px; outline: none; }
+    
+    .mic-btn-chat { background: #0d6efd; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; margin-left: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; user-select: none; -webkit-user-select: none; }
+    .mic-btn-chat.recording { background: #dc3545; animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.7); } 100% { box-shadow: 0 0 0 15px rgba(220,53,69,0); } }
+    
+    #open-chat-btn { position: fixed; bottom: 20px; right: 20px; width: 75px; height: 75px; border-radius: 50%; background: #0d6efd; color: white; border: none; font-size: 2.2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 99999; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+    .loading-status { font-size: 0.8rem; color: #888; margin-bottom: 5px; display: none; }
+  </style>
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#bsb-tpl-navbar" data-bs-smooth-scroll="true" tabindex="0">
+  <header id="header" class="sticky-top bsb-tpl-header-sticky bsb-tpl-header-sticky-animationX">
+    <nav id="scrollspyNav" class="navbar navbar-expand-lg bsb-tpl-bg-blue bsb-navbar bsb-navbar-hover bsb-navbar-caret bsb-tpl-navbar-sticky" data-bsb-sticky-target="#header">
+      <div class="container">
+        <a class="navbar-brand" href="index.html">
+          <img src="./assets/img/branding/logo.png" class="bsb-tpl-logo" alt=""> 山林診所
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+          </svg>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+          <div class="offcanvas-header">
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <ul id="bsb-tpl-navbar" class="navbar-nav justify-content-end flex-grow-1">
+              <li class="nav-item"><a class="nav-link active" href="#scrollspyNav" aria-current="page" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">首頁</a></li>
+              <li class="nav-item"><a class="nav-link" href="appointment.html" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">預約健檢</a></li>
+              <li class="nav-item"><a class="nav-link" href="#scrollspyServices" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">健檢資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="search.html" >預約資訊查詢</a></li>
+              <li class="nav-item"><a class="nav-link" href="#scrollspyFooter" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasNavbar">聯絡資訊</a></li>
+              <li class="nav-item"><a class="nav-link" href="" data-bs-toggle="modal" data-bs-target="#staticBackdrop">登入</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form action="login.php" name="frm1" id="frm1" method="post">
+      <input type="hidden" name="act" id="act"  value="Login"/>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">登入後台</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label for="account" class="col-form-label">帳號:</label><input type="text" class="form-control" id="account" name="account"></div>
+          <div class="mb-3"><label for="password" class="col-form-label">密碼:</label><input type="password" class="form-control" id="password" name="password"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="submit" class="btn btn-primary">登入</button></div>
+      </div>
+      </form>
+    </div>
+  </div>
+
+  <main id="main">
+    <section id="scrollspyHero" class="bsb-hero-2 py-5 py-xl-8 py-xxl-10 banner-img">
+      <div class="container overflow-hidden">
+        <div class="row gy-3 gy-lg-0 align-items-lg-center justify-content-lg-between">
+          <div class="col-12 col-lg-6 order-1 order-lg-0">
+            <h1 class="display-3 fw-bolder mb-3">115年臺北市<br/>老人健康檢查</h1>
+            <div class="d-grid gap-2 d-sm-flex mt-4">
+              <a href="#scrollspyAppointment" class="btn btn-primary bsb-btn-2xl rounded-pill">一般預約</a>
+              <button onclick="openChat()" class="btn btn-outline-primary bsb-btn-2xl rounded-pill d-flex align-items-center justify-content-center">
+                <span class="me-2">🎙️</span> 語音智慧助理
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scrollspyAppointment" class="home-bg bsb-pricing-1 py-5 py-xl-8 bsb-section-py-xxl-1">
+      <div class="container">
+        <div class="row gy-5 gy-lg-0 align-items-center">
+          <div class="col-12 col-lg-4">
+            <h2 class="display-3 fw-bolder mb-4"><mark class="bsb-tpl-highlight bsb-tpl-highlight-yellow"><span class="display-1 text-accent fw-normal">預約健檢</span></mark></h2>
+            <p class="fs-4 mb-4 mb-xl-5">
+              <span class="fw-bold text-primary text-medium">流程: </span><br/>
+              <span class="text-secondary text-small">1️. 線上預約登記健康檢查: 網站 / Line / 電話預約 （相關資訊在網頁最下方）</span><br/>
+              <span class="text-secondary text-small">預約需提供資訊：姓名、出生年月日(民國)、身分證字號、電話、健康檢查附早餐(葷素選擇)</span><br/>
+              <span class="text-secondary text-small">2. 失智症篩檢/憂鬱症篩檢：現場拿資料 或 網路下載 後填寫(需在健康檢查當天攜帶)</span><br/>
+              <span class="text-secondary text-small">⚠️ 當天來現場除了可以確認老人健康檢查項目之外，另外可查詢是否符合可做「成人預防保健服務」、「糞便潛血免疫分析」(50-75歲每2年一次)、「B、C型肝炎篩檢」(終身一次)</span><br/>
+              <span class="text-secondary text-small">3. 健檢前須空腹8小時、穿著輕便衣物鞋子、務必攜帶雙證件(健保卡、身分證)</span><br/>
+              <span class="text-secondary text-small">⚠️「受檢資格需至現場經本院確認，若於檢查當天發現資格不符，將無法進行檢查，敬請見諒。」</span><br/>
+            </p>
+          </div>
+          <div class="col-12 col-lg-8">
+            <div class="row justify-content-xl-end">
+              <div class="col-12 col-xl-12">
+                <div class="row gy-4 gy-md-0 gx-xxl-5">
+                  <div class="col-12 col-md-4">
+                    <div class="card border-0 border-bottom border-primary shadow-sm">
+                      <div class="card-body p-4 p-xxl-5">
+                        <h2 class="h4 mb-2">A 方案</h2><h4 class="fw-bold text-primary mb-0">腦肺方案</h4><p class="text-secondary mb-4">涵蓋項目</p>
+                        <ul class="list-group list-group-flush mb-4">
+                          <li class="list-group-item"><span>胸部X光</span></li><li class="list-group-item"><span>甲狀腺刺激素</span></li>
+                          <li class="list-group-item"><span>維他命B12</span></li><li class="list-group-item"><span>葉酸</span></li>
+                          <li class="list-group-item"><span>尿液常規檢查</span></li><li class="list-group-item"><span>血液常規檢查</span></li>
+                          <li class="list-group-item"><span>鈉</span></li><li class="list-group-item"><span>鉀</span></li><li class="list-group-item"><span>鈣</span></li>
+                          <li class="list-group-item"><span>失智症篩檢（AD-8）</span></li><li class="list-group-item"><span>憂鬱症篩檢（GDS-15）</span></li>
+                          <li class="list-group-item"><span>早餐(葷素選擇)</span></li><li class="list-group-item"><span>醫師諮詢</span></li>
+                        </ul>
+                        <a href="./appointment.html?p=A" class="btn bsb-btn-2xl btn-accent rounded-pill">預約</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="card border-0 border-bottom border-primary shadow-sm">
+                      <div class="card-body p-4 p-xxl-5">
+                        <h2 class="h4 mb-2">B 方案</h2><h4 class="fw-bold text-primary mb-0">腹部方案</h4><p class="text-secondary mb-4">涵蓋項目</p>
+                        <ul class="list-group list-group-flush mb-4">
+                          <li class="list-group-item"><span>腹部超音波</span></li><li class="list-group-item"><span>糖化血色素</span></li>
+                          <li class="list-group-item"><span>尿液常規檢查</span></li><li class="list-group-item"><span>白蛋白</span></li><li class="list-group-item"><span>球蛋白</span></li>
+                          <li class="list-group-item"><span>失智症篩檢（AD-8）</span></li><li class="list-group-item"><span>憂鬱症篩檢（GDS-15）</span></li>
+                          <li class="list-group-item"><span>早餐(葷素選擇)</span></li><li class="list-group-item"><span>醫師諮詢</span></li>
+                        </ul>
+                        <a href="./appointment.html?p=B" class="btn bsb-btn-2xl btn-accent rounded-pill">預約</a>
+                      </div>
+                    </div>
+                  </div>                  
+                  <div class="col-12 col-md-4">
+                    <div class="card border-0 border-bottom border-primary shadow-sm">
+                      <div class="card-body p-4 p-xxl-5">
+                        <h2 class="h4 mb-2">C 方案</h2><h4 class="fw-bold text-primary mb-0">骨密肌力方案</h4><p class="text-secondary mb-4">涵蓋項目</p>
+                        <ul class="list-group list-group-flush mb-4">
+                          <li class="list-group-item"><span>DXA骨密度檢查</span></li><li class="list-group-item"><span>肌少症篩檢</span></li>
+                          <li class="list-group-item"><span>肌少症體能表現</span></li><li class="list-group-item"><span>ALK-P</span></li><li class="list-group-item"><span>鈣</span></li>
+                          <li class="list-group-item"><span>尿液常規檢查</span></li><li class="list-group-item"><span>血液常規檢查</span></li>                          
+                          <li class="list-group-item"><span>白蛋白</span></li><li class="list-group-item"><span>球蛋白</span></li><li class="list-group-item"><span>尿素氮</span></li>
+                          <li class="list-group-item"><span>失智症篩檢（AD-8）</span></li><li class="list-group-item"><span>憂鬱症篩檢</span></li>
+                          <li class="list-group-item"><span>早餐(葷素選擇)</span></li><li class="list-group-item"><span>醫師諮詢</span></li>
+                        </ul>
+                        <a href="./appointment.html?p=C" class="btn bsb-btn-2xl btn-accent rounded-pill">預約</a>
+                      </div>
+                    </div>
+                  </div>                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>    
+
+    <section id="scrollspyServices" class="py-5 py-xl-8 bsb-tpl-bg-sea-shell bsb-section-py-xxl-1">
+      <div class="container mb-5 mb-md-6 mb-xl-10">
+        <div class="row justify-content-md-center">
+          <div class="col-12 col-md-10 col-lg-9 col-xl-8 col-xxl-7 text-center">
+            <h2 class="display-3 fw-bolder mb-4">健檢資訊</h2>
+          </div>
+        </div>
+      </div>
+      <div class="container overflow-hidden">
+        <div class="row gy-5 gx-md-4 gy-lg-0 gx-xxl-5 justify-content-center">
+          <div class="col-11 col-sm-11 col-lg-11">
+            <div class="rounded-3 bsb-tpl-bg-yellow p-3 mb-4"><h4 class="m-3 ">健檢海報</h4></div>
+            <h4 class="mb-3 px-3 text-medium fw-light"><a href="./assets/img/file/healthycare115.jpg" target="_blank" class="link-primary">臺北市老人免費檢查詳細說明海報</a></h4>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <section class="bg-light py-4 py-xl-8 border-top border-light" id="scrollspyFooter">
+      <div class="container overflow-hidden">
+        <div class="row gy-4 gy-lg-0 justify-content-xl-between">
+          <div class="col-12">
+            <div class="widget">
+              <h4 class="widget-title mb-4">聯絡資訊</h4>
+              <address class="mb-4">臺北市文山區羅斯福路六段407號2樓</address>
+              <p class="mb-4"><a class="text-decoration-none" href="tel:+886-2-29332010">02 2933 2010</a></p>
+              <div class="copyright text-center text-md-start link-secondary text-decoration-none">&copy; 2025. All Rights Reserved.</div>
+              <div class="credits text-secondary text-center text-md-start mt-2 fs-7">Built by 依德科技 with <span class="text-primary">&#9829;</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </footer>
+
+  <button id="open-chat-btn" onclick="openChat()">💬</button>
+
+  <div id="chat-widget">
+    <div id="chat-header">
+      <span>🏥 健檢小幫手 (V45 完美抗音偏版)</span>
+      <div class="header-icons">
+        <span style="cursor:pointer; font-size: 20px;" onclick="toggleSize()" title="放大字體">🔍放大</span>
+        <span style="cursor:pointer; font-size: 28px;" onclick="closeChat()">×</span>
+      </div>
+    </div>
+    <div id="chat-body">
+      <div class="msg ai-msg">您好！我是健檢預約小幫手。請問您想預約 A、B 還是 C 方案呢？<br><br><small style="color: #666;">(如果您不知道怎麼選，可以告訴我您哪裡不舒服喔！)</small></div>
+      <div id="loading" class="loading-status">處理中，請稍候...</div>
+    </div>
+    
+    <div class="quick-actions">
+      <button class="action-btn" onclick="handleAction('上一步')">🔙 回上一步</button>
+      <button class="action-btn" onclick="handleAction('重來')">🔄 重新開始</button>
+    </div>
+
+    <div id="chat-footer">
+      <input type="text" id="chat-input" placeholder="打字，或按住說話...">
+      <button id="chatMicBtn" class="mic-btn-chat" 
+        onmousedown="startRec()" onmouseup="stopRec()" onmouseleave="stopRec()" 
+        ontouchstart="startRec()" ontouchend="stopRec()">🎤</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
+  <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const chatBtn = document.getElementById('open-chat-btn');
+    const chatWidget = document.getElementById('chat-widget');
+    const chatBody = document.getElementById('chat-body');
+    const chatMicBtn = document.getElementById('chatMicBtn');
+    const loadingStatus = document.getElementById('loading');
+    const chatInput = document.getElementById('chat-input');
+
+    let currentStep = "plan"; 
+    let bookingData = { plan: "", name: "", pid: "", phone: "", birthday: "", date: "", time: "" };
+    let mediaRecorder, audioChunks = [], globalStream = null; 
+    let lastAiMessage = "您好！我是健檢預約小幫手。請問您想預約 A、B 還是 C 方案呢？";
+
+    let availableVoices = [];
+    function loadVoices() { availableVoices = window.speechSynthesis.getVoices(); }
+    if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = loadVoices; }
+
+    function speakText(htmlText) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        let plainText = htmlText.replace(/<[^>]+>/g, '') 
+                                .replace(/👉|⚠️|✅|🏥|🔊/g, '') 
+                                .replace(/\(如果您不知道怎麼選，可以告訴我您哪裡不舒服喔！\)/g, '') 
+                                .replace(/450101/g, '民國45年，1月1號')  
+                                .replace(/5\/1/g, '5月1號')            
+                                .replace(/5\/4/g, '5月4號')            
+                                .trim();
+        if (!plainText) return;
+        
+        const utterance = new SpeechSynthesisUtterance(plainText);
+        utterance.lang = 'zh-TW'; 
+        if (availableVoices.length === 0) availableVoices = window.speechSynthesis.getVoices();
+        
+        let bestVoice = availableVoices.find(v => v.name.includes('Google') && v.lang === 'zh-TW') || 
+                        availableVoices.find(v => v.name.includes('Google') && v.lang.includes('zh')) ||
+                        availableVoices.find(v => v.name.includes('Microsoft Yating')) || 
+                        availableVoices.find(v => v.name.includes('Microsoft HsiaoChen')) ||     
+                        availableVoices.find(v => v.lang === 'zh-TW');                           
+                        
+        if (bestVoice) utterance.voice = bestVoice; 
+        utterance.rate = 1.05; 
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleSize() { chatWidget.classList.toggle('large-mode'); setTimeout(() => chatBody.scrollTop = chatBody.scrollHeight, 100); }
+    function closeChat() { chatWidget.style.display = 'none'; chatBtn.style.display = 'block'; }
+    async function openChat() { 
+        chatWidget.style.display = 'flex'; chatBtn.style.display = 'none'; 
+        if (!globalStream) { globalStream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(e => null); }
+    }
+    
+    function goBack() {
+        if (currentStep === "plan") {
+            addMsg("目前已經是第一步囉！👉 請問您想預約哪個方案？（或告訴我哪裡不舒服）", "ai");
+            return;
+        }
+        let msg = "好的，沒問題！為您退回上一題。<br>";
+        switch (currentStep) {
+            case "name": bookingData.plan = ""; currentStep = "plan"; msg += "👉 請問您想預約哪個方案？"; break;
+            case "pid": bookingData.name = ""; currentStep = "name"; msg += "👉 請問您的大名是？"; break;
+            case "phone": bookingData.pid = ""; currentStep = "pid"; msg += "👉 請問您的身分證字號？"; break;
+            case "birthday": bookingData.phone = ""; currentStep = "phone"; msg += "👉 請問手機號碼？"; break;
+            case "date": bookingData.birthday = ""; currentStep = "birthday"; msg += "👉 請問出生年月日（例如 450101）？"; break;
+            case "time": bookingData.date = ""; currentStep = "date"; msg += "👉 請問您想預約哪一天？（5/1 或 5/4）"; break;
+            case "confirm": bookingData.time = ""; currentStep = "time"; msg += "👉 請問預約幾點？（8點 或 9點）"; break;
+        }
+        addMsg(msg, "ai");
+    }
+
+    function handleAction(cmd) { 
+        if(cmd === "重來") location.reload(); 
+        if(cmd === "上一步") goBack();
+    }
+
+    function addMsg(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}-msg`; div.innerHTML = text.replace(/\n/g, "<br>");
+        chatBody.insertBefore(div, loadingStatus); chatBody.scrollTop = chatBody.scrollHeight;
+        
+        if (type === 'ai') {
+            if (!text.includes("🔊 好的，我再說一次") && !text.includes("對不起對不起") && !text.includes("不好意思，我剛剛沒接收到聲音")) lastAiMessage = text; 
+            speakText(text); 
+        }
+    }
+
+    function startRec() {
+        if (!globalStream) return addMsg("請開啟麥克風權限", "ai");
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        audioChunks = []; mediaRecorder = new MediaRecorder(globalStream);
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.start(); chatMicBtn.classList.add('recording');
+    }
+
+    function stopRec() {
+        if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+        mediaRecorder.stop(); chatMicBtn.classList.remove('recording');
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            loadingStatus.style.display = 'block';
+            
+            const fd = new FormData(); 
+            fd.append('file', blob, 'v.webm');
+            fd.append('current_name', bookingData.name || "");
+            
+            try {
+                const r = await fetch('http://127.0.0.1:8000/api/whisper_booking', { method: 'POST', body: fd });
+                const res = await r.json(); loadingStatus.style.display = 'none';
+                if (res.status === 'error') { addMsg("<span style='color:red;'>⚠️ 伺服器發生錯誤。</span>", "ai"); return; }
+                processLogic(res.raw_text, res.result);
+            } catch(e) { 
+                loadingStatus.style.display = 'none'; 
+                addMsg("<span style='color:red;'>⚠️ 無法連線到伺服器。請確認 main.py 有啟動。</span>", "ai");
+            }
+        };
+    }
+    
+    async function processLogic(rawText, aiResult) {
+        if(!rawText || rawText.trim() === "") {
+            addMsg("不好意思，我剛剛沒接收到聲音，可以請您靠近麥克風再說一次嗎？", "ai");
+            return;
+        }
+        
+        const data = (aiResult && aiResult.data) ? aiResult.data : {};
+
+        // ✅ 修復2：語音辨識顯示時，身分證優先顯示AI修正後的正確格式
+        let displayUserText = rawText;
+        if (aiResult && aiResult.translated_text) {
+            displayUserText = aiResult.translated_text;
+        }
+        // 若當前步驟是身分證，且AI解析出正確格式，直接用正確格式顯示在藍色氣泡
+        if (currentStep === "pid" && data.pid && data.pid.match(/^[A-Z]\d{9}$/)) {
+            displayUserText = data.pid;
+        }
+        // 若當前步驟是手機，且AI解析出號碼，直接顯示解析結果
+        if (currentStep === "phone" && data.phone) {
+            displayUserText = data.phone;
+        }
+        
+        addMsg(displayUserText, 'user');
+
+        // 自費項目優先交由資料庫處理；命中後不進入 A/B/C 公費方案流程。
+        if (window.selfPayHandleText && await window.selfPayHandleText(displayUserText, true)) {
+            return;
+        }
+        const checkText = displayUserText.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, ""); 
+
+        if (checkText.match(/重新開始|取消預約|重設/)) { location.reload(); return; }
+        if (checkText.match(/聽不清楚|再說一次|再講一次|重講|重說|聽不懂|再唸一次|蛤|再一遍|你說什麼/)) {
+            addMsg("🔊 好的，我再說一次喔！<br><br>" + lastAiMessage, "ai"); return; 
+        }
+        if (checkText.match(/傻逼|智障|智商|不會|輪迴|一直|講過|白痴|靠北|媽的|操|幹|跳針|毛病/)) {
+            addMsg("對不起對不起！🙇‍♂️ 語音辨識有時候比較不準。您可以直接打字輸入，或點擊下方按鈕重新開始！", "ai"); return;
+        }
+        if (checkText.match(/上[一1][步部]|上[一1][題提]|回上一|退回|寫錯|打錯/)) {
+            goBack(); return;
+        }
+        if (checkText.match(/下一[步部]|下一[題提]|跳過/)) {
+            addMsg("⚠️ 目前資料還沒填寫完整，請先完成這一步才能往下走喔！<br><br>" + lastAiMessage, "ai"); return;
+        }
+
+        if (data.name) {
+            data.name = data.name.replace(/[^\u4e00-\u9fa5]/g, ""); 
+        }
+
+        let nameUpdated = false;
+        if (data.name && data.name.length >= 2 && data.name !== bookingData.name) {
+            bookingData.name = data.name;
+            nameUpdated = true;
+        }
+
+        let isCorrectionIntent = (data.intent === "correction" || checkText.match(/錯了|打錯了|填錯了|剛剛錯了/));
+
+        if (!nameUpdated && isCorrectionIntent) {
+            if (checkText.match(/名字|姓名|字/)) {
+                bookingData.name = ""; currentStep = "name";
+                addMsg("好的，幫您重新輸入名字。👉 請重新告訴我您的全名是？", "ai"); return;
+            } else if (checkText.match(/身分證|證號/)) {
+                bookingData.pid = ""; currentStep = "pid";
+                addMsg("好的，幫您重新輸入。👉 請問身分證字號？", "ai"); return;
+            } else if (checkText.match(/手機|電話/)) {
+                bookingData.phone = ""; currentStep = "phone";
+                addMsg("好的，幫您重新輸入。👉 請問手機號碼？", "ai"); return;
+            } else if (checkText.match(/方案/)) {
+                bookingData.plan = ""; currentStep = "plan";
+                addMsg("好的，幫您重選。👉 請問您想預約哪個方案？", "ai"); return;
+            }
+        }
+
+        // ✅ 修復1：只更新當前步驟對應的欄位，不預先填入尚未詢問的欄位，避免亂跳題
+        const stepFieldMap = { plan: "plan", name: "name", pid: "pid", phone: "phone", birthday: "birthday" };
+        const currentField = stepFieldMap[currentStep];
+        if (currentField && !bookingData[currentField] && data[currentField]) {
+            bookingData[currentField] = data[currentField];
+        }
+        // 姓名可以在任何步驟被順帶抓到
+        if (!bookingData.plan && data.plan) bookingData.plan = data.plan;
+
+        if (nameUpdated && currentStep !== "name" && currentStep !== "plan") {
+            let stepQuestion = "";
+            switch (currentStep) {
+                case "pid": stepQuestion = "請問您的「身分證字號」是？"; break;
+                case "phone": stepQuestion = "請問您的「手機號碼」是？"; break;
+                case "birthday": stepQuestion = "請問您的「出生年月日」是？"; break;
+                case "date": stepQuestion = "請問您想預約「哪一天」？"; break;
+                case "time": stepQuestion = "請問您想預約「幾點」？"; break;
+                case "confirm": stepQuestion = "以上資料正確嗎？"; break;
+                default: stepQuestion = "請問身分證字號？";
+            }
+            addMsg(`沒問題！已為您將名字更正為：「${bookingData.name}」。<br>👉 接下來，${stepQuestion}`, "ai");
+            return;
+        }
+
+        switch (currentStep) {
+            case "plan":
+                if (bookingData.plan === "COMMON") {
+                    addMsg("您提到的項目是 A、B、C 三個方案都有的喔！請問您還有特別想針對腦部、腹部還是骨質做檢查嗎？", "ai");
+                    bookingData.plan = ""; 
+                } else if (bookingData.plan) {
+                    if (bookingData.name) {
+                        currentStep = "pid";
+                        addMsg(`好的！為您推薦「${bookingData.plan}」方案。已記錄姓名：「${bookingData.name}」。<br>👉 請問身分證字號？`, "ai");
+                    } else {
+                        currentStep = "name";
+                        addMsg(`好的！為您推薦「${bookingData.plan}」方案。<br>👉 請問您的大名是？`, "ai");
+                    }
+                } else {
+                    addMsg("不好意思沒抓到方案。請問您想預約哪一區的檢查？（如：A方案、頭部、腹部）", "ai");
+                }
+                break;
+
+            case "name":
+                if (bookingData.name) {
+                    currentStep = "pid"; 
+                    addMsg(`已記錄姓名：「${bookingData.name}」。<br>👉 請問身分證字號？`, "ai");
+                } else { 
+                    addMsg("不好意思，我剛剛沒有聽得很清楚。👉 請問您的全名是？", "ai"); 
+                }
+                break;
+
+            case "pid":
+                if (bookingData.pid && bookingData.pid.match(/^[A-Z]\d{9}$/)) {
+                    currentStep = "phone"; 
+                    addMsg(`證號無誤。<br>👉 請問手機號碼？`, "ai");
+                } else { 
+                    bookingData.pid = "";
+                    // 把這裡的 ** 移除，改用引號標示重點
+                    addMsg("<span style='color:red;'>⚠️ 身分證格式不對喔。</span><br>格式應該是「一個大寫英文加上九位數字」。<br><br>👉 您可以「再說一次」，或是直接在下方「輸入框打字」給我。", "ai"); 
+                }
+                break;
+
+            case "phone":
+                // ✅ 修復3：嚴格驗證台灣手機格式：09 開頭、共10碼，超過或不符都提醒
+                {
+                    let ph = bookingData.phone || data.phone || "";
+                    // 嘗試從輸入文字中直接抓 09xxxxxxxx
+                    let rawDigits = checkText.replace(/[^0-9]/g, "");
+                    let directMatch = rawDigits.match(/09\d{8}/);
+                    if (!ph && directMatch) ph = directMatch[0];
+
+                    if (ph && ph.match(/^09\d{8}$/) && ph.length === 10) {
+                        bookingData.phone = ph;
+                        currentStep = "birthday"; 
+                        addMsg(`手機號碼已記錄：${bookingData.phone}。<br>👉 請問出生年月日（例如 450101）？`, "ai");
+                    } else {
+                        bookingData.phone = "";
+                        let hint = "";
+                        if (ph && ph.length > 10) hint = `（您輸入了 ${ph.length} 碼，號碼過長）`;
+                        else if (ph && !ph.startsWith("09")) hint = "（號碼開頭須為 09）";
+                        else if (ph && ph.length < 10) hint = `（您輸入了 ${ph.length} 碼，號碼不足）`;
+                        addMsg(`<span style='color:red;'>⚠️ 手機號碼格式不合理${hint}。<br>台灣行動電話格式為 09 開頭共 10 碼，例如：0912345678。</span><br>👉 請重新輸入手機號碼？`, "ai"); 
+                    }
+                }
+                break;
+
+            case "birthday":
+                            {
+                                // ✅ 優先使用 LLM 完美排版過的 data.birthday，如果沒有才退回使用純數字的正則比對
+                                let b = bookingData.birthday || data.birthday || "";
+                                if (!b) {
+                                    let rawDigits = checkText.replace(/\D/g, '');
+                                    if (rawDigits.length >= 5 && rawDigits.length <= 7) {
+                                        b = rawDigits;
+                                    }
+                                }
+
+                                if (b) {
+                                    let digits = b.toString();
+                                    let isValidDate = false;
+                                    let isQualified = false;
+                                    let ageMsg = "";
+
+                                    if (digits.length >= 5 && digits.length <= 7) {
+                                        let rocYear = parseInt(digits.slice(0, digits.length - 4), 10);
+                                        let mm = parseInt(digits.slice(-4, -2), 10);
+                                        let dd = parseInt(digits.slice(-2), 10);
+                                        
+                                        if (rocYear > 0 && mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+                                            isValidDate = true;
+                                            b = digits;
+                                            // 換算西元年並計算年齡
+                                            let adYear = rocYear + 1911;
+                                            let today = new Date();
+                                            let age = today.getFullYear() - adYear;
+                                            // 未過生日則減1歲
+                                            let birthMonthDay = mm * 100 + dd;
+                                            let todayMonthDay = (today.getMonth() + 1) * 100 + today.getDate();
+                                            if (todayMonthDay < birthMonthDay) age--;
+                                            isQualified = (age >= 65);
+                                            if (!isQualified) ageMsg = `（您的出生年份換算西元為 ${adYear} 年，目前年齡約 ${age} 歲，未達 65 歲受檢資格）`;
+                                        }
+                                    }
+
+                                    if (!isValidDate) {
+                                        bookingData.birthday = "";
+                                        addMsg("<span style='color:red;'>⚠️ 哎呀！日期不合理喔（月份應為 01-12，日期應為 01-31）。</span><br>👉 您可以試著說「民國45年1月1號」或直接打字輸入：", "ai");
+                                    } else if (!isQualified) {
+                                        bookingData.birthday = "";
+                                        addMsg(`<span style='color:red;'>⚠️ 很抱歉，不符合受檢資格。${ageMsg}<br>本健檢對象為年滿 65 歲以上市民。</span><br>👉 請確認出生年月日是否正確？（若要更正請重新輸入）`, "ai");
+                                    } else {
+                                        bookingData.birthday = b;
+                                        currentStep = "confirm";
+                                        addMsg(`資料核對：<br>方案：${bookingData.plan}<br>姓名：${bookingData.name}<br>證號：${bookingData.pid}<br>電話：${bookingData.phone}<br>生日：${bookingData.birthday}<br><br>👉 以上正確嗎？`, "ai");
+                                    }
+                                } else { 
+                                    addMsg("👉 請問出生年月日？（例如：民國45年2月2號）", "ai"); 
+                                }
+                            }
+                            break;
+                
+            case "confirm":
+                if (checkText.match(/對|是|好|正確|沒錯|可以/)) {
+                    addMsg("✅ 預約成功！正在跳轉...", "ai");
+                    setTimeout(() => { window.location.href = `./appointment.html?p=${encodeURIComponent(bookingData.plan)}&name=${encodeURIComponent(bookingData.name)}&pid=${encodeURIComponent(bookingData.pid)}&phone=${encodeURIComponent(bookingData.phone)}&birthday=${encodeURIComponent(bookingData.birthday)}&date=${encodeURIComponent(bookingData.date || "")}&time=${encodeURIComponent(bookingData.time || "")}`; }, 1500);
+                } else {
+                    addMsg("如果資料有誤，請點擊「上一步」。👉 以上資料正確嗎？", "ai");
+                }
+                break;
+        }
+    }
+
+    document.getElementById('chat-input').onkeypress = async (e) => { 
+        if(e.key === 'Enter' && document.getElementById('chat-input').value) { 
+            const val = document.getElementById('chat-input').value; document.getElementById('chat-input').value = '';
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            document.getElementById('loading').style.display = 'block';
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/smart_parse', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: val, current_name: bookingData.name || "" }) });
+                const result = await res.json(); document.getElementById('loading').style.display = 'none';
+                if (result.status === 'error') { addMsg("<span style='color:red;'>⚠️ 伺服器發生錯誤。</span>", "ai"); return; }
+                processLogic(val, result.result);
+            } catch(err) { 
+                document.getElementById('loading').style.display = 'none'; 
+                addMsg("<span style='color:red;'>⚠️ 無法連線到伺服器。請確認 main.py 有啟動。</span>", "ai");
+            }
+        } 
+    };
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const p = urlParams.get('p') || urlParams.get('plan');
+        const n = urlParams.get('name');
+        const id = urlParams.get('pid');
+        const ph = urlParams.get('phone');
+        const b = urlParams.get('birthday');
+        
+        if(p && document.getElementById('plan')) document.getElementById('plan').value = p;
+        if(n && document.getElementById('name')) document.getElementById('name').value = n;
+        if(id && document.getElementById('pid')) document.getElementById('pid').value = id;
+        if(ph && document.getElementById('phone')) document.getElementById('phone').value = ph;
+        if(b && document.getElementById('birthday')) document.getElementById('birthday').value = b;
+    });
+  </script>
+
+  <style>
+    .self-pay-option { margin: 9px 0; padding: 10px; border: 1px solid #d9e6dc; border-radius: 10px; background: #f8fcf9; }
+    .self-pay-choice, .self-pay-add, .self-pay-cancel { border: 0; border-radius: 8px; padding: 7px 12px; margin: 4px; cursor: pointer; font-weight: 700; }
+    .self-pay-choice, .self-pay-add { background: #2f6f4e; color: #fff; }
+    .self-pay-cancel { background: #e9ecef; color: #333; }
+  </style>
+  <script src="self_pay_chat.js"></script>
+
+</body>
+</html>
