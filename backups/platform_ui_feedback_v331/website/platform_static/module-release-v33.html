@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>模組部署與驗收｜DOUBTS</title>
+  <link rel="stylesheet" href="/platform/assets/platform.css">
+  <link rel="stylesheet" href="/platform/assets/module-release-v33.css">
+</head>
+<body>
+  <header><div><strong>頤典 DOUBTS</strong><span>工程師平台 · v3.3 部署與驗收管理</span></div>
+    <a class="back-link" href="/platform/modules">← 返回功能模組管理</a></header>
+  <main id="releaseMain" hidden>
+    <h1 id="releaseTitle">模組部署與驗收</h1>
+    <p class="muted">這裡記錄工程師的開發與測試進度；<strong>填寫紀錄不會安裝程式或開通正式醫療服務。</strong></p>
+    <p id="releaseMessage" role="status">正在載入…</p>
+    <section id="releaseContent" hidden>
+      <section class="card" aria-label="版本與狀態">
+        <h2>目前版本與狀態</h2>
+        <div class="release-tags" id="releaseTags"></div>
+        <div id="releaseSummary" class="release-info"></div>
+        <p class="muted small" id="releaseVersions"></p>
+      </section>
+      <section class="card">
+        <h2>1. 開發進度與版本參照</h2>
+        <p class="muted">程式參照碼可填 Git commit（7–40 位）或檔案 SHA256（64 位）。這是工程師填報的證據，不代表伺服器已驗證部署。</p>
+        <form id="progressForm">
+          <div class="release-fields">
+            <label>開發進度
+              <select id="devProgress"><option value="planned">規劃中</option><option value="developing">開發中</option><option value="testing">測試中</option></select>
+            </label>
+            <label>程式參照碼
+              <input id="codeReference" autocomplete="off" spellcheck="false" maxlength="64" placeholder="例如 Git commit 前 12 碼" pattern="([0-9a-f]{7,64})?">
+            </label>
+          </div>
+          <button id="saveProgress" type="submit">儲存進度</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>2. 測試與驗收檢查表</h2>
+        <p class="muted">以下狀態由工程師人工回報，必須附上測試報告或識別碼。勿填入病患個資、帳密或 Firebase 金鑰。</p>
+        <div id="releaseChecks"></div>
+      </section>
+      <section class="card">
+        <h2>3. 部署驗證與送交驗收</h2>
+        <div id="deploymentNotice" class="release-info"></div>
+        <div id="acceptanceNotice" class="release-info"></div>
+        <div class="release-actions">
+          <button id="submitReview" type="button">送交驗收</button>
+          <button id="withdrawReview" class="outline" type="button" hidden>撤回送驗</button>
+          <button id="approveReview" class="outline" type="button" hidden>核准驗收</button>
+          <button id="rejectReview" class="outline" type="button" hidden>退回修正</button>
+        </div>
+        <p class="muted small">核准驗收必須有後端可信任的同版本部署驗證；目前示範模組未部署，因此無法核准或真正上線。</p>
+      </section>
+      <section class="card">
+        <h2>4. 最近操作紀錄</h2>
+        <div id="releaseAudit" aria-live="polite">讀取中…</div>
+      </section>
+    </section>
+  </main>
+  <script src="/platform/assets/module-release-v33.js" defer></script>
+</body>
+</html>

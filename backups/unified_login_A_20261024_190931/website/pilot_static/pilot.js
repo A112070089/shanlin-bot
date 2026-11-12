@@ -1,0 +1,749 @@
+/* 頤典公版管理 v5：山林舊資料唯讀；頤典獨立設定；原網站不寫回。 */
+(() => {
+  'use strict';
+  const CLINIC = { shanlin:'山林診所', yidian:'頤典診所' };
+  const CATEGORY = [
+    ['cardiovascular','心臟與血管'],
+    ['pulmonary','肺部與呼吸'],
+    ['hepatobiliary_gastrointestinal','肝膽與腸胃'],
+    ['renal_urology','腎臟與泌尿'],
+    ['other_value_added','抽血與全身健康']
+  ];
+  const $ = id => document.getElementById(id);
+  const api='/api/pilot';
+  let clinic=null, publicData=null, csrf='', draft=null, savedDraft=false, draftRevision=null;
+  let adminState=null, screen='chooser', workingDepartments=[], workingPhysicians=[], currentPane='overview';
+  let sourceCatalog=null, sourceLoading=false, configDirty=false, staffDirty=false;
+  const money=n=>Number.isInteger(n)?'NT$'+n.toLocaleString('zh-TW'):'價格待確認';
+  const escapeHTML=value=>String(value ?? '').replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#39;'}[ch]));
+  const text=(id,value)=>{ if($(id)) $(id).textContent=String(value??''); };
+  const isKnown=id=>Object.hasOwn(CLINIC,id);
+  let toastTimer;
+  function toast(message,error=false){
+    const el=$('notification');clearTimeout(toastTimer);
+    el.textContent=message;el.classList.toggle('error',error);el.hidden=false;
+    toastTimer=setTimeout(()=>{el.hidden=true;},5200);
+  }
+  async function request(path,options={}){
+    const h=new Headers(options.headers||{});
+    if(options.body instanceof FormData){ /* browser manages multipart */ }
+    else if(options.body && typeof options.body==='object'){
+      h.set('Content-Type','application/json');options.body=JSON.stringify(options.body);
+    }
+    if(options.method && options.method.toUpperCase()!=='GET' && csrf){h.set('X-Pilot-CSRF',csrf);}
+    const r=await fetch(api+path,{credentials:'same-origin',cache:'no-store',...options,headers:h});
+    const obj=await r.json().catch(()=>({}));
+    if(!r.ok){
+      const detail=typeof obj.detail==='string'?obj.detail:`操作失敗（HTTP ${r.status}）`;
+      const error=new Error(detail);
+      error.status=r.status;
+      throw error;
+    }
+    return obj;
+  }
+  const show=(name)=>{
+    screen=name;
+    if($('myAccountBtn')){
+      $('myAccountBtn').hidden=!(name==='adminView' && clinic==='yidian');
+    }
+
+    // Clinic pages never display cross-clinic or system-admin navigation.
+    const clinicScreen = [
+      'clinicView',
+      'adminLogin',
+      'adminView',
+      'changePasswordView'
+    ].includes(name);
+
+    // Only authenticated system management shows cross-clinic navigation.
+    for (const id of ['navClinics', 'navPlatform']) {
+      const item = $(id);
+      if (item) item.style.display = name === 'platformView' ? '' : 'none';
+    }
+    for (const id of ['navHome', 'navAdmin']) {
+      const item = $(id);
+      if (item) item.style.display =
+        ['chooser', 'platformLogin'].includes(name) ? 'none' : '';
+    }
+    for(const view of ['chooser','clinicView','adminLogin','adminView','platformLogin','platformView','changePasswordView']) $(view).hidden=(view!==name);
+    document.title=(clinic?CLINIC[clinic]+'｜':'')+'頤典公版示範';
+    window.scrollTo({top:0,behavior:'instant'});
+  };
+  function goChooser(){
+    clinic=null;publicData=null;csrf='';draft=null;savedDraft=false;adminState=null;sourceCatalog=null;configDirty=false;staffDirty=false;legacyPublicPreview=null;
+    history.pushState({},'', '/pilot');show('chooser');
+  }
+  async function pickClinic(id,mode='public'){
+    if(!isKnown(id)){goChooser();return;}
+    clinic=id;csrf='';draft=null;adminState=null;sourceCatalog=null;configDirty=false;staffDirty=false;legacyPublicPreview=null;
+    const url=new URL(location.href);url.pathname='/pilot';url.searchParams.set('clinic',id);
+    if(mode==='admin')url.searchParams.set('view','admin');else url.searchParams.delete('view');
+    history.pushState({},'',url.pathname+url.search);
+    if(mode==='admin')await openAdmin();else await openPublic();
+  }
+  function updateViewQuery(view){
+    if(!clinic)return;
+    const url=new URL(location.href);url.searchParams.set('clinic',clinic);
+    if(view==='admin')url.searchParams.set('view','admin');else url.searchParams.delete('view');
+    history.replaceState({},'',url.pathname+url.search);
+  }
+  async function openPublic(){
+    if(!clinic){goChooser();return;}
+    updateViewQuery('public');show('clinicView');
+    try{
+      publicData=await request('/clinics/'+clinic+'/public');
+      text('publicClinicName',publicData.clinic.name);
+      text('publicIntro',publicData.clinic.intro||'歡迎使用頤典公版展示網站');
+      for(const [id,key] of [['publicPhone','phone'],['publicAddress','address'],['publicHours','hours'],['publicDirections','directions']]){
+        text(id,publicData.clinic[key]||'尚未設定');
+      }
+      renderPublicCatalog();
+      renderPublicStaff();
+    }catch(err){toast(err.message,true);}
+  }
+  function renderPublicCatalog(){
+    const data=publicData;const items=data?.items||[];
+    const source=data?.catalogSource;
+    text('catalogBadge',source==='legacy_file_unverified_preview'
+      ? items.length+' 項待核對的原站檔案資料（唯讀）'
+      : items.length+' 個已發布於公版的項目');
+    const container=$('publicCatalog');container.replaceChildren();
+    if(!items.length){container.innerHTML='<div class="empty-state">'+(clinic==='shanlin'
+       ? '目前找不到原山林檢查目錄來源檔。請檢查 website/自費項目對話資料庫.json，勿以空白資料取代原網站內容。'
+       : '頤典診所尚未匯入並發布自費健檢項目。')+'</div>';return;}
+    if(source==='legacy_file_unverified_preview'){
+      const n=document.createElement('p');n.className='source-note';
+      n.textContent='這是目前本機預約網站資料檔的唯讀預覽；尚未驗證該檔案的診所歸屬，不能視為山林正式目錄，也不保證與 Railway 版本相同。';
+      container.append(n);
+    }
+    for(const [cat,name] of CATEGORY){
+      const list=items.filter(x=>x.categoryId===cat);
+      if(!list.length)continue;
+      const section=document.createElement('section');section.className='catalog-category';
+      const title=document.createElement('h3');title.textContent=name;section.appendChild(title);
+      const cards=document.createElement('div');cards.className='catalog-cards';
+      for(const item of list){
+        const card=document.createElement('article');card.className='catalog-card';
+        card.innerHTML=`<strong>${escapeHTML(item.name)}</strong><p>${escapeHTML(item.description||'請洽詢診所了解檢查內容')}</p><span class="price">${money(item.price)}</span>`;
+        cards.appendChild(card);
+      }
+      section.appendChild(cards);container.appendChild(section);
+    }
+    // Published items are read-only catalog entries; no fake appointment form in v3.
+  }
+  function renderPublicStaff(){
+    const holder=$('publicMedicalStaff');holder.replaceChildren();
+    const deps=(publicData?.clinic?.departments||[]).filter(d=>d.enabled);
+    const docs=(publicData?.clinic?.physicians||[]).filter(p=>p.enabled);
+    if(!deps.length){holder.textContent='診所尚未設定科別與醫師。';return;}
+    for(const dep of deps){
+      const card=document.createElement('article');card.className='staff-public-card';
+      const title=document.createElement('strong');title.textContent=dep.name;card.append(title);
+      const names=docs.filter(p=>p.departmentId===dep.id).map(p=>p.name+(p.title?'（'+p.title+'）':''));
+      const detail=document.createElement('p');detail.textContent=names.join('、')||'尚未提供醫師名單';card.append(detail);holder.append(card);
+    }
+  }
+  async function openAdmin(){
+    if(!clinic){goChooser();return;}
+    updateViewQuery('admin');text('adminLoginTitle',CLINIC[clinic]+'｜管理員登入');
+    const entering=clinic;
+    $('shanlinLoginBlock').hidden=entering!=='shanlin';
+    $('yidianLoginBlock').hidden=entering!=='yidian';
+    // Separate elements and autocomplete scopes prevent cross-clinic autofill.
+    // Never expose the internal Shanlin session identifier as Yidian's account.
+    $('shanlinLoginPassword').value='';
+    $('shanlinLoginError').hidden=true;
+    $('yidianLoginError').hidden=true;
+    $('yidianLoginPassword').value='';
+    $('legacyPreviewPassword').value='';
+    if($('yidianLoginUsername').value==='shanlin_legacy')$('yidianLoginUsername').value='';
+    text('clinicLoginNote',entering==='shanlin'
+      ? '沿用山林正式後台管理密碼，並確認 Railway 回傳的診所確實屬於山林。'
+      : '請使用由頤典系統管理員建立的頤典專屬帳號，與山林原後台帳號不同。');
+    try{
+      const sess=await request('/admin/session');
+      if(sess.clinicId===entering && sess.role==='clinic_admin'){
+        csrf=sess.csrf;if(sess.mustChangePassword){openClinicPasswordPage(true);return;}
+        await loadAdminState();return;
+      }
+    }catch(_){/* no session */}
+    csrf='';show('adminLogin');
+    if(entering==='yidian'){
+      // A stale saved 'shanlin_legacy' value is always rejected/cleared.
+      setTimeout(()=>{if(clinic==='yidian'&&$('yidianLoginUsername').value==='shanlin_legacy')$('yidianLoginUsername').value='';},100);
+      await updateYidianAccountNotice(entering);
+    }
+  }
+  async function updateYidianAccountNotice(expectedClinic){
+    try{
+      const status=await request('/clinics/yidian/account-status');
+      if(clinic!==expectedClinic)return;
+      $('yidianLoginButton').disabled=!status.accountProvisioned;
+      $('goYidianProvision').hidden=!!status.accountProvisioned;
+      const state=String(status.notice || '本機公版 Firebase 連線尚未驗證。');
+      text('yidianAccountNotice',status.accountProvisioned
+        ? '頤典獨立管理帳號已建立。'+state
+        : '頤典管理帳號尚未建立，請由平台管理員開通。'+state);
+    }catch(err){if(clinic===expectedClinic)text('yidianAccountNotice','無法查詢帳號狀態：'+err.message);}
+  }
+  let loginInFlight=false;
+  function loginFailureMessage(err, which){
+    if(err.status===401)return '帳號或密碼不正確，請再試一次。';
+    if(err.status===429)return '登入嘗試次數較多，請稍後再試。';
+    if(err.status===409)return which==='shanlin'
+      ? '本次登入未完成：無法確認山林原後台的診所歸屬。請管理者核對來源設定。'
+      : '帳號與所選診所不符，請確認登入入口。';
+    if(err.status===503 || (err.status>=500))return '驗證服務暫時無法連線，請稍後再試。';
+    return '登入未完成，請確認資料及網路連線後再試。';
+  }
+  async function login(event){
+    event.preventDefault();if(!clinic || loginInFlight)return;
+    const loggingClinic=clinic;
+    const submit=$((loggingClinic==='shanlin')?'shanlinLoginButton':'yidianLoginButton');
+    const wasDisabled=submit.disabled;
+    loginInFlight=true;submit.disabled=true;
+    $('shanlinLoginError').hidden=true;
+    $('yidianLoginError').hidden=true;
+    try{
+      let sess;
+      if(loggingClinic==='shanlin'){
+        const p=$('shanlinLoginPassword').value;
+        $('shanlinLoginPassword').value='';
+        sess=await request('/admin/legacy-shanlin-login',{method:'POST',body:{password:p}});
+      }else{
+        const username=$('yidianLoginUsername').value.trim();
+        const p=$('yidianLoginPassword').value;
+        $('yidianLoginPassword').value='';
+        if(username==='shanlin_legacy'||username.toLowerCase().startsWith('shanlin')){
+          $('yidianLoginUsername').value='';
+          throw new Error('這是山林舊系統代號，不是頤典帳號。請使用平台管理員建立的頤典帳號。');
+        }
+        sess=await request('/admin/login',{method:'POST',body:{clinicId:loggingClinic,username,password:p}});
+      }
+      csrf=sess.csrf;
+      if(sess.mustChangePassword){openClinicPasswordPage(true);toast('請先修改頤典診所的初始密碼');return;}
+      await loadAdminState();toast('已登入 '+CLINIC[loggingClinic]+' 的專屬後台');
+    }catch(err){
+      const message=loginFailureMessage(err,loggingClinic);
+      const errorBox=$(loggingClinic==='shanlin'?'shanlinLoginError':'yidianLoginError');
+      if(clinic===loggingClinic){errorBox.textContent=message;errorBox.hidden=false;}
+      // Inline feedback is enough: avoid a second alarming red toast.
+    }finally{
+      loginInFlight=false;
+      // Restore the original state; do not re-enable an unprovisioned account.
+      submit.disabled=wasDisabled;
+    }
+  }
+  async function openPlatform(){
+    clinic=null;publicData=null;draft=null;adminState=null;sourceCatalog=null;
+    history.pushState({},'', '/pilot?view=platform');
+    try{
+      const sess=await request('/admin/session');
+      if(sess.role==='platform_admin'){
+        csrf=sess.csrf;await loadPlatformState();return;
+      }
+    }catch(_){/* no platform session */}
+    csrf='';show('platformLogin');
+  }
+  async function platformLogin(event){
+    event.preventDefault();
+    try{
+      const sess=await request('/platform/login',{method:'POST',body:{
+        username:$('platformUsername').value.trim(),password:$('platformPassword').value}});
+      $('platformPassword').value='';csrf=sess.csrf;
+      await loadPlatformState();toast('已登入頤典平台總管理後台');
+    }catch(err){toast(err.message,true);}
+  }
+  let yidianProvisioned=false;
+  async function loadPlatformState(){
+    try{
+      const state=await request('/platform/state');
+      yidianProvisioned=!!state.clinics.find(x=>x.clinicId==='yidian')?.provisioned;
+      $('provisionBtn').textContent=yidianProvisioned?'重設頤典診所帳號':'建立頤典診所帳號';
+      const rows=$('platformClinicRows');rows.replaceChildren();
+      for(const item of state.clinics){
+        const card=document.createElement('div');card.className='platform-clinic-card';
+        const title=document.createElement('strong');title.textContent=item.name;
+        const desc=document.createElement('p');desc.textContent=item.clinicId==='shanlin'
+          ? '沿用山林 Railway 原後台密碼；不會另外建立公版密碼。'
+          : item.provisioned?('已建立本機公版帳號：'+item.username+'。Firebase 狀態須另外驗證。')
+                           :'本機公版管理帳號尚未建立，請由平台管理員開通。';
+        const chip=document.createElement('span');chip.className='chip';chip.textContent=item.clinicId==='shanlin'
+          ? (item.bridgeEnabled?'橋接設定已啟用（須啟動原後端）':'舊驗證橋接未啟用')
+          : (item.provisioned?'已建立試行帳號':'尚未開通帳號');
+        card.append(title,desc,chip);rows.append(card);
+      }
+      const yidianDb=state.firebaseProvisioning?.yidian;
+      text('platformFirebaseNotice', '頤典：'+(yidianDb?.notice || '尚未確認本機公版資料庫設定')+
+            ' 山林與頤典使用獨立資料來源，不得共用服務帳戶或資料庫路徑。');
+      show('platformView');
+    }catch(err){toast(err.message,true);}
+  }
+  async function provision(event){
+    event.preventDefault();
+    const username=$('newClinicUsername').value.trim();
+    const password=$('newClinicPassword').value;
+    if(password!==$('confirmClinicPassword').value){toast('兩次輸入的初始密碼不一致',true);return;}
+    if(password.length<12){toast('初始密碼至少需要 12 字元',true);return;}
+    if(yidianProvisioned&&!confirm('頤典診所已經有帳號。確定重設？原本的公版管理員登入將立即失效。'))return;
+    try{
+      await request('/platform/clinics/yidian/account',{method:'POST',body:{username,password,reset:yidianProvisioned}});
+      $('newClinicPassword').value='';$('confirmClinicPassword').value='';
+      await loadPlatformState();toast('頤典診所管理帳號已建立；請以安全管道交付初始密碼。');
+    }catch(err){toast(err.message,true);}
+  }
+  function openClinicPasswordPage(forced=false){
+    if(clinic!=='yidian'){
+      toast('此功能僅供頤典診所管理員使用',true);
+      return;
+    }
+    for(const id of ['oldClinicPassword','newClinicOwnPassword','newClinicOwnPassword2']){
+      $(id).value='';
+    }
+    text('changePasswordTitle',
+      forced ? '變更頤典診所初始密碼' : '修改頤典診所管理員密碼');
+    text('changePasswordHint',
+      forced ? '首次登入須先修改初始密碼。'
+             : '請輸入目前密碼及新密碼；完成後需要重新登入。');
+    $('cancelChangePassword').hidden=forced;
+    show('changePasswordView');
+  }
+
+  function cancelClinicPasswordPage(){
+    for(const id of ['oldClinicPassword','newClinicOwnPassword','newClinicOwnPassword2']){
+      $(id).value='';
+    }
+    $('cancelChangePassword').hidden=true;
+    if(clinic==='yidian' && adminState){
+      show('adminView');
+    }else{
+      openAdmin();
+    }
+  }
+
+  async function changeClinicPassword(event){
+    event.preventDefault();
+    const oldPassword=$('oldClinicPassword').value;
+    const newPassword=$('newClinicOwnPassword').value;
+    if(newPassword!==$('newClinicOwnPassword2').value){toast('兩次輸入的新密碼不一致',true);return;}
+    try{
+      await request('/admin/change-password',{method:'POST',body:{oldPassword,newPassword}});
+      for(const id of ['oldClinicPassword','newClinicOwnPassword','newClinicOwnPassword2'])$(id).value='';
+      csrf='';await openAdmin();toast('密碼已更新，請使用新的密碼重新登入。');
+    }catch(err){toast(err.message,true);}
+  }
+  async function platformLogout(){
+    try{if(csrf)await request('/admin/logout',{method:'POST'});}catch(_){}
+    csrf='';goChooser();toast('已登出平台管理');
+  }
+  async function logout(){
+    try{if(csrf) await request('/admin/logout',{method:'POST'});}catch(_){}
+    csrf='';adminState=null;draft=null;
+    if(clinic){await openAdmin();}else show('chooser');
+  }
+  async function loadAdminState(){
+    try{
+      const state=await request('/admin/state');
+      if(state.clinicId!==clinic){csrf='';show('adminLogin');toast('這是其他診所的登入狀態，請登出後改用本診所帳號。',true);return;}
+      adminState=state;draft=JSON.parse(JSON.stringify(state.catalogDraft||{items:[]}));savedDraft=!!state.catalogDraft?.items?.length;draftReplacementPending=false;draftRevision=state.catalogDraftRevision||null;
+      show('adminView');text('adminTitle',CLINIC[clinic]+'｜診所管理');
+      text('adminStorage',state.storage==='firebase'?'公版 Firebase 模式（仍須驗證）':'獨立本機公版資料');
+      const shanlin=clinic==='shanlin';
+      text('adminIntro',shanlin
+        ? '山林診所的基本資料與預約由既有管理系統維護；此處可管理科別、醫師及自費健檢目錄。'
+        : '管理本診所的基本資料、科別與醫師，以及自費健檢目錄。');
+      $('shanlinConfigNotice').hidden=!shanlin;
+      $('yidianOriginalPreview').hidden=true;
+      $('shanlinConfigNotice').classList.toggle('source-error',shanlin && state.configSource!=='shanlin_legacy_verified_snapshot');
+      $('metricOriginalWrap').hidden=!shanlin;
+      $('cfgEditable').disabled=shanlin;
+      $('saveConfigBtn').hidden=shanlin;
+      text('configSourceNote',shanlin
+        ? '此處的診所基本資料僅供查看；如需修改，請使用山林正式管理後台。科別與醫師可在本系統另行管理。'
+        : '此處可更新本診所的基本資料；正式線上預約服務尚未啟用。');
+      text('shanlinConfigDetail',shanlin
+        ? state.configSource==='shanlin_legacy_verified_snapshot'
+          ? '已從山林診所正式後台取得基本資料；如需修改，請使用下方「開啟山林正式管理後台」。'
+          : (state.legacyConfigError||'本次登入未能驗證基本資料來源；請先確認山林 Railway 後台正常。')
+        : '');
+      if(shanlin && !sourceCatalog) loadShanlinSourceCatalog();
+      text('metricDraft',draft.items?.length||0);
+      text('metricPublished',(state.catalogPublished.items||[]).filter(i=>i.enabled).length);
+      showConfig(state.config);renderDraft();renderAdminChecklist();
+      await loadIntegrationState();switchAdminPane(currentPane);
+    }catch(err){toast(err.message,true);}
+  }
+  function showConfig(c){
+    for(const [id,key] of [['cfgName','name'],['cfgPhone','phone'],['cfgAddress','address'],['cfgDirections','directions'],['cfgHours','hours'],['cfgIntro','intro']]) $(id).value=c[key]||'';
+    $('cfgDates').value=(c.elderlyDates||[]).join('\n');$('cfgTimes').value=(c.timeSlots||[]).join('\n');
+    workingDepartments=structuredClone(c.departments||[]);
+    workingPhysicians=structuredClone(c.physicians||[]);
+    configDirty=false;staffDirty=false;
+    renderStaffEditor();renderAdminChecklist();
+  }
+  function splitLines(str){return str.split(/[\n,，、]+/).map(s=>s.trim()).filter(Boolean);}
+  let legacyPublicPreview=null;
+  async function previewOriginalPublicFields(event){
+    event.preventDefault();
+    if(clinic!=='yidian')return;
+    const password=$('legacyPreviewPassword').value;
+    $('legacyPreviewPassword').value='';
+    $('previewLegacyBtn').disabled=true;
+    legacyPublicPreview=null;
+    $('legacyPreviewResults').hidden=true;
+    try{
+      const result=await request('/admin/yidian/legacy-public-preview',{method:'POST',body:{password}});
+      if(result.clinicId!=='yidian'||!result.data)throw new Error('來源驗證失敗');
+      legacyPublicPreview=result.data;
+      text('legacyPreviewSource','來源：'+result.sourceClinicName+'（8001）。僅公開資料預覽，資料庫歸屬未驗證；未儲存、不持續同步。');
+      const host=$('legacyPreviewFields');host.replaceChildren();
+      for(const [key,title] of [['name','診所名稱'],['phone','電話'],['address','地址'],['directions','交通資訊'],['hours','服務時間']]){
+        const box=document.createElement('div');const label=document.createElement('small');label.textContent=title;
+        const value=document.createElement('strong');value.textContent=result.data[key]||'（來源未提供）';
+        box.append(label,value);host.append(box);
+      }
+      $('legacyPreviewResults').hidden=false;
+      toast('已取得原後台可公開欄位；請先逐一核對是否真的屬於頤典診所。');
+    }catch(err){toast('無法預覽：'+err.message,true);}
+    finally{$('previewLegacyBtn').disabled=false;}
+  }
+  function applyLegacyPublicPreview(){
+    if(clinic!=='yidian'||!legacyPublicPreview)return;
+    if(!confirm('確認這些公開基本資料確實屬於「頤典診所」嗎？\n僅帶入下方欄位供人工核對，不包含病患資料、預約日曆，也不會即時同步或直接儲存。'))return;
+    if(configDirty&&!confirm('目前已修改基本資料但尚未儲存。確定以原後台預覽內容取代這幾個欄位？'))return;
+    for(const [id,key] of [['cfgName','name'],['cfgPhone','phone'],['cfgAddress','address'],['cfgDirections','directions'],['cfgHours','hours']]){
+      $(id).value=legacyPublicPreview[key]||'';
+    }
+    configDirty=true;
+    $('legacyPreviewResults').hidden=true;legacyPublicPreview=null;
+    toast('已帶入可公開基本資料。請核對欄位，再按「儲存診所基本資料」；不會修改原網站。');
+    $('cfgName').focus();
+  }
+  function configPayload(){
+    return {name:$('cfgName').value.trim(),phone:$('cfgPhone').value.trim(),address:$('cfgAddress').value.trim(),
+      directions:$('cfgDirections').value.trim(),hours:$('cfgHours').value.trim(),intro:$('cfgIntro').value.trim(),
+      elderlyDates:splitLines($('cfgDates').value),timeSlots:splitLines($('cfgTimes').value),
+      departments:structuredClone(adminState?.config?.departments||[]),
+      physicians:structuredClone(adminState?.config?.physicians||[])};
+  }
+  async function saveConfig(event){
+    if(event)event.preventDefault();
+    if(clinic==='shanlin'){toast('山林基本資料請到山林正式 Railway 後台修改，避免重複維護。',true);return;}
+    try{
+      const result=await request('/admin/config',{method:'PUT',body:configPayload()});
+      adminState.config=result.clinic;configDirty=false;
+      text('configStatus','頤典本機資料已儲存 '+new Date().toLocaleTimeString('zh-TW'));
+      renderAdminChecklist();toast('診所基本資料已儲存。');
+    }catch(err){toast(err.message,true);}
+  }
+  async function saveStaff(){
+    if(!adminState?.staffRevision){
+      toast('尚未取得科別與醫師版本資訊，請重新整理頁面後再試。',true);
+      return;
+    }
+    try{
+      const result=await request('/admin/staff',{method:'PUT',body:{
+        departments:structuredClone(workingDepartments),
+        physicians:structuredClone(workingPhysicians),
+        expectedRevision:adminState.staffRevision}});
+      adminState.config.departments=result.departments;
+      adminState.config.physicians=result.physicians;
+      adminState.staffRevision=result.staffRevision;
+      staffDirty=false;
+      text('staffStatus','本診所科別與醫師已儲存 '+new Date().toLocaleTimeString('zh-TW'));
+      renderAdminChecklist();
+      toast('科別與醫師已儲存於本診所的 8005 公版，不會修改原預約網站。');
+    }catch(err){
+      toast(err.message,true);
+    }
+  }
+  function makeId(prefix){const bytes=crypto.getRandomValues(new Uint8Array(8));return prefix+'_'+Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');}
+  function renderStaffEditor(){
+    const depList=$('departmentList'),docList=$('physicianList'),depSelect=$('newPhysicianDepartment');
+    depList.replaceChildren();docList.replaceChildren();depSelect.replaceChildren();
+    for(const d of workingDepartments){
+      const option=new Option(d.name,d.id);depSelect.append(option);
+      const row=document.createElement('div');row.className='managed-row';
+      const title=document.createElement('strong');title.textContent=d.name;
+      const remove=document.createElement('button');remove.type='button';remove.className='outline-button compact-button';remove.textContent='移除';
+      remove.addEventListener('click',()=>{
+        if(workingPhysicians.some(p=>p.departmentId===d.id)){toast('此科別已有醫師，請先移除或調整醫師。',true);return;}
+        workingDepartments=workingDepartments.filter(x=>x.id!==d.id);staffDirty=true;renderStaffEditor();
+      });row.append(title,remove);depList.append(row);
+    }
+    for(const p of workingPhysicians){
+      const row=document.createElement('div');row.className='managed-row';
+      const desc=document.createElement('div');const title=document.createElement('strong');title.textContent=p.name;
+      const sub=document.createElement('small');sub.textContent=(workingDepartments.find(d=>d.id===p.departmentId)?.name||'未知科別')+(p.title?' · '+p.title:'');
+      desc.append(title,sub);const remove=document.createElement('button');remove.type='button';remove.className='outline-button compact-button';remove.textContent='移除';
+      remove.addEventListener('click',()=>{workingPhysicians=workingPhysicians.filter(x=>x.id!==p.id);staffDirty=true;renderStaffEditor();});
+      row.append(desc,remove);docList.append(row);
+    }
+    text('metricDepartments',workingDepartments.length);
+  }
+  function addDepartment(){
+    const name=$('newDepartmentName').value.trim();
+    if(name.length<2 || name.length>50){toast('科別名稱需為 2～50 個字',true);return;}
+    if(workingDepartments.some(x=>x.name===name)){toast('科別名稱不可重複',true);return;}
+    if(workingDepartments.length>=40){toast('最多 40 個科別',true);return;}
+    workingDepartments.push({id:makeId('dep'),name,enabled:true});staffDirty=true;$('newDepartmentName').value='';renderStaffEditor();
+  }
+  function addPhysician(){
+    const name=$('newPhysicianName').value.trim(), departmentId=$('newPhysicianDepartment').value,title=$('newPhysicianTitle').value.trim();
+    if(name.length<2 || name.length>60 || !workingDepartments.some(x=>x.id===departmentId)){toast('請輸入醫師姓名並選擇所屬科別',true);return;}
+    if(workingPhysicians.length>=100){toast('最多 100 位醫師',true);return;}
+    if(workingPhysicians.some(x=>x.name===name&&x.departmentId===departmentId)){toast('同科別已有相同醫師',true);return;}
+    workingPhysicians.push({id:makeId('doc'),name,departmentId,title,enabled:true});staffDirty=true;
+    $('newPhysicianName').value='';$('newPhysicianTitle').value='';renderStaffEditor();
+  }
+  function renderAdminChecklist(){
+    const c=adminState?.config||{};
+    const checks=[['診所聯絡電話',!!(c.phone||'').trim()],['診所地址',!!(c.address||'').trim()],
+      ['門診時間',!!(c.hours||'').trim()],['至少一個科別',workingDepartments.length>0],
+      ['醫師名單',workingPhysicians.length>0],['公版自費項目已核對發布',(adminState?.catalogPublished?.items||[]).some(x=>x.enabled)]];
+    const area=$('setupChecklist');area.replaceChildren();
+    for(const [name,done] of checks){const line=document.createElement('div');line.className='checklist-row';
+      const mark=document.createElement('span');mark.textContent=done?'✓':'!';mark.className=done?'check-done':'check-todo';
+      const label=document.createElement('span');label.textContent=name;line.append(mark,label);area.append(line);}
+  }
+  function switchAdminPane(pane){
+    if(!['overview','clinic','staff','catalog','appointments'].includes(pane))pane='overview';
+    currentPane=pane;
+    if(pane==='catalog' && clinic==='shanlin' && sourceCatalog===null && !sourceLoading){loadShanlinSourceCatalog();}
+    for(const n of ['overview','clinic','staff','catalog','appointments']){
+      const section=$(n+'Pane');if(section)section.hidden=n!==pane;
+    }
+    document.querySelectorAll('[data-admin-pane]').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.adminPane===pane);
+      btn.setAttribute('aria-current',btn.dataset.adminPane===pane?'page':'false');
+    });
+  }
+  async function loadIntegrationState(){
+    try{
+      const state=await request('/admin/integration');
+      const note=$('integrationSummary'),panel=$('appointmentIntegration');note.replaceChildren();panel.replaceChildren();
+      const heading=document.createElement('strong');heading.textContent=state.label;
+      const detail=document.createElement('p');detail.textContent=state.details;
+      note.append(heading,detail);
+      const status=document.createElement('p');
+      status.className='status-chip status-wait';
+      status.textContent=clinic==='shanlin'
+        ? '預約由既有系統管理'
+        : '預約服務尚未啟用';
+
+      const guidance=document.createElement('p');
+      guidance.textContent=clinic==='shanlin'
+        ? '請至山林診所原有的預約管理後台查詢及處理預約。'
+        : '目前尚未開放線上預約管理。服務啟用後即可在此查看及處理預約。';
+
+      panel.append(status,guidance);
+
+      const official='https://shanlin-bot-production.up.railway.app/admin.html';
+      const showShanlinLink=clinic==='shanlin' && state.mode==='legacy_admin_link'
+        && state.legacyConfigRead===true && state.url===official;
+      $('openLegacyAdmin').hidden=!showShanlinLink;
+      if(showShanlinLink){$('openLegacyAdmin').href=official;}
+      else{$('openLegacyAdmin').removeAttribute('href');}
+    }catch(err){text('integrationSummary','無法讀取後台串接狀態：'+err.message);text('appointmentIntegration',err.message);}
+  }
+  async function loadShanlinSourceCatalog(force=false){
+    if(clinic!=='shanlin'||sourceLoading)return;
+    if(sourceCatalog && !force)return;
+    sourceLoading=true;$('shanlinSourcePanel').hidden=false;
+    text('sourceCatalogSummary','正在檢查原山林預約網站使用的資料檔…');
+    $('copySourceToDraftBtn').disabled=true;
+    try{
+      const result=await request('/admin/shanlin/source-catalog');
+      sourceCatalog=result;
+      text('metricOriginal',result.available?result.count:'不可讀取');
+      text('sourceCatalogBadge',result.available?result.count+' 個原站可計價項目':'來源不可讀取');
+      text('sourceCatalogSummary',result.available
+        ? '已讀取 '+result.count+' 個既有健檢項目（其中 '+result.packages+' 個套組）。請先核對資料來源、項目與價格；此清單尚未發布。'
+        : result.reason);
+      $('copySourceToDraftBtn').disabled=!result.available;
+      const holder=$('sourceCatalogItems');holder.replaceChildren();
+      for(const item of (result.items||[])){
+        const row=document.createElement('div');row.className='source-item';
+        const name=document.createElement('strong');name.textContent=item.name;
+        const price=document.createElement('span');price.textContent=money(item.price);
+        const category=document.createElement('small');category.textContent=(CATEGORY.find(c=>c[0]===item.categoryId)?.[1]||'其他')+(item.type==='package'?' · 套組':' · 單項');
+        row.append(name,price,category);holder.append(row);
+      }
+    }catch(err){text('sourceCatalogSummary','讀取原站健檢目錄失敗：'+err.message);
+      text('sourceCatalogBadge','讀取失敗');}
+    finally{sourceLoading=false;}
+  }
+  let draftReplacementPending=false;
+  function copySourceToDraft(){
+    if(clinic!=='shanlin'||!sourceCatalog?.available)return;
+    if(!confirm('將以「原山林資料庫」的 '+sourceCatalog.count+' 項建立公版待核對草稿（全數預設未核對、未啟用）。\n\n此動作不會修改原網站；若目前有草稿編輯內容，畫面內容將被取代。確定嗎？'))return;
+    draft={schemaVersion:'clinic-catalog/v1',sourceFilename:sourceCatalog.sourceFilename,
+      categories:CATEGORY.map(([id,name])=>({id,name})),items:structuredClone(sourceCatalog.items)};
+    savedDraft=false;draftReplacementPending=true;$('searchItems').value='';$('filterItems').value='all';renderDraft();
+    toast('已建立 '+draft.items.length+' 項待核對草稿；請確認套組及價格，再按「儲存草稿」。');
+    $('sourceCatalogDetails').open=false;
+  }
+  function countEnabled(){return (draft?.items||[]).filter(x=>x.enabled).length;}
+  function countIssues(){return (draft?.items||[]).filter(x=>x.price===null || x.issue && !x.reviewed).length;}
+  function renderSummary(){
+    const all=draft?.items||[];text('metricDraft',all.length);
+    text('importSummary',all.length
+      ? '草稿 '+all.length+' 項｜已啟用 '+countEnabled()+' 項｜價格待確認 '+countIssues()+' 項。先逐項核對，再儲存草稿並發布。'
+      : '尚無健檢項目；可以上傳 Excel（.xlsx）。');
+    $('saveDraftBtn').disabled=!all.length;
+    if(clinic==='shanlin')$('shanlinSourcePanel').hidden=false;
+    $('publishBtn').disabled=!all.length||!savedDraft;
+    $('downloadDraftBtn').disabled=!all.length;
+  }
+  function renderDraft(){
+    renderSummary();
+    const holder=$('editCatalog');
+    holder.innerHTML='';const all=draft?.items||[];
+    const query=$('searchItems').value.trim().toLowerCase();const filter=$('filterItems').value;
+    const filtered=all.map((entry,index)=>({entry,index})).filter(({entry})=>
+      (!query || [entry.name,entry.originalGroup,entry.sourceSheet,entry.description].join(' ').toLowerCase().includes(query))&&
+      (filter==='all'||filter==='enabled'&&entry.enabled||filter==='issues'&&entry.price===null));
+    if(!filtered.length){holder.innerHTML='<div class="empty-state">沒有符合條件的項目</div>';return;}
+    for(const {entry:e,index:i} of filtered){
+      const options=CATEGORY.map(([id,name])=>`<option value="${id}" ${id===e.categoryId?'selected':''}>${escapeHTML(name)}</option>`).join('');
+      const price=e.price===null||e.price===undefined?'':escapeHTML(e.price);
+      const comps=e.components?.length?`<details><summary>查看套組細項（${e.components.length}）</summary><ul>${e.components.map(x=>`<li>${escapeHTML(x.name)}</li>`).join('')}</ul></details>`:'';
+      const elt=document.createElement('article');elt.className='entry';elt.dataset.index=i;
+      elt.innerHTML=`
+        <div class="entry-top"><strong>${escapeHTML(e.name)}</strong><span class="entry-kind">${e.type==='package'?'套組':'單項'}</span></div>
+        <div class="entry-source">來源：${escapeHTML(e.sourceSheet||'手動資料')}　${escapeHTML(e.sourceRows||'')}</div>
+        <div class="entry-grid"><label>檢查分類<select data-field="categoryId">${options}</select></label><label>定價（NT$）<input data-field="price" type="number" min="0" step="1" value="${price}" placeholder="待確認"></label></div>
+        ${e.issue?`<div class="issue">${escapeHTML(e.issue)}</div>`:''}${comps}
+        <details><summary>檢查內容與說明</summary><textarea data-field="description" rows="3">${escapeHTML(e.description||'')}</textarea></details>
+        <div class="checks"><label><input type="checkbox" data-field="reviewed" ${e.reviewed?'checked':''}> 人工已核對</label><label><input type="checkbox" data-field="enabled" ${e.enabled?'checked':''}> 啟用於網站</label></div>`;
+      holder.appendChild(elt);
+    }
+  }
+  function catalogChanged(event){
+    const target=event.target;if(!target?.dataset.field)return;
+    const row=target.closest('[data-index]');if(!row)return;
+    const i=Number(row.dataset.index),e=draft?.items[i];if(!e)return;
+    const f=target.dataset.field;
+    if(f==='categoryId' && e.categoryId!==target.value){e.categoryId=target.value;e.reviewed=false;
+      const ck=row.querySelector('[data-field="reviewed"]');if(ck)ck.checked=false;}
+    if(f==='price'){
+      const v=target.value.trim(),num=Number(v);
+      e.price=v!==''&&Number.isInteger(num)&&num>=0&&num<=10000000?num:null;
+      e.reviewed=false;const ck=row.querySelector('[data-field="reviewed"]');if(ck)ck.checked=false;
+      if(e.price!==null)e.issue='';
+    }
+    if(f==='description'){e.description=target.value;e.reviewed=false;const ck=row.querySelector('[data-field="reviewed"]');if(ck)ck.checked=false;}
+    if(f==='reviewed'){e.reviewed=target.checked&&Number.isInteger(e.price);target.checked=e.reviewed;if(!e.reviewed&&e.enabled){e.enabled=false;const ck=row.querySelector('[data-field="enabled"]');if(ck)ck.checked=false;}}
+    if(f==='enabled'){
+      if(target.checked && (!e.reviewed||e.price===null)){target.checked=false;toast('請先確認名稱、內容及價格，再勾選「人工已核對」。',true);return;}
+      e.enabled=target.checked;
+    }
+    savedDraft=false;renderSummary();
+  }
+  async function importExcel(event){
+    const file=event.target.files?.[0];if(!file)return;
+    if(draft?.items?.length && !confirm('這會取代目前編輯畫面上的草稿（不會刪除已儲存或已發布的目錄）。確定解析新檔案？')){
+      event.target.value='';return;
+    }
+    const form=new FormData();form.append('file',file);
+    try{
+      toast('正在解析 '+file.name+'…');
+      const parsed=await request('/admin/import-excel',{method:'POST',body:form});
+      draft=parsed;savedDraft=false;draftReplacementPending=true;
+      $('searchItems').value='';$('filterItems').value='all';renderDraft();
+      toast('Excel 已解析 '+parsed.statistics.count+' 項（含 '+parsed.statistics.packages+' 套組），請核對後再儲存。');
+      if(parsed.warnings?.length)text('importSummary',parsed.warnings.join('；'));
+    }catch(err){toast(err.message,true);}
+    finally{event.target.value='';}
+  }
+  async function saveDraft(){
+    if(!draft?.items?.length)return;
+
+    if(draftReplacementPending && adminState?.catalogDraft?.items?.length){
+      if(!confirm('本診所已有儲存的健檢草稿。繼續儲存將覆蓋原有草稿，先前人工修改可能遺失。如需保留，請取消並先備份原草稿。確定覆蓋嗎？'))return;
+    }
+
+    try{
+      const result=await request('/admin/catalog/draft',{method:'PUT',body:{...draft,expectedRevision:draftRevision}});
+      savedDraft=true;
+      draftReplacementPending=false;
+      if(adminState)adminState.catalogDraft=structuredClone(draft);
+      if(typeof result.revision==='string')draftRevision=result.revision;
+      renderSummary();
+      toast(result.message);
+    }catch(err){toast(err.message,true);}
+  }
+  async function publish(){
+    if(!savedDraft){toast('有未儲存的修改，請先儲存草稿',true);return;}
+    if(!confirm('確定要發布已人工核對且啟用的健檢項目嗎？發布僅更新本系統的健檢目錄，不會修改診所既有的正式預約或自費加購系統。'))return;
+    try{
+      const v=await request('/admin/catalog/publish',{method:'POST'});
+      toast('已發布至 8005 公版預覽：'+v.publishedCount+' 項。原山林預約網站未修改。');
+      await loadAdminState();
+    }catch(err){toast(err.message,true);}
+  }
+  function downloadDraft(){
+    if(!draft)return;
+    const blob=new Blob([JSON.stringify(draft,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=clinic+'_catalog_draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+  }
+  function bind(){
+    document.querySelectorAll('[data-select-clinic]').forEach(btn=>btn.addEventListener('click',()=>pickClinic(btn.dataset.selectClinic)));
+    $('clinicEntryForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const id = $('clinicEntryCode').value.trim().toLowerCase();
+      if (!isKnown(id)) {
+        toast('診所識別碼無效，請向所屬診所確認。', true);
+        return;
+      }
+      pickClinic(id, 'admin');
+    });
+    $('navClinics').addEventListener('click',goChooser);
+    $('navHome').addEventListener('click',()=>clinic?openPublic():goChooser());
+    $('navAdmin').addEventListener('click',()=>clinic?openAdmin():toast('請先選擇診所',true));
+    $('navPlatform').addEventListener('click',openPlatform);
+    $('chooserPlatform').addEventListener('click',openPlatform);
+    $('platformLoginForm').addEventListener('submit',platformLogin);
+    $('provisionForm').addEventListener('submit',provision);
+    $('platformLogout').addEventListener('click',platformLogout);
+    $('changePasswordForm').addEventListener('submit',changeClinicPassword);
+    $('publicAdminEntry').addEventListener('click',()=>clinic?openAdmin():goChooser());
+    $('shanlinLoginForm').addEventListener('submit',login);
+    $('yidianLoginForm').addEventListener('submit',login);
+    for(const id of ['shanlinLoginPassword','yidianLoginUsername','yidianLoginPassword']){
+      $(id).addEventListener('input',()=>{
+        $('shanlinLoginError').hidden=true;$('yidianLoginError').hidden=true;
+      });
+    }
+    $('goYidianProvision').addEventListener('click',openPlatform);
+    $('legacyPreviewForm').addEventListener('submit',previewOriginalPublicFields);
+    $('applyLegacyPreview').addEventListener('click',applyLegacyPublicPreview);
+    $('myAccountBtn').addEventListener('click',()=>openClinicPasswordPage(false));
+    $('cancelChangePassword').addEventListener('click',cancelClinicPasswordPage);
+    $('logoutBtn').addEventListener('click',logout);
+    $('configForm').addEventListener('submit',saveConfig);
+    $('saveStaffBtn').addEventListener('click',saveStaff);
+    $('addDepartmentBtn').addEventListener('click',addDepartment);
+    $('addPhysicianBtn').addEventListener('click',addPhysician);
+    $('refreshIntegrationBtn').addEventListener('click',loadIntegrationState);
+    document.querySelectorAll('[data-admin-pane]').forEach(btn=>btn.addEventListener('click',()=>switchAdminPane(btn.dataset.adminPane)));
+    $('excelFile').addEventListener('change',importExcel);
+    $('reloadSourceCatalogBtn').addEventListener('click',()=>loadShanlinSourceCatalog(true));
+    $('copySourceToDraftBtn').addEventListener('click',copySourceToDraft);
+    $('configForm').addEventListener('input',()=>{if(clinic==='yidian')configDirty=true;});
+    window.addEventListener('beforeunload',e=>{if(configDirty||staffDirty){e.preventDefault();e.returnValue='';}});
+    $('saveDraftBtn').addEventListener('click',saveDraft);
+    $('publishBtn').addEventListener('click',publish);
+    $('downloadDraftBtn').addEventListener('click',downloadDraft);
+    $('searchItems').addEventListener('input',renderDraft);
+    $('filterItems').addEventListener('change',renderDraft);
+    $('editCatalog').addEventListener('input',catalogChanged);
+    $('editCatalog').addEventListener('change',catalogChanged);
+    window.addEventListener('popstate',()=>{const params=new URLSearchParams(location.search);const id=params.get('clinic');if(isKnown(id)){clinic=id;params.get('view')==='admin'?openAdmin():openPublic();}else if(params.get('view')==='platform')openPlatform();else goChooser();});
+  }
+  bind();
+  const args=new URLSearchParams(location.search),initial=args.get('clinic');
+  if(isKnown(initial)){clinic=initial;args.get('view')==='admin'?openAdmin():openPublic();}
+  else if(args.get('view')==='platform')openPlatform();
+  else show('chooser');
+})();

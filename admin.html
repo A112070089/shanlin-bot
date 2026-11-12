@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>頤典診所 預約管理後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="css/admin.css"/>
+<!-- 部署設定：後端網址（開通新診所時改這個檔） -->
+<script src="site-config.js"></script>
+<!-- 診所設定：名稱、電話、可預約日期與時段 -->
+<script src="clinic.js" data-api="admin"></script>
+<!-- 日曆（診所設定：選可預約日期、休診日） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/zh-tw.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark"><i class="ti ti-building-hospital"></i></div>
+    <div class="login-eyebrow">管理後台 · Staff Only</div>
+    <div class="login-title" data-clinic="name">頤典診所</div>
+    <div class="login-sub">預約資料管理系統<br>請輸入管理密碼以繼續</div>
+    <label class="login-label">密碼</label>
+    <input class="login-input" id="pwInput" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">登入後台</button>
+    <div class="login-err" id="loginErr">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div class="shell" id="shell">
+  <div class="topbar">
+    <div class="topbar-mark"><i class="ti ti-building-hospital"></i></div>
+    <div>
+      <div class="topbar-title"><span data-clinic="name">頤典診所</span> 預約管理</div>
+      <div class="topbar-sub">Appointment Management System</div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-stat"><i class="ti ti-calendar-event"></i>共 <b id="topbarCount">0</b> 筆</div>
+    <button class="btn-logout" onclick="doLogout()">登出</button>
+  </div>
+
+  <div class="tabbar">
+    <div class="tabbar-in">
+      <button class="tab active" id="tabAppts" onclick="switchView('appts')"><i class="ti ti-calendar-event"></i>預約總覽</button>
+      <button class="tab" id="tabQuestions" onclick="switchView('questions')"><i class="ti ti-message-question"></i>問診題目設定<span class="dot"></span></button>
+      <button class="tab" id="tabClinic" onclick="switchView('clinic')"><i class="ti ti-building-hospital"></i>診所設定<span class="dot"></span></button>
+      <!-- YIDIAN_V3_ADMIN_PORTAL_LINK: navigation link only; original appointment API untouched -->
+      <a class="tab" href="http://127.0.0.1:8005/pilot?clinic=shanlin&amp;view=admin" target="_blank" rel="noopener noreferrer" title="開啟公版診所設定，需經公版權限驗證">
+        <i class="ti ti-app-window"></i>公版診所設定 ↗
+      </a>
+    </div>
+  </div>
+
+  <div class="main view active" id="viewAppts">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">Appointments</div>
+        <div class="page-title">預約總覽</div>
+      </div>
+      <div class="head-btns">
+        <div class="export-wrap">
+          <button class="btn-secondary" onclick="toggleExportMenu(event)"><i class="ti ti-download"></i>匯出<i class="ti ti-chevron-down btn-caret"></i></button>
+          <div class="export-menu" id="exportMenu">
+            <button class="export-item xlsx" onclick="exportData('xlsx')"><i class="ti ti-file-type-xls"></i>匯出 Excel（.xlsx）</button>
+            <button class="export-item csv" onclick="exportData('csv')"><i class="ti ti-file-type-csv"></i>匯出 CSV（.csv）</button>
+            <button class="export-item xml" onclick="exportData('xml')"><i class="ti ti-file-code"></i>匯出 XML（.xml）</button>
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="openImportModal()"><i class="ti ti-file-spreadsheet"></i>匯入 Excel</button>
+        <button class="btn-primary" onclick="openCreateModal()"><i class="ti ti-plus"></i>手動新增</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-lbl">全部預約</div></div>
+      <div class="stat-card accent"><div class="stat-num" id="statBound">—</div><div class="stat-lbl">已綁定 LINE</div></div>
+      <div class="stat-card warn"><div class="stat-num" id="statUnbound">—</div><div class="stat-lbl">尚未綁定</div></div>
+      <div class="stat-card"><div class="stat-num" id="statToday">—</div><div class="stat-lbl">今日預約</div></div>
+      <div class="stat-card"><div class="stat-num" id="statWeek">—</div><div class="stat-lbl">本週預約</div></div>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="search-bar">
+      <div class="search-bar-title">請輸入查詢條件：</div>
+      <div class="search-row">
+        <div class="search-field">
+          <div class="search-label">證件字號</div>
+          <input class="search-input" id="sID" placeholder="A123456789" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">使用者名稱</div>
+          <input class="search-input" id="sName" placeholder="姓名" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">手機號碼</div>
+          <input class="search-input" id="sPhone" placeholder="0912..." oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">健檢方案</div>
+          <select class="search-select" id="sPlan" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="A">A 方案（腦肺）</option>
+            <option value="B">B 方案（腹部）</option>
+            <option value="C">C 方案（骨密肌力）</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <div class="search-label">來源</div>
+          <select class="search-select" id="sSource" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="LINE">LINE</option>
+            <option value="電話">電話</option>
+            <option value="現場">現場</option>
+            <option value="官網">官網</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <div class="search-label">LINE 綁定</div>
+          <select class="search-select" id="sBound" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="bound">已綁定</option>
+            <option value="unbound">未綁定</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <div class="search-label">葷/素</div>
+          <select class="search-select" id="sVeg" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="葷">葷</option>
+            <option value="素">素</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <div class="search-label">有無自費</div>
+          <select class="search-select" id="sHasSelfPay" onchange="renderTable()">
+            <option value="">全部</option>
+            <option value="yes">有自費</option>
+            <option value="no">無自費</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-row search-row-sub">
+        <div class="search-field">
+          <div class="search-label">預約日期（起）</div>
+          <input class="search-input" id="sDateFrom" type="date" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約日期（迄）</div>
+          <input class="search-input" id="sDateTo" type="date" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約時段（起）</div>
+          <input class="search-input" id="sTimeFrom" type="time" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約時段（迄）</div>
+          <input class="search-input" id="sTimeTo" type="time" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約成功時間（起）</div>
+          <input class="search-input" id="sBookedFrom" type="datetime-local" oninput="renderTable()"/>
+        </div>
+        <div class="search-field">
+          <div class="search-label">預約成功時間（迄）</div>
+          <input class="search-input" id="sBookedTo" type="datetime-local" oninput="renderTable()"/>
+        </div>
+        <div class="search-field search-actions">
+          <button class="btn-reset" onclick="resetSearch()">清除</button>
+          <button class="btn-search" onclick="renderTable()"><i class="ti ti-search"></i>查詢</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="table-count">顯示 <b id="displayCount">0</b> 筆 / 共 <b id="totalCount">0</b> 筆</div>
+        <div class="toolbar-right">
+          <select class="search-select" id="sortOrder" onchange="renderTable()">
+            <option value="desc">預約成功時間：最新到最舊</option>
+            <option value="asc">預約成功時間：最舊到最新</option>
+          </select>
+          <button class="btn-reset btn-refresh" onclick="loadAppointments()"><i class="ti ti-refresh"></i>重新整理</button>
+        </div>
+      </div>
+      <div id="loadingWrap" class="loading-wrap">
+        <div class="spinner-sm"></div>
+        <div class="loading-text">載入中...</div>
+      </div>
+      <table id="apptTable">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>方案</th>
+            <th>姓名</th>
+            <th>生日</th>
+            <th>證號</th>
+            <th>手機號碼</th>
+            <th>預約日期</th>
+            <th>葷/素</th>
+            <th>自費項目</th>
+            <th>問診回答</th>
+            <th>預約成功時間</th>
+            <th>LINE</th>
+            <th>來源</th>
+            <th class="th-right">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">
+        <i class="ti ti-calendar-off"></i>
+        <p>目前沒有符合條件的預約紀錄</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 問診題目設定 ══ -->
+  <div class="main view" id="viewQuestions">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">Booking Questions</div>
+        <div class="page-title">問診題目設定</div>
+        <div class="q-intro">
+          AI 語音助理問完基本資料（姓名、身分證、手機、生日）之後，會依照下面的順序<strong>再多問這些題目</strong>。
+          醫師想多了解什麼，直接在這裡新增，按「儲存並上線」後，下一位民眾就會被問到，不需要改程式。
+        </div>
+      </div>
+      <div class="head-btns">
+        <button class="btn-primary" onclick="openQuestionModal()"><i class="ti ti-plus"></i>新增題目</button>
+      </div>
+    </div>
+
+    <div class="q-layout">
+      <div>
+        <div class="q-section-title">系統固定題目（不可修改）<span class="line"></span></div>
+        <div class="q-fixed">
+          <div class="q-fixed-item"><i class="ti ti-lock"></i>1. 健檢方案</div>
+          <div class="q-fixed-item"><i class="ti ti-lock"></i>2. 姓名</div>
+          <div class="q-fixed-item"><i class="ti ti-lock"></i>3. 身分證字號</div>
+          <div class="q-fixed-item"><i class="ti ti-lock"></i>4. 手機號碼</div>
+          <div class="q-fixed-item"><i class="ti ti-lock"></i>5. 出生年月日</div>
+        </div>
+
+        <div class="q-section-title">診所自訂題目 · 接在生日之後依序詢問<span class="line"></span></div>
+        <div id="qLoading" class="loading-wrap"><div class="spinner-sm"></div></div>
+        <div class="q-list" id="qList"></div>
+
+        <div class="templates">
+          <div class="q-section-title">常用題目範本 · 點一下直接加入<span class="line"></span></div>
+          <div class="tpl-grid" id="tplGrid"></div>
+        </div>
+      </div>
+
+      <aside class="preview">
+        <div class="preview-head">
+          <div class="preview-title"><i class="ti ti-device-mobile"></i> 民眾會看到的對話</div>
+          <select class="preview-mode" id="previewMode" onchange="renderPreview()">
+            <option value="elderly">老人健檢</option>
+            <option value="self_pay">自費健檢</option>
+          </select>
+        </div>
+        <div class="preview-body" id="previewBody"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ══ 診所設定 ══ -->
+  <div class="main view" id="viewClinic">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">Clinic Settings</div>
+        <div class="page-title">診所設定</div>
+        <div class="q-intro">
+          這裡的資料會顯示在官網、AI 語音助理、LINE 機器人和這個後台。
+          換一家診所使用時，只要改這一頁，<strong>不需要改程式</strong>。
+        </div>
+      </div>
+      <div class="head-btns">
+        <button class="btn-secondary" onclick="resetClinicForm()"><i class="ti ti-arrow-back-up"></i>復原</button>
+        <button class="btn-primary" id="clinicSaveBtn" onclick="saveClinic()"><i class="ti ti-cloud-upload"></i>儲存並上線</button>
+      </div>
+    </div>
+
+    <div class="onboard-banner" id="clinicFirstBanner" hidden>
+      <i class="ti ti-sparkles"></i>
+      <div>
+        <b>第一次設定</b>：下面顯示的是系統預設資料，請改成貴診所的名稱、電話、地址與可預約時間，
+        確認後按右上角「儲存並上線」，民眾就會看到貴診所的資料。
+      </div>
+    </div>
+
+    <div class="q-layout">
+      <div>
+        <div class="q-section-title">基本資料<span class="line"></span></div>
+        <div class="c-card">
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">診所名稱 *</label>
+              <input class="form-input" id="cName" maxlength="30" oninput="clinicChanged()"/>
+            </div>
+            <div class="form-field">
+              <label class="form-label">電話 *</label>
+              <input class="form-input" id="cPhone" maxlength="20" placeholder="02-2933-2010" oninput="clinicChanged()"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">地址</label>
+              <input class="form-input" id="cAddress" maxlength="60" oninput="clinicChanged()"/>
+            </div>
+            <div class="form-field">
+              <label class="form-label">地址補充說明（選填）</label>
+              <input class="form-input" id="cAddressNote" maxlength="40" placeholder="例如：由車前路門口上樓" oninput="clinicChanged()"/>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">門診時間（LINE 機器人回覆用，可換行）</label>
+            <textarea class="form-textarea" id="cHours" rows="5" maxlength="300" placeholder="範例：&#10;週一至週五 上午 08:30-12:30&#10;週四及週五 下午 13:30-17:30&#10;週六 晚上 18:30-21:00&#10;若遇休診日請以診所公告為準" oninput="clinicChanged()"></textarea>
+            <div class="form-hint">淡灰色文字是輸入範例，不會自動儲存；請依實際門診時間填寫，按 Enter 可以換行。</div>
+          </div>
+        </div>
+
+        <div class="q-section-title">老人健檢：可預約日期<span class="line"></span></div>
+        <div class="c-card">
+          <div class="c-cal-wrap">
+            <div class="c-cal" id="cDatesCal"></div>
+            <div class="c-cal-side">
+              <div class="c-cal-tip">在日曆上<b>點一下</b>加入，<b>再點一次</b>取消。沒有安排門診的星期及休診日會同步變灰，不能選擇。</div>
+              <div class="chip-list" id="cDates"></div>
+            </div>
+          </div>
+          <div class="chip-add cal-fallback">
+            <input class="form-input" type="date" id="cDateInput"/>
+            <button class="btn-secondary" onclick="addClinicItem('elderlyDates','cDateInput')"><i class="ti ti-plus"></i>加入日期</button>
+          </div>
+          <div class="form-hint">民眾跟 AI 說「11月2號」「2號」都能辨識；確認頁的日期選單也會跟著改。</div>
+        </div>
+
+        <div class="q-section-title">老人健檢：可預約時段<span class="line"></span></div>
+        <div class="c-card">
+          <div class="chip-list" id="cTimes"></div>
+          <div class="chip-add">
+            <input class="form-input" type="time" id="cTimeInput" step="1800"/>
+            <button class="btn-secondary" onclick="addClinicItem('elderlyTimes','cTimeInput')"><i class="ti ti-plus"></i>加入時段</button>
+          </div>
+          <div class="form-hint">可以用半點，例如 08:30；下午時段 AI 會說「下午2點」。</div>
+        </div>
+
+        <div class="q-section-title">自費健檢：門診時段<span class="line"></span></div>
+        <div class="c-card">
+          <div class="week-grid" id="cWeekly"></div>
+          <div class="form-row" style="margin-top:14px">
+            <div class="form-field">
+              <label class="form-label">上午診時間</label>
+              <input class="form-input" id="cSessMorning" placeholder="08:30-12:30" oninput="clinicChanged()"/>
+            </div>
+            <div class="form-field">
+              <label class="form-label">下午診時間</label>
+              <input class="form-input" id="cSessAfternoon" placeholder="13:30-17:30" oninput="clinicChanged()"/>
+            </div>
+            <div class="form-field">
+              <label class="form-label">晚上診時間</label>
+              <input class="form-input" id="cSessEvening" placeholder="18:30-21:00" oninput="clinicChanged()"/>
+            </div>
+          </div>
+          <div class="form-hint">勾選表示該星期的該診別開放預約；未勾選表示不開放。若一整天都沒有勾選，上方老人健檢與下方休診日曆的該星期會同步灰掉，民眾也無法選擇。取消勾選最後一個時段會同步移除不再開放的老人健檢日期。</div>
+        </div>
+
+        <div class="q-section-title">休診日（國定假日、臨時休診）<span class="line"></span></div>
+        <div class="c-card">
+          <div class="c-cal-wrap">
+            <div class="c-cal" id="cClosedCal"></div>
+            <div class="c-cal-side">
+              <div class="c-cal-tip">已經整天沒有安排門診的星期會自動灰掉，不需另外加入休診日。其他有開診的日期，可點一下設為臨時休診，再點一次取消。</div>
+              <div class="chip-list" id="cClosed"></div>
+            </div>
+          </div>
+          <div class="chip-add cal-fallback">
+            <input class="form-input" type="date" id="cClosedInput"/>
+            <button class="btn-secondary" onclick="addClinicItem('closedDates','cClosedInput')"><i class="ti ti-plus"></i>加入休診日</button>
+          </div>
+          <div class="form-hint">固定不開診的星期由上方勾選表控制；此處是額外的國定假日或臨時休診。兩種休診條件都會同步影響老人與自費預約。</div>
+        </div>
+
+        <div class="q-section-title">每日預約名額<span class="line"></span></div>
+        <div class="c-card">
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">老人健檢：每天最多幾位</label>
+              <input class="form-input" type="number" min="0" id="cElderlyLimit" oninput="clinicChanged()"/>
+            </div>
+            <div class="form-field">
+              <label class="form-label">自費健檢：每天最多幾位</label>
+              <input class="form-input" type="number" min="0" id="cSelfPayLimit" oninput="clinicChanged()"/>
+            </div>
+          </div>
+          <div class="form-hint">填 0 代表不限。額滿的日子在日曆上會變紅灰色、標示「額滿」，民眾不能再選。</div>
+        </div>
+      </div>
+
+      <aside class="preview">
+        <div class="preview-head">
+          <div class="preview-title"><i class="ti ti-device-mobile"></i> 套用後的樣子</div>
+        </div>
+        <div class="preview-body" id="clinicPreview"></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE BAR -->
+<div class="savebar" id="saveBar">
+  <span><i class="ti ti-alert-circle"></i> 題目有變更，尚未上線</span>
+  <button class="sb-undo" onclick="undoQuestions()">復原</button>
+  <button class="sb-save" id="sbSaveBtn" onclick="saveQuestions()"><i class="ti ti-cloud-upload"></i>儲存並上線</button>
+</div>
+
+<!-- QUESTION MODAL -->
+<div class="modal-ov" id="qModal">
+  <div class="modal-box modal-lg">
+    <div class="modal-head">
+      <div class="modal-title" id="qModalTitle">新增題目</div>
+      <button class="modal-close" onclick="closeQuestionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">欄位名稱 *</label>
+        <input class="form-input" id="qLabel" placeholder="例如：BMI、過敏史、目前用藥" maxlength="20"/>
+        <div class="form-hint">會顯示在預約資料表格與確認畫面上。</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">AI 要怎麼問 *</label>
+        <textarea class="form-textarea" id="qPrompt" maxlength="120" placeholder="例如：請問您有沒有對藥物或食物過敏？"></textarea>
+        <div class="form-hint">AI 會用語音把這句話念給民眾聽，建議口語、簡短。</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">民眾要怎麼回答</label>
+        <div class="type-grid" id="qTypeGrid"></div>
+      </div>
+
+      <div class="form-field" id="qOptionsWrap">
+        <label class="form-label">選項（一行一個，至少 2 個）</label>
+        <textarea class="form-textarea" id="qOptions" placeholder="從不抽菸&#10;已經戒菸&#10;目前有抽菸"></textarea>
+      </div>
+
+      <div id="qNumberWrap">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">單位</label>
+            <input class="form-input" id="qUnit" placeholder="例如：公分、公斤、次"/>
+          </div>
+          <div class="form-field">
+            <label class="form-label">合理範圍（選填）</label>
+            <div class="range-inputs">
+              <input class="form-input" id="qMin" type="number" placeholder="最小"/>
+              <span class="range-sep">～</span>
+              <input class="form-input" id="qMax" type="number" placeholder="最大"/>
+            </div>
+          </div>
+        </div>
+        <div class="form-hint form-hint-tight">超出範圍時，AI 會請民眾再確認一次（避免語音聽錯）。</div>
+      </div>
+
+      <div class="form-field" id="qFollowWrap">
+        <label class="form-label">回答「有」時要追問（選填）</label>
+        <input class="form-input" id="qFollowUp" placeholder="例如：請問是對什麼過敏呢？" maxlength="80"/>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">哪個流程要問</label>
+        <div class="seg" id="qScope">
+          <button type="button" data-v="all">全部</button>
+          <button type="button" data-v="elderly">只問老人健檢</button>
+          <button type="button" data-v="self_pay">只問自費健檢</button>
+        </div>
+      </div>
+
+      <div class="req-row">
+        <div><b>必須回答</b><small>關閉後，民眾可以說「跳過」</small></div>
+        <label class="switch"><input type="checkbox" id="qRequired" checked/><span></span></label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeQuestionModal()">取消</button>
+      <button class="btn-modal-p" onclick="submitQuestion()">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING MODAL（第一次登入、診所還沒設定時出現） -->
+<div class="modal-ov" id="onboardModal">
+  <div class="modal-box modal-md">
+    <div class="modal-head">
+      <div class="modal-title">👋 歡迎使用頤典預約系統</div>
+      <button class="modal-close" onclick="closeOnboard()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-text">開始接受民眾預約前，請先完成以下設定（約 5 分鐘）：</p>
+      <ol class="onboard-steps" id="onboardSteps"></ol>
+      <div class="form-hint">完成第 1、2 步後就不會再出現這個視窗；之後也隨時可以在上方分頁修改。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeOnboard()">稍後再說</button>
+      <button class="btn-modal-p" onclick="startOnboard()">開始設定</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE QUESTION MODAL -->
+<div class="modal-ov" id="qDeleteModal">
+  <div class="modal-box modal-sm">
+    <div class="modal-head">
+      <div class="modal-title">刪除題目</div>
+      <button class="modal-close" onclick="closeQDelete()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-text">
+        確定要刪除「<strong id="qDeleteName" class="modal-target">—</strong>」嗎？<br>
+        只想暫時不問的話，可以用右邊的開關<strong>關閉</strong>就好。已經收到的回答不會被刪除。
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeQDelete()">取消</button>
+      <button class="btn-modal-d" onclick="confirmQDelete()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+<div class="modal-ov" id="formModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="formModalTitle">新增預約</div>
+      <button class="modal-close" onclick="closeFormModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">姓名 *</label>
+          <input class="form-input" id="fName" placeholder="陳○美"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">手機號碼 *</label>
+          <input class="form-input" id="fPhone" placeholder="0912345678" maxlength="10"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">出生年月日（民國）</label>
+          <input class="form-input" id="fBirth" placeholder="500619" maxlength="7"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">身分證字號</label>
+          <input class="form-input" id="fIdNumber" placeholder="A123456789" maxlength="10"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">健檢方案 *</label>
+          <select class="form-select" id="fPlan">
+            <option value="A">A 方案（腦肺方案）</option>
+            <option value="B">B 方案（腹部方案）</option>
+            <option value="C">C 方案（骨密肌力方案）</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">葷/素</label>
+          <select class="form-select" id="fVeg">
+            <option value="葷">葷</option>
+            <option value="素">素</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">預約日期 *</label>
+          <input class="form-input" id="fDate" type="date"/>
+        </div>
+        <div class="form-field">
+          <label class="form-label">預約時段 *</label>
+          <input class="form-input" id="fTime" type="time"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">來源</label>
+          <select class="form-select" id="fSource">
+            <option value="電話">電話</option>
+            <option value="現場">現場</option>
+            <option value="官網">官網</option>
+            <option value="LINE">LINE</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">備註</label>
+          <input class="form-input" id="fNote" placeholder="其他備註"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeFormModal()">取消</button>
+      <button class="btn-modal-p" id="formSubmitBtn" onclick="submitForm()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-ov" id="deleteModal">
+  <div class="modal-box modal-sm">
+    <div class="modal-head">
+      <div class="modal-title">刪除預約紀錄</div>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-text">
+        確定要刪除 <strong id="deleteTargetName" class="modal-target">—</strong> 的預約紀錄嗎？此操作無法復原。
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeDeleteModal()">取消</button>
+      <button class="btn-modal-d" onclick="confirmDelete()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-ov" id="importModal">
+  <div class="modal-box modal-md">
+    <div class="modal-head">
+      <div class="modal-title">匯入 Excel 預約資料</div>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-text import-desc">
+        適用於電話、現場或官網等管道的預約紀錄，請使用統一範本批次上傳。
+      </p>
+      <a href="https://a112070089.github.io/shanlin-bot/Appointment%20import%20template.xlsx" download class="template-link">
+        <i class="ti ti-download"></i>下載 Excel 範本
+      </a>
+      <div class="form-field">
+        <label class="form-label">選擇檔案</label>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls"/>
+      </div>
+      <div id="importResult"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-modal-s" onclick="closeImportModal()">取消</button>
+      <button class="btn-modal-p" id="importSubmitBtn" onclick="submitImport()">開始匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-circle-check"></i><span id="toastMsg">已儲存</span></div>
+
+<script>
+// 後端網址統一寫在 site-config.js
+const API_BASE = window.SITE.adminApi;
+const PLAN_NAMES = { A:'A方案（腦肺）', B:'B方案（腹部）', C:'C方案（骨密肌力）' };
+
+let adminPassword = '';
+let allAppts = [];
+let editingKey = null;
+let deleteKey = null;
+
+/* ══ 登入 ══ */
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('shanlin_admin_pw');
+  if (saved) {
+    adminPassword = saved; showShell(); loadAppointments();
+    try { const v = sessionStorage.getItem('shanlin_admin_view'); if (v === 'questions' || v === 'clinic') switchView(v); } catch(e) {}
+    checkOnboarding();
+  }
+});
+
+async function doLogin() {
+  const pw = document.getElementById('pwInput').value;
+  if (!pw) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    if (res.ok) {
+      adminPassword = pw;
+      sessionStorage.setItem('shanlin_admin_pw', pw);
+      document.getElementById('loginErr').classList.remove('show');
+      showShell(); loadAppointments(); checkOnboarding();
+    } else { document.getElementById('loginErr').classList.add('show'); }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = '連線失敗';
+    document.getElementById('loginErr').classList.add('show');
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('shanlin_admin_pw'); adminPassword = '';
+  document.getElementById('shell').classList.remove('active');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('pwInput').value = '';
+}
+
+function showShell() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('shell').classList.add('active');
+}
+
+/* ══ 載入資料 ══ */
+async function loadAppointments() {
+  document.getElementById('loadingWrap').style.display = 'flex';
+  document.getElementById('apptTable').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/appointments`, {
+      headers: {'X-Admin-Password': adminPassword}
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('載入預約失敗', res.status, data);
+      showToast(`載入失敗（${res.status}）：${data.detail || '伺服器發生錯誤，請查看 Railway logs'}`, true);
+      allAppts = [];
+    } else {
+      allAppts = data.appointments || [];
+    }
+    updateStats();
+    renderTable();
+  } catch(e) { console.error(e); showToast('載入失敗，請檢查網路連線', true); }
+  document.getElementById('loadingWrap').style.display = 'none';
+}
+
+function updateStats() {
+  const total = allAppts.length;
+  const bound = allAppts.filter(a => a._bound).length;
+  const today = new Date().toISOString().split('T')[0];
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekStr = weekStart.toISOString().split('T')[0];
+  const todayCount = allAppts.filter(a => a.date === today).length;
+  const weekCount = allAppts.filter(a => a.date >= weekStr).length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statBound').textContent = bound;
+  document.getElementById('statUnbound').textContent = total - bound;
+  document.getElementById('statToday').textContent = todayCount;
+  document.getElementById('statWeek').textContent = weekCount;
+  document.getElementById('topbarCount').textContent = total;
+  document.getElementById('totalCount').textContent = total;
+}
+
+/* ══ 搜尋與渲染 ══ */
+function resetSearch() {
+  ['sID','sName','sPhone'].forEach(id => document.getElementById(id).value = '');
+  ['sPlan','sSource','sBound','sVeg','sHasSelfPay'].forEach(id => document.getElementById(id).value = '');
+  ['sDateFrom','sDateTo','sTimeFrom','sTimeTo','sBookedFrom','sBookedTo'].forEach(id => document.getElementById(id).value = '');
+  renderTable();
+}
+
+/* 台北時間（UTC+8）輔助函式 */
+// 後端 bookedAt 是「沒有時區資訊的 UTC 時間字串」，補上 Z 讓瀏覽器當作 UTC 解析
+function bookedAtToUtcDate(bookedAt) {
+  if (!bookedAt) return null;
+  let s = String(bookedAt);
+  if (!/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) s += 'Z';
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+// datetime-local 輸入框的值代表「台北當地時間」，補上 +08:00 轉成正確的 UTC 時間點
+function taipeiLocalToUtcDate(localStr) {
+  if (!localStr) return null;
+  const d = new Date(localStr + ':00+08:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+// 判斷是不是「本質上只是自費、不是真正健檢預約」的紀錄（匯出健檢清冊時要排除）：
+// 純自費（_pureSelfPay），或是 appointments 裡 plan 直接存成 SELF_PAY 的紀錄
+function isSelfPayOnlyRecord(a) {
+  if (a._pureSelfPay) return true;
+  return typeof a.plan === 'string' && a.plan.toUpperCase() === 'SELF_PAY';
+}
+function formatBookedAt(bookedAt) {
+  const d = bookedAtToUtcDate(bookedAt);
+  if (!d) return '—';
+  try {
+    return d.toLocaleString('zh-TW', { timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+  } catch(e) { return d.toISOString(); }
+}
+
+function getFilteredAppts() {
+  const sID    = document.getElementById('sID').value.trim().toUpperCase();
+  const sName  = document.getElementById('sName').value.trim().toLowerCase();
+  const sPhone = document.getElementById('sPhone').value.trim();
+  const sPlan  = document.getElementById('sPlan').value;
+  const sSrc   = document.getElementById('sSource').value;
+  const sBound = document.getElementById('sBound').value;
+  const sVeg   = document.getElementById('sVeg').value;
+  const sHasSelfPay = document.getElementById('sHasSelfPay').value;
+  const sDateFrom = document.getElementById('sDateFrom').value;
+  const sDateTo   = document.getElementById('sDateTo').value;
+  const sTimeFrom = document.getElementById('sTimeFrom').value;
+  const sTimeTo   = document.getElementById('sTimeTo').value;
+  const sBookedFrom = taipeiLocalToUtcDate(document.getElementById('sBookedFrom').value);
+  const sBookedTo   = taipeiLocalToUtcDate(document.getElementById('sBookedTo').value);
+
+  const filtered = allAppts.filter(a => {
+    if (sID && !(a.idNumber||'').toUpperCase().includes(sID)) return false;
+    if (sName && !(a.name||'').toLowerCase().includes(sName)) return false;
+    if (sPhone && !(a.phone||'').includes(sPhone)) return false;
+    if (sPlan && a.plan !== sPlan) return false;
+    if (sSrc && a.source !== sSrc) return false;
+    if (sBound === 'bound' && !a._bound) return false;
+    if (sBound === 'unbound' && a._bound) return false;
+    if (sVeg && a.veg !== sVeg) return false;
+    if (sHasSelfPay === 'yes' && !a._hasSelfPay) return false;
+    if (sHasSelfPay === 'no' && a._hasSelfPay) return false;
+    if (sDateFrom && (!a.date || a.date < sDateFrom)) return false;
+    if (sDateTo && (!a.date || a.date > sDateTo)) return false;
+    if (sTimeFrom && (!a.time || a.time < sTimeFrom)) return false;
+    if (sTimeTo && (!a.time || a.time > sTimeTo)) return false;
+    if (sBookedFrom || sBookedTo) {
+      const bd = bookedAtToUtcDate(a.bookedAt);
+      if (!bd) return false;
+      if (sBookedFrom && bd < sBookedFrom) return false;
+      if (sBookedTo && bd > sBookedTo) return false;
+    }
+    return true;
+  });
+
+  // 右上角的排序按鈕：依「預約成功時間」排最新到最舊，或最舊到最新
+  const sortEl = document.getElementById('sortOrder');
+  const sortDir = sortEl ? sortEl.value : 'desc';
+  const missingSentinel = sortDir === 'asc' ? Infinity : -Infinity; // 沒有預約成功時間的資料，不管哪個方向都排到最後面
+  filtered.sort((a, b) => {
+    const da = bookedAtToUtcDate(a.bookedAt);
+    const db = bookedAtToUtcDate(b.bookedAt);
+    const ta = da ? da.getTime() : missingSentinel;
+    const tb = db ? db.getTime() : missingSentinel;
+    return sortDir === 'asc' ? ta - tb : tb - ta;
+  });
+
+  return filtered;
+}
+
+function renderTable() {
+  let filtered = getFilteredAppts();
+
+  document.getElementById('displayCount').textContent = filtered.length;
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    document.getElementById('apptTable').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('apptTable').style.display = 'table';
+  document.getElementById('emptyState').style.display = 'none';
+
+  filtered.forEach((a, idx) => {
+    const tr = document.createElement('tr');
+    const isPure = !!a._pureSelfPay;
+
+    // 日期欄固定顯示兩行：健檢預約時間、自費檢查時間，哪個有資料就顯示哪個，都有就都顯示
+    const checkupLine = a.date ? '健檢：' + formatDate(a.date) + (a.time ? ' ' + a.time : '') : '';
+    const selfPayLine = a.selfPayDate ? '自費：' + formatDate(a.selfPayDate) + (a.selfPayTime ? ' ' + a.selfPayTime : '') : '';
+    const dateLines = [checkupLine, selfPayLine].filter(Boolean);
+    const dateStr = dateLines.length ? dateLines.join('\n') : '—';
+
+    // 葷/素：舊資料有些欄位存的是 "1"（早期系統的預設值，代表葷），不是只有 "葷"/"素" 兩種字串，
+    // 所以只要值包含「素」就顯示素、完全沒有值才顯示「—」，其他非空值（"葷"、"1"...）一律顯示葷
+    const vegRaw = String(a.veg || '').trim();
+    const vegBadge = vegRaw.includes('素')
+      ? `<span class="badge badge-veg">素</span>`
+      : vegRaw
+        ? `<span class="badge badge-nonveg">葷</span>`
+        : '—';
+
+    const boundBadge = a._bound
+      ? `<span class="badge badge-bound"><i class="ti ti-circle-check"></i>已綁</span>`
+      : `<span class="badge badge-unbound">未綁</span>`;
+
+    // 方案：A/B/C 照常顯示；plan 是 SELF_PAY（不分大小寫）顯示「自費」；純自費顯示「純自費」；
+    // 其他沒有方案值的情況顯示「—」，不要整欄消失讓人以為是 bug
+    const knownPlan = ['A','B','C'].includes(a.plan);
+    const isSelfPayPlan = !isPure && typeof a.plan === 'string' && a.plan.toUpperCase() === 'SELF_PAY';
+    const planCell = isPure
+      ? `<span class="badge badge-selfpay">純自費</span>`
+      : isSelfPayPlan
+        ? `<span class="badge badge-selfpay">自費</span>`
+        : knownPlan
+          ? `<span class="badge badge-${a.plan}">${a.plan}</span>`
+          : `<span class="badge badge-src">${esc(a.plan || '—')}</span>`;
+
+    const selfPayItems = Array.isArray(a.selfPayItems) ? a.selfPayItems : [];
+    const selfPayCell = selfPayItems.length
+      ? `<span class="cell-multiline">${esc(selfPayItems.join('\n'))}</span>`
+      : '<span class="cell-empty">—</span>';
+    const bookedCell = formatBookedAt(a.bookedAt);
+    const keyEnc = encodeURIComponent(a._key);
+    const editBtn = isPure
+      ? ''
+      : `<button class="icon-btn" onclick='openEditModal(${JSON.stringify(a).replace(/'/g,"&apos;")})'>
+          <i class="ti ti-pencil"></i>修改
+        </button>`;
+
+    tr.innerHTML = `
+      <td class="no-col">${idx + 1}</td>
+      <td>${planCell}</td>
+      <td>
+        <div class="name-col">${esc(a.name||'—')}</div>
+      </td>
+      <td><span class="mono">${esc(a.birth||'—')}</span></td>
+      <td><span class="mono">${esc(a.idNumber||'—')}</span></td>
+      <td><span class="mono">${esc(a.phone||'—')}</span></td>
+      <td class="td-date">${esc(dateStr)}</td>
+      <td>${vegBadge}</td>
+      <td>${selfPayCell}</td>
+      <td>${renderAnswers(a.extraAnswers)}</td>
+      <td class="td-booked">${esc(bookedCell)}</td>
+      <td>${boundBadge}</td>
+      <td><span class="badge badge-src">${esc(a.source||'—')}</span></td>
+      <td>
+        <div class="row-actions">
+          ${editBtn}
+          <button class="icon-btn danger" onclick="openDeleteModal('${keyEnc}','${esc(a.name||'')}')">
+            <i class="ti ti-trash"></i>刪除
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    const dt = new Date(d + 'T00:00:00');
+    if (isNaN(dt.getTime())) return String(d); // 格式不是 YYYY-MM-DD 就照原樣顯示，不要顯示 Invalid Date
+    return dt.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  } catch(e) { return String(d); }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══ 匯出（Excel / CSV / XML）══ */
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.export-wrap');
+  const menu = document.getElementById('exportMenu');
+  if (wrap && !wrap.contains(e.target)) menu.classList.remove('open');
+});
+
+function toggleExportMenu(e) {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('open');
+}
+
+const EXPORT_HEADERS = ['編號','身分證號','姓名','生日','電話','手機號碼','地址','檢查日期','體檢方案','預約人','長者身分別','行政區'];
+
+function buildExportRows() {
+  // 純自費、或本質上只是自費（沒有真正健檢方案與日期）的紀錄，一律不匯出到健檢批量匯入清冊
+  const filtered = getFilteredAppts().filter(a => !isSelfPayOnlyRecord(a));
+  return filtered.map((a, idx) => ({
+    '編號':     idx + 1,
+    '身分證號': a.idNumber || '',
+    '姓名':     a.name || '',
+    '生日':     a.birth || '',
+    '電話':     '',
+    '手機號碼': a.phone || '',
+    '地址':     '',
+    '檢查日期': a.date || '',
+    '體檢方案': a.plan ? `${a.plan}方案` : '',
+    '預約人':   '本人',
+    '長者身分別': '一般老人',
+    '行政區':   '文山區',
+  }));
+}
+
+function exportFileName(ext) {
+  const d = new Date();
+  const stamp = d.toISOString().split('T')[0].replace(/-/g,'');
+  return `${CLINIC.name}_老人健檢批量匯入清冊_${stamp}.${ext}`;
+}
+
+function exportData(format) {
+  const rows = buildExportRows();
+  if (rows.length === 0) { showToast('目前查詢結果沒有資料可以匯出', true); document.getElementById('exportMenu').classList.remove('open'); return; }
+
+  if (format === 'xlsx') exportXlsx(rows);
+  else if (format === 'csv') exportCsv(rows);
+  else if (format === 'xml') exportXml(rows);
+
+  document.getElementById('exportMenu').classList.remove('open');
+  showToast(`已匯出 ${rows.length} 筆資料`);
+}
+
+function exportXlsx(rows) {
+  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_HEADERS });
+  ws['!cols'] = EXPORT_HEADERS.map(h => ({ wch: Math.max(10, h.length * 2 + 2) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '受檢者作業清冊');
+  XLSX.writeFile(wb, exportFileName('xlsx'));
+}
+
+function exportCsv(rows) {
+  const lines = [EXPORT_HEADERS.join(',')];
+  rows.forEach(r => {
+    lines.push(EXPORT_HEADERS.map(h => csvCell(r[h])).join(','));
+  });
+  const csvContent = '\uFEFF' + lines.join('\r\n'); // 加 BOM 避免 Excel 開啟中文亂碼
+  downloadBlob(csvContent, exportFileName('csv'), 'text/csv;charset=utf-8;');
+}
+
+function csvCell(v) {
+  const s = String(v ?? '');
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+
+function exportXml(rows) {
+  const esc_xml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<受檢者作業清冊>\n';
+  rows.forEach(r => {
+    xml += '  <受檢者>\n';
+    EXPORT_HEADERS.forEach(h => {
+      const tag = h.replace(/\//g, '');
+      xml += `    <${tag}>${esc_xml(r[h])}</${tag}>\n`;
+    });
+    xml += '  </受檢者>\n';
+  });
+  xml += '</受檢者作業清冊>';
+  downloadBlob(xml, exportFileName('xml'), 'application/xml;charset=utf-8;');
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ══ 新增 / 編輯 ══ */
+function openCreateModal() {
+  editingKey = null;
+  document.getElementById('formModalTitle').textContent = '新增預約';
+  document.getElementById('formSubmitBtn').textContent = '儲存';
+  ['fName','fPhone','fBirth','fIdNumber','fNote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fPlan').value = 'A';
+  document.getElementById('fVeg').value = '葷';
+  document.getElementById('fSource').value = '電話';
+  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fTime').value = '09:00';
+  document.getElementById('formModal').classList.add('open');
+}
+
+function openEditModal(a) {
+  editingKey = a._key;
+  document.getElementById('formModalTitle').textContent = '修改預約';
+  document.getElementById('formSubmitBtn').textContent = '更新';
+  document.getElementById('fName').value = a.name||'';
+  document.getElementById('fPhone').value = a.phone||'';
+  document.getElementById('fBirth').value = a.birth||'';
+  document.getElementById('fIdNumber').value = a.idNumber||'';
+  document.getElementById('fPlan').value = a.plan||'A';
+  document.getElementById('fVeg').value = a.veg||'葷';
+  document.getElementById('fSource').value = a.source||'電話';
+  document.getElementById('fDate').value = a.date||'';
+  document.getElementById('fTime').value = a.time||'';
+  document.getElementById('fNote').value = a.note||'';
+  document.getElementById('formModal').classList.add('open');
+}
+
+function closeFormModal() { document.getElementById('formModal').classList.remove('open'); }
+
+async function submitForm() {
+  const name  = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const date  = document.getElementById('fDate').value;
+  const time  = document.getElementById('fTime').value;
+  if (!name || !phone || !date || !time) { showToast('請填寫姓名、手機、日期與時段', true); return; }
+
+  const payload = {
+    name, phone, date, time,
+    plan:      document.getElementById('fPlan').value,
+    veg:       document.getElementById('fVeg').value,
+    source:    document.getElementById('fSource').value,
+    birth:     document.getElementById('fBirth').value.trim(),
+    id_number: document.getElementById('fIdNumber').value.trim(),
+    note:      document.getElementById('fNote').value.trim(),
+  };
+
+  try {
+    const url = editingKey
+      ? `${API_BASE}/api/admin/appointments/${editingKey}`
+      : `${API_BASE}/api/admin/appointments`;
+    const method = editingKey ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method, headers: {'Content-Type':'application/json','X-Admin-Password':adminPassword},
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast(editingKey ? '預約已更新' : '預約已新增');
+      closeFormModal(); loadAppointments();
+    } else { showToast('儲存失敗，請再試一次', true); }
+  } catch(e) { showToast('連線失敗', true); }
+}
+
+/* ══ 刪除 ══ */
+function openDeleteModal(key, name) {
+  deleteKey = key;
+  document.getElementById('deleteTargetName').textContent = name || '此筆資料';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); deleteKey = null; }
+
+async function confirmDelete() {
+  if (!deleteKey) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/appointments/${deleteKey}`, {
+      method: 'DELETE', headers: {'X-Admin-Password': adminPassword}
+    });
+    if (res.ok) { showToast('已刪除預約紀錄'); closeDeleteModal(); loadAppointments(); }
+    else { showToast('刪除失敗', true); }
+  } catch(e) { showToast('連線失敗', true); }
+}
+
+/* ══ 匯入 Excel ══ */
+function openImportModal() {
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('importSubmitBtn').disabled = false;
+  document.getElementById('importSubmitBtn').textContent = '開始匯入';
+  document.getElementById('importModal').classList.add('open');
+}
+function closeImportModal() { document.getElementById('importModal').classList.remove('open'); }
+
+async function submitImport() {
+  const file = document.getElementById('importFileInput').files[0];
+  if (!file) { showToast('請先選擇 Excel 檔案', true); return; }
+  document.getElementById('importSubmitBtn').disabled = true;
+  document.getElementById('importSubmitBtn').textContent = '匯入中...';
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/import`, {
+      method: 'POST', headers: {'X-Admin-Password': adminPassword}, body: formData
+    });
+    const data = await res.json();
+    const el = document.getElementById('importResult');
+    el.style.display = 'block';
+    if (res.ok) {
+      let html = `<div class="import-ok">✓ 成功匯入 ${data.imported} 筆</div>`;
+      if (data.skipped > 0) {
+        html += `<div class="import-warn">⚠ 略過 ${data.skipped} 筆</div>`;
+        if (data.errors?.length) html += `<div class="import-errors">${data.errors.map(e=>esc(e)).join('<br>')}</div>`;
+      }
+      el.innerHTML = html;
+      showToast(`已匯入 ${data.imported} 筆`);
+      loadAppointments();
+    } else {
+      el.innerHTML = `<div class="import-fail">匯入失敗：${esc(data.detail||'未知錯誤')}</div>`;
+    }
+  } catch(e) { showToast('上傳失敗', true); }
+  document.getElementById('importSubmitBtn').disabled = false;
+  document.getElementById('importSubmitBtn').textContent = '開始匯入';
+}
+
+
+/* ══════════════════════════════════════
+   問診題目設定
+   存到 Firebase booking_config/questions，
+   語音預約網站會在問完生日後依序詢問。
+══════════════════════════════════════ */
+const Q_TYPES = {
+  text:   { name:'簡短文字',  icon:'ti-forms',          desc:'民眾說一句話，例如目前用藥' },
+  number: { name:'數字',      icon:'ti-123',            desc:'例如腰圍、每週運動次數' },
+  choice: { name:'單選題',    icon:'ti-list-check',     desc:'從幾個選項中選一個' },
+  yesno:  { name:'有／沒有',  icon:'ti-toggle-right',   desc:'可設定回答「有」時追問' },
+  bmi:    { name:'身高體重',  icon:'ti-scale',          desc:'自動換算 BMI 與體位' },
+};
+const Q_SCOPES = { all:'全部流程', elderly:'只問老人健檢', self_pay:'只問自費健檢' };
+
+const Q_TEMPLATES = [
+  { key:'bmi', icon:'ti-scale', label:'身高體重 / BMI', type:'bmi',
+    prompt:'請告訴我您的身高和體重，例如：身高160公分、體重55公斤。' },
+  { key:'allergy', icon:'ti-alert-triangle', label:'過敏史', type:'yesno',
+    prompt:'請問您有沒有對藥物或食物過敏？', followUp:'請問是對什麼過敏呢？' },
+  { key:'chronic', icon:'ti-heartbeat', label:'慢性病', type:'yesno',
+    prompt:'請問您有沒有高血壓、糖尿病或其他慢性病？', followUp:'請問是哪一種慢性病呢？' },
+  { key:'meds', icon:'ti-pill', label:'目前用藥', type:'text', required:false,
+    prompt:'請問您目前有在吃什麼藥嗎？沒有的話請說「沒有」。' },
+  { key:'smoke', icon:'ti-smoking', label:'抽菸習慣', type:'choice',
+    prompt:'請問您有抽菸的習慣嗎？', options:['從不抽菸','已經戒菸','目前有抽菸'] },
+  { key:'waist', icon:'ti-ruler-measure', label:'腰圍', type:'number', unit:'公分', min:40, max:200,
+    prompt:'請問您的腰圍大約幾公分？', required:false },
+  { key:'fall', icon:'ti-walk', label:'近一年跌倒', type:'yesno',
+    prompt:'請問您最近一年內有沒有跌倒過？', followUp:'大概跌倒幾次、有沒有受傷呢？' },
+  { key:'emergency', icon:'ti-phone-call', label:'緊急聯絡人', type:'text',
+    prompt:'請告訴我一位緊急聯絡人的姓名和電話。' },
+];
+
+let questions = [];        // 目前畫面上的（可能未儲存）
+let savedQuestions = [];   // 最後一次從伺服器讀到 / 儲存成功的
+let qLoaded = false;
+let qEditingIdx = null;
+let qDeleteIdx = null;
+let qForm = { type:'text', appliesTo:'all' };
+
+function switchView(v) {
+  const views = { appts: ['viewAppts', 'tabAppts'], questions: ['viewQuestions', 'tabQuestions'], clinic: ['viewClinic', 'tabClinic'] };
+  Object.entries(views).forEach(([k, [view, tab]]) => {
+    document.getElementById(view).classList.toggle('active', k === v);
+    document.getElementById(tab).classList.toggle('active', k === v);
+  });
+  try { sessionStorage.setItem('shanlin_admin_view', v); } catch(e) {}
+  if (v === 'questions' && !qLoaded) loadQuestions();
+  if (v === 'clinic' && !clinicLoaded) loadClinic();
+}
+
+function renderAnswers(list) {
+  if (!Array.isArray(list) || !list.length) return '<span class="ans-empty">—</span>';
+  return '<div class="ans-list">' + list.map(a =>
+    `<div><b>${esc(a.label)}</b>：${esc(a.value)}</div>`).join('') + '</div>';
+}
+
+async function loadQuestions() {
+  document.getElementById('qLoading').style.display = 'flex';
+  document.getElementById('qList').innerHTML = '';
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/questions`, {
+      headers: {'X-Admin-Password': adminPassword}
+    });
+    if (res.status === 401) { doLogout(); return; }
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    savedQuestions = (data.questions || []).map(normalizeQ);
+    questions = clone(savedQuestions);
+    qLoaded = true;
+  } catch(e) {
+    showToast('題目載入失敗，請檢查網路或後端是否已更新', true);
+  }
+  document.getElementById('qLoading').style.display = 'none';
+  renderQuestions();
+}
+
+function normalizeQ(q) {
+  return {
+    id: q.id || newId(), label: q.label || '', prompt: q.prompt || '',
+    type: Q_TYPES[q.type] ? q.type : 'text',
+    options: Array.isArray(q.options) ? q.options : [],
+    unit: q.unit || '', min: q.min ?? null, max: q.max ?? null,
+    followUp: q.followUp || '', required: q.required !== false,
+    appliesTo: Q_SCOPES[q.appliesTo] ? q.appliesTo : 'all',
+    enabled: q.enabled !== false,
+  };
+}
+
+function clone(x) { return JSON.parse(JSON.stringify(x)); }
+function newId() { return 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function isDirty() { return JSON.stringify(questions) !== JSON.stringify(savedQuestions); }
+
+function renderQuestions() {
+  const list = document.getElementById('qList');
+  if (!questions.length) {
+    list.innerHTML = `<div class="q-empty">
+      目前沒有自訂題目，AI 問完生日就會直接進入預約。<br>
+      按右上角「<b>新增題目</b>」，或從下方範本點一下加入。</div>`;
+  } else {
+    list.innerHTML = questions.map((q, i) => {
+      const extra = q.type === 'choice' ? `：${q.options.join(' / ')}`
+                  : q.type === 'number' && q.unit ? `（${q.unit}）`
+                  : q.type === 'yesno' && q.followUp ? '，有則追問' : '';
+      return `
+      <div class="q-card ${q.enabled ? '' : 'off'}">
+        <div class="q-num">${i + 1}</div>
+        <div>
+          <div class="q-label">${esc(q.label)}</div>
+          <div class="q-prompt">${esc(q.prompt)}</div>
+          <div class="q-tags">
+            <span class="q-tag type"><i class="ti ${Q_TYPES[q.type].icon}"></i> ${Q_TYPES[q.type].name}${esc(extra)}</span>
+            <span class="q-tag ${q.required ? 'req' : 'opt'}">${q.required ? '必答' : '可跳過'}</span>
+            ${q.appliesTo !== 'all' ? `<span class="q-tag">${Q_SCOPES[q.appliesTo]}</span>` : ''}
+            ${q.enabled ? '' : '<span class="q-tag">已關閉，不會問</span>'}
+          </div>
+        </div>
+        <div class="q-actions">
+          <button class="q-mini" title="往上移" onclick="moveQ(${i},-1)" ${i === 0 ? 'disabled' : ''}><i class="ti ti-arrow-up"></i></button>
+          <button class="q-mini" title="往下移" onclick="moveQ(${i},1)" ${i === questions.length - 1 ? 'disabled' : ''}><i class="ti ti-arrow-down"></i></button>
+          <button class="q-mini" title="修改" onclick="openQuestionModal(${i})"><i class="ti ti-pencil"></i></button>
+          <button class="q-mini danger" title="刪除" onclick="openQDelete(${i})"><i class="ti ti-trash"></i></button>
+          <label class="switch q-switch" title="${q.enabled ? '關閉這題' : '開啟這題'}">
+            <input type="checkbox" ${q.enabled ? 'checked' : ''} onchange="toggleQ(${i}, this.checked)"/><span></span>
+          </label>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const usedLabels = new Set(questions.map(q => q.label));
+  document.getElementById('tplGrid').innerHTML = Q_TEMPLATES.map(t =>
+    `<button class="tpl" onclick="addTemplate('${t.key}')" ${usedLabels.has(t.label) ? 'disabled title="已加入"' : ''}>
+       <i class="ti ${t.icon}"></i>${esc(t.label)}${usedLabels.has(t.label) ? ' ✓' : ''}</button>`).join('');
+
+  const dirty = isDirty();
+  document.getElementById('saveBar').classList.toggle('show', dirty);
+  document.getElementById('tabQuestions').classList.toggle('dirty', dirty);
+  renderPreview();
+}
+
+function renderPreview() {
+  const mode = document.getElementById('previewMode').value;
+  const active = questions.filter(q => q.enabled && (q.appliesTo === 'all' || q.appliesTo === mode));
+  const sample = {
+    text:'目前有吃血壓藥', number:null, bmi:'身高160公分，體重55公斤', yesno:'有', choice:null,
+  };
+  let html = `<div class="bub sys">⋯ 方案、姓名、身分證、手機 ⋯</div>
+    <div class="bub ai">👉 請問出生年月日（例如 450101）？</div>
+    <div class="bub user">民國45年2月2號</div>`;
+
+  if (!active.length) {
+    html += `<div class="bub ai">✅ 出生年月日已記錄。<br>👉 請問您想預約哪一天？</div>
+      <div class="bub sys">（目前沒有自訂題目）</div>`;
+  } else {
+    active.forEach((q, i) => {
+      const head = i === 0
+        ? `✅ 出生年月日已記錄。<br>接下來想再請教您 ${active.length} 個問題。<br><br>` : '';
+      let chips = '';
+      if (q.type === 'choice') chips = q.options.map(o => `<span>${esc(o)}</span>`).join('');
+      if (q.type === 'yesno') chips = '<span>有</span><span>沒有</span>';
+      if (!q.required) chips += '<span>跳過</span>';
+      html += `<div class="bub ai">${head}👉 ${esc(q.prompt)}${chips ? `<div class="chips">${chips}</div>` : ''}</div>`;
+      const ans = q.type === 'choice' ? q.options[0]
+               : q.type === 'number' ? `${q.min ?? 80}${q.unit}`
+               : sample[q.type];
+      html += `<div class="bub user">${esc(ans)}</div>`;
+      if (q.type === 'yesno' && q.followUp) {
+        html += `<div class="bub ai">👉 ${esc(q.followUp)}</div><div class="bub user">⋯</div>`;
+      }
+      if (q.type === 'bmi') {
+        html += `<div class="bub ai">已記錄：身高 160 公分、體重 55 公斤，BMI 約 21.5。</div>`;
+      }
+    });
+    html += `<div class="bub ai">👉 ${mode === 'self_pay' ? '以上資料正確嗎？' : '請問您想預約哪一天？'}</div>`;
+  }
+  const body = document.getElementById('previewBody');
+  body.innerHTML = html;
+}
+
+function moveQ(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= questions.length) return;
+  [questions[i], questions[j]] = [questions[j], questions[i]];
+  renderQuestions();
+}
+
+function toggleQ(i, on) { questions[i].enabled = on; renderQuestions(); }
+
+function addTemplate(key) {
+  const t = Q_TEMPLATES.find(x => x.key === key);
+  if (!t) return;
+  questions.push(normalizeQ({
+    id: 'q_' + key + '_' + Date.now().toString(36),
+    label: t.label, prompt: t.prompt, type: t.type, options: t.options || [],
+    unit: t.unit || '', min: t.min ?? null, max: t.max ?? null,
+    followUp: t.followUp || '', required: t.required !== false,
+  }));
+  renderQuestions();
+  showToast(`已加入「${t.label}」，記得按「儲存並上線」`);
+}
+
+/* ── 新增 / 修改題目 ── */
+function openQuestionModal(idx = null) {
+  qEditingIdx = idx;
+  const q = idx === null ? normalizeQ({ type:'text' }) : questions[idx];
+  document.getElementById('qModalTitle').textContent = idx === null ? '新增題目' : '修改題目';
+  document.getElementById('qLabel').value = q.label;
+  document.getElementById('qPrompt').value = q.prompt;
+  document.getElementById('qOptions').value = (q.options || []).join('\n');
+  document.getElementById('qUnit').value = q.unit || '';
+  document.getElementById('qMin').value = q.min ?? '';
+  document.getElementById('qMax').value = q.max ?? '';
+  document.getElementById('qFollowUp').value = q.followUp || '';
+  document.getElementById('qRequired').checked = q.required;
+  qForm = { type: q.type, appliesTo: q.appliesTo };
+  renderQForm();
+  document.getElementById('qModal').classList.add('open');
+  setTimeout(() => document.getElementById('qLabel').focus(), 50);
+}
+
+function renderQForm() {
+  document.getElementById('qTypeGrid').innerHTML = Object.entries(Q_TYPES).map(([k, t]) =>
+    `<button type="button" class="type-opt ${qForm.type === k ? 'sel' : ''}" onclick="qForm.type='${k}';renderQForm()">
+       <b><i class="ti ${t.icon}"></i>${t.name}</b><small>${t.desc}</small></button>`).join('');
+  document.getElementById('qOptionsWrap').style.display = qForm.type === 'choice' ? '' : 'none';
+  document.getElementById('qNumberWrap').style.display = qForm.type === 'number' ? '' : 'none';
+  document.getElementById('qFollowWrap').style.display = qForm.type === 'yesno' ? '' : 'none';
+  document.querySelectorAll('#qScope button').forEach(b => {
+    b.classList.toggle('sel', b.dataset.v === qForm.appliesTo);
+    b.onclick = () => { qForm.appliesTo = b.dataset.v; renderQForm(); };
+  });
+  if (qForm.type === 'bmi' && !document.getElementById('qPrompt').value.trim()) {
+    document.getElementById('qPrompt').value = '請告訴我您的身高和體重，例如：身高160公分、體重55公斤。';
+    if (!document.getElementById('qLabel').value.trim()) document.getElementById('qLabel').value = '身高體重 / BMI';
+  }
+}
+
+function closeQuestionModal() { document.getElementById('qModal').classList.remove('open'); }
+
+function submitQuestion() {
+  const label = document.getElementById('qLabel').value.trim();
+  const prompt = document.getElementById('qPrompt').value.trim();
+  if (!label) { showToast('請填寫欄位名稱', true); return; }
+  if (!prompt) { showToast('請填寫 AI 要怎麼問', true); return; }
+  if (questions.some((q, i) => q.label === label && i !== qEditingIdx)) {
+    showToast('已經有同名的題目了', true); return;
+  }
+  const options = document.getElementById('qOptions').value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (qForm.type === 'choice' && options.length < 2) { showToast('單選題至少要 2 個選項', true); return; }
+  const num = id => { const v = document.getElementById(id).value.trim(); return v === '' ? null : Number(v); };
+  const min = num('qMin'), max = num('qMax');
+  if (min !== null && max !== null && min > max) { showToast('最小值不能大於最大值', true); return; }
+
+  const base = qEditingIdx === null ? { id: newId(), enabled: true } : questions[qEditingIdx];
+  const q = normalizeQ({
+    ...base, label, prompt, type: qForm.type,
+    options: qForm.type === 'choice' ? options : [],
+    unit: qForm.type === 'number' ? document.getElementById('qUnit').value.trim() : '',
+    min: qForm.type === 'number' ? min : null,
+    max: qForm.type === 'number' ? max : null,
+    followUp: qForm.type === 'yesno' ? document.getElementById('qFollowUp').value.trim() : '',
+    required: document.getElementById('qRequired').checked,
+    appliesTo: qForm.appliesTo,
+  });
+  if (qEditingIdx === null) questions.push(q); else questions[qEditingIdx] = q;
+  closeQuestionModal();
+  renderQuestions();
+}
+
+/* ── 刪除 ── */
+function openQDelete(i) {
+  qDeleteIdx = i;
+  document.getElementById('qDeleteName').textContent = questions[i].label;
+  document.getElementById('qDeleteModal').classList.add('open');
+}
+function closeQDelete() { document.getElementById('qDeleteModal').classList.remove('open'); qDeleteIdx = null; }
+function confirmQDelete() {
+  if (qDeleteIdx === null) return;
+  questions.splice(qDeleteIdx, 1);
+  closeQDelete();
+  renderQuestions();
+}
+
+/* ── 儲存 / 復原 ── */
+function undoQuestions() { questions = clone(savedQuestions); renderQuestions(); }
+
+async function saveQuestions() {
+  const btn = document.getElementById('sbSaveBtn');
+  btn.disabled = true; btn.innerHTML = '儲存中…';
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/questions`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json','X-Admin-Password':adminPassword},
+      body: JSON.stringify({ questions })
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : '儲存失敗');
+    savedQuestions = clone(questions);
+    renderQuestions();
+    showToast(`已上線，共 ${questions.filter(q => q.enabled).length} 題會被詢問`);
+  } catch(e) {
+    showToast(e.message || '儲存失敗，請再試一次', true);
+  }
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-cloud-upload"></i>儲存並上線';
+}
+
+window.addEventListener('beforeunload', e => {
+  if (qLoaded && isDirty()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+
+/* ══════════════════════════════════════
+   診所設定（公版化）
+   存到 Firebase booking_config/clinic，
+   官網、AI 語音助理、LINE 機器人、後台都會讀這份設定。
+══════════════════════════════════════ */
+let clinicLoaded = false;
+let clinicSaved = null;   // 伺服器上的版本
+let clinicForm = null;    // 畫面上（可能未儲存）的版本
+
+const CLINIC_TEXT_FIELDS = { cName: 'name', cPhone: 'phone', cAddress: 'address', cAddressNote: 'addressNote', cHours: 'hours' };
+
+async function loadClinic() {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/clinic-config`, { headers: {'X-Admin-Password': adminPassword} });
+    if (res.status === 401) { doLogout(); return; }
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    clinicSaved = clone(data.clinic);
+    clinicLoaded = true;
+  } catch(e) {
+    clinicSaved = clone(window.CLINIC || {});
+    showToast('診所設定載入失敗，請檢查網路或後端是否已更新', true);
+  }
+  resetClinicForm();
+}
+
+function resetClinicForm() {
+  if (!clinicSaved) return;
+  clinicForm = clone(clinicSaved);
+  Object.entries(CLINIC_TEXT_FIELDS).forEach(([id, k]) => document.getElementById(id).value = clinicForm[k] || '');
+  const sess = clinicForm.selfPaySessions || {};
+  document.getElementById('cSessMorning').value = sess.morning || '';
+  document.getElementById('cSessAfternoon').value = sess.afternoon || '';
+  document.getElementById('cSessEvening').value = sess.evening || '18:30-21:00';
+  document.getElementById('cElderlyLimit').value = clinicForm.elderlyDailyLimit || 0;
+  document.getElementById('cSelfPayLimit').value = clinicForm.selfPayDailyLimit || 0;
+  clinicForm.closedDates = clinicForm.closedDates || [];
+  clinicForm.selfPayWeekly = clinicForm.selfPayWeekly || {};
+  const unavailableCount = pruneUnavailableElderlyDates();
+  renderClinic();
+  if (unavailableCount) showToast(`有 ${unavailableCount} 個老人健檢日期已休診或未排班，已從待儲存清單同步移除`);
+}
+
+function clinicChanged() {
+  Object.entries(CLINIC_TEXT_FIELDS).forEach(([id, k]) => clinicForm[k] = document.getElementById(id).value);
+  clinicForm.selfPaySessions = {
+    morning: document.getElementById('cSessMorning').value.trim(),
+    afternoon: document.getElementById('cSessAfternoon').value.trim(),
+    evening: document.getElementById('cSessEvening').value.trim(),
+  };
+  clinicForm.elderlyDailyLimit = Math.max(0, parseInt(document.getElementById('cElderlyLimit').value || '0', 10) || 0);
+  clinicForm.selfPayDailyLimit = Math.max(0, parseInt(document.getElementById('cSelfPayLimit').value || '0', 10) || 0);
+  renderClinic();
+}
+
+const WEEK_DAYS = [['mon','一'],['tue','二'],['wed','三'],['thu','四'],['fri','五'],['sat','六'],['sun','日']];
+const CLINIC_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const CLINIC_SESSIONS = [['morning','上午'], ['afternoon','下午'], ['evening','晚上']];
+
+function clinicDayKey(iso) {
+  const parts = String(iso || '').split('-').map(Number);
+  if (parts.length !== 3 || parts.some(v => !Number.isInteger(v))) return '';
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (date.getFullYear() !== parts[0] || date.getMonth() !== parts[1] - 1 || date.getDate() !== parts[2]) return '';
+  return CLINIC_DAY_KEYS[date.getDay()];
+}
+
+function clinicHasSession(iso) {
+  const day = clinicDayKey(iso);
+  return !!(day && ((clinicForm.selfPayWeekly || {})[day] || []).length);
+}
+
+function clinicElderlyDateAllowed(iso) {
+  return clinicHasSession(iso) && !(clinicForm.closedDates || []).includes(iso);
+}
+
+function pruneUnavailableElderlyDates() {
+  const before = clinicForm.elderlyDates || [];
+  clinicForm.elderlyDates = before.filter(clinicElderlyDateAllowed);
+  return before.length - clinicForm.elderlyDates.length;
+}
+
+function toggleWeekly(day, sess, on) {
+  const w = clinicForm.selfPayWeekly = clinicForm.selfPayWeekly || {};
+  const list = new Set(w[day] || []);
+  on ? list.add(sess) : list.delete(sess);
+  w[day] = CLINIC_SESSIONS.map(([key]) => key).filter(key => list.has(key));
+  const removed = pruneUnavailableElderlyDates();
+  renderClinic();
+  if (removed) showToast(`已同步移除 ${removed} 個不開放的老人健檢日期`);
+}
+
+function clinicDirty() {
+  return clinicSaved && clinicForm && JSON.stringify(clinicForm) !== JSON.stringify(clinicSaved);
+}
+
+function addClinicItem(key, inputId) {
+  const el = document.getElementById(inputId);
+  const v = (el.value || '').slice(0, key === 'elderlyTimes' ? 5 : 10);
+  if (!v) { showToast(key === 'elderlyTimes' ? '請先選擇時段' : '請先選擇日期', true); return; }
+  if (key === 'elderlyDates' && !clinicElderlyDateAllowed(v)) { showToast('此日期未開診或已休診，不能加入', true); return; }
+  if (key === 'closedDates' && !clinicHasSession(v)) { showToast('此星期已固定不開診，無須另設休診', true); return; }
+  if (clinicForm[key].includes(v)) { showToast('已經有這個了', true); return; }
+  clinicForm[key] = [...clinicForm[key], v].sort();
+  if (key === 'closedDates') pruneUnavailableElderlyDates();
+  el.value = '';
+  renderClinic();
+}
+
+function removeClinicItem(key, v) {
+  clinicForm[key] = clinicForm[key].filter(x => x !== v);
+  renderClinic();
+}
+
+/* 日曆：點日期加入 / 取消，和下面的清單同步 */
+const clinicCals = {};
+
+function syncClinicCalendars() {
+  if (typeof flatpickr !== 'function' || !clinicForm) return;
+  document.querySelectorAll('.cal-fallback').forEach(el => el.hidden = true);
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  [['elderlyDates', 'cDatesCal'], ['closedDates', 'cClosedCal']].forEach(([key, id]) => {
+    let fp = clinicCals[key];
+    if (!fp) {
+      const holder = document.getElementById(id);
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      holder.appendChild(input);
+      fp = clinicCals[key] = flatpickr(input, {
+        inline: true, mode: 'multiple', dateFormat: 'Y-m-d',
+        locale: (flatpickr.l10ns && flatpickr.l10ns.zh_tw) || 'default',
+        disable: [date => {
+          const iso = ymd(date);
+          return !clinicHasSession(iso) || (key === 'elderlyDates' && !clinicElderlyDateAllowed(iso));
+        }],
+        onChange(dates) {
+          const selected = dates.map(ymd).filter(d => key === 'elderlyDates' ? clinicElderlyDateAllowed(d) : clinicHasSession(d));
+          clinicForm[key] = selected.sort();
+          if (key === 'closedDates') pruneUnavailableElderlyDates();
+          renderClinic();
+        },
+        onDayCreate(dObj, dStr, inst, dayEl) {
+          const d = ymd(dayEl.dateObj);
+          if (!clinicHasSession(d)) {
+            dayEl.classList.add('c-day-weekly-off');
+            dayEl.title = '本星期固定不開診';
+          } else if (key === 'elderlyDates' && (clinicForm.closedDates || []).includes(d)) {
+            dayEl.classList.add('c-day-closed');
+            dayEl.title = '臨時休診日';
+          }
+        },
+      });
+    }
+    const want = (clinicForm[key] || []).join(',');
+    const have = fp.selectedDates.map(ymd).sort().join(',');
+    if (want !== have) fp.setDate(clinicForm[key] || [], false);
+    fp.redraw();
+  });
+}
+
+function renderClinic() {
+  syncClinicCalendars();
+  const F = window.ClinicFmt;
+  const c = clinicForm;
+  const chip = (key, v, label) =>
+    `<span class="chip">${esc(label)}<button title="移除" onclick="removeClinicItem('${key}','${v}')"><i class="ti ti-x"></i></button></span>`;
+
+  const allowedElderlyDates = (c.elderlyDates || []).filter(clinicElderlyDateAllowed);
+  document.getElementById('cDates').innerHTML = allowedElderlyDates.length
+    ? allowedElderlyDates.map(d => chip('elderlyDates', d, F.dateOption(d))).join('')
+    : '<span class="chip-empty">尚未設定可預約日期</span>';
+  document.getElementById('cTimes').innerHTML = c.elderlyTimes.length
+    ? c.elderlyTimes.map(t => chip('elderlyTimes', t, `${t}（${F.time(t)}）`)).join('')
+    : '<span class="chip-empty">尚未設定時段</span>';
+
+  const w = c.selfPayWeekly || {};
+  document.getElementById('cWeekly').innerHTML =
+    `<div class="wk-h"></div>` + WEEK_DAYS.map(([, n]) => `<div class="wk-h">${n}</div>`).join('') +
+    CLINIC_SESSIONS.map(([s, label]) =>
+      `<div class="wk-row">${label}</div>` + WEEK_DAYS.map(([d, dayLabel]) => {
+        const on = (w[d] || []).includes(s);
+        return `<label class="wk-cell ${on ? 'on' : ''}" title="週${dayLabel}${label}診：${on ? '開放' : '不開放'}"><input type="checkbox" aria-label="週${dayLabel}${label}診" ${on ? 'checked' : ''}
+          onchange="toggleWeekly('${d}','${s}',this.checked)"/><span>${on ? '✓' : ''}</span></label>`;
+      }).join('')).join('');
+  const closed = c.closedDates || [];
+  document.getElementById('cClosed').innerHTML = closed.length
+    ? closed.map(d => chip('closedDates', d, F.dateOption(d))).join('')
+    : '<span class="chip-empty">目前沒有休診日</span>';
+
+  const openDates = allowedElderlyDates; // 週排班與臨時休診同步限制老人健檢日期
+  const dates = F.joinOr(openDates.map(F.dateShort)) || '（尚未設定）';
+  const times = F.joinOr(c.elderlyTimes.map(F.time)) || '（尚未設定）';
+  const firstDate = openDates[0], firstTime = c.elderlyTimes[0];
+  document.getElementById('clinicPreview').innerHTML = `
+    <div class="bub sys">官網上方</div>
+    <div class="bub ai"><b>${esc(c.name || '（診所名稱）')}</b></div>
+    <div class="bub sys">AI 語音助理</div>
+    <div class="bub ai">👉 請問您想預約哪一天？（${esc(dates)}）</div>
+    ${firstDate ? `<div class="bub user">${esc(F.dateSay(firstDate))}</div>
+    <div class="bub ai">✅ 已選擇 ${esc(F.dateLabel(firstDate))}。<br>👉 請問您想預約幾點？（${esc(times)}）</div>` : ''}
+    ${firstTime ? `<div class="bub user">${esc(F.time(firstTime))}</div>` : ''}
+    <div class="bub sys">自費日曆</div>
+    <div class="bub ai">${WEEK_DAYS.map(([d, n]) => {
+        const s = w[d] || [];
+        const labels = CLINIC_SESSIONS.filter(([key]) => s.includes(key)).map(([, label]) => label);
+        return `週${n}：${labels.length === 3 ? '全天' : labels.length ? labels.join('、') : '<span style="color:#c62828">不開放</span>'}`;
+      }).join('<br>')}${closed.length ? `<br>休診：${closed.map(F.dateShort).join('、')}` : ''}</div>
+    <div class="bub sys">每日名額</div>
+    <div class="bub ai">老人健檢：${c.elderlyDailyLimit ? c.elderlyDailyLimit + ' 位' : '不限'}<br>自費健檢：${c.selfPayDailyLimit ? c.selfPayDailyLimit + ' 位' : '不限'}</div>
+    <div class="bub sys">LINE 機器人：問地址</div>
+    <div class="bub ai">📍 ${esc(c.address || '')}${c.addressNote ? `<br>（${esc(c.addressNote)}）` : ''}<br><br>📞 ${esc(c.phone || '')}</div>
+    <div class="bub sys">LINE 機器人：問門診時間</div>
+    <div class="bub ai">⭐ 門診時間<br>${esc(c.hours || '').replace(/\n/g, '<br>')}</div>`;
+
+  document.getElementById('tabClinic').classList.toggle('dirty', !!clinicDirty());
+}
+
+async function saveClinic() {
+  if (!clinicForm) return;
+  if (!clinicForm.name.trim()) { showToast('請填寫診所名稱', true); return; }
+  if (!clinicForm.phone.trim()) { showToast('請填寫電話', true); return; }
+  if (!clinicForm.elderlyDates.length || !clinicForm.elderlyTimes.length) { showToast('至少要有一個日期和一個時段', true); return; }
+  if (clinicForm.elderlyDates.some(d => !clinicElderlyDateAllowed(d))) { showToast('老人健檢日期含休診或未排班的日期，請先修正', true); return; }
+  if (!Object.values(clinicForm.selfPayWeekly || {}).some(x => x && x.length)) { showToast('自費健檢至少要開放一個門診時段', true); return; }
+  const btn = document.getElementById('clinicSaveBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/clinic-config`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json','X-Admin-Password':adminPassword},
+      body: JSON.stringify(clinicForm)
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : '儲存失敗');
+    const { updatedAt, ...saved } = data.clinic;
+    clinicSaved = clone(saved);
+    clinicForm = clone(saved);
+    window.CLINIC = Object.assign({}, window.CLINIC, saved);
+    try { sessionStorage.setItem('clinicConfig', JSON.stringify(window.CLINIC)); } catch(e) {}
+    document.querySelectorAll('[data-clinic="name"]').forEach(el => el.textContent = saved.name);
+    renderClinic();
+    const firstTime = !clinicConfigured;
+    clinicConfigured = true;
+    document.getElementById('clinicFirstBanner').hidden = true;
+    showToast(firstTime ? '設定完成！民眾現在會看到貴診所的資料' : '診所設定已上線');
+  } catch(e) {
+    showToast(e.message || '儲存失敗，請再試一次', true);
+  }
+  btn.disabled = false;
+}
+
+window.addEventListener('beforeunload', e => {
+  if (clinicDirty()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+
+/* ══════════════════════════════════════
+   首次登入引導
+   診所還沒在「診所設定」儲存過資料時，登入後先跳出設定步驟。
+══════════════════════════════════════ */
+let clinicConfigured = true;
+
+async function checkOnboarding() {
+  try {
+    const [cRes, qRes] = await Promise.all([
+      fetch(`${API_BASE}/api/admin/clinic-config`, { headers: {'X-Admin-Password': adminPassword} }),
+      fetch(`${API_BASE}/api/admin/questions`, { headers: {'X-Admin-Password': adminPassword} }),
+    ]);
+    if (!cRes.ok) return;
+    const c = await cRes.json();
+    const q = qRes.ok ? await qRes.json() : { questions: [] };
+    clinicConfigured = c.configured !== false;
+    if (!clinicLoaded) { clinicSaved = clone(c.clinic); clinicLoaded = true; resetClinicForm(); }
+    document.getElementById('clinicFirstBanner').hidden = clinicConfigured;
+    if (clinicConfigured) return;
+
+    let dismissed = false;
+    try { dismissed = sessionStorage.getItem('onboard_dismissed') === '1'; } catch(e) {}
+    if (dismissed) return;
+
+    const qCount = (q.questions || []).filter(x => x.enabled !== false).length;
+    const step = (done, title, desc, onclick, optional) => `
+      <li class="onboard-step ${done ? 'done' : ''}" onclick="${onclick}">
+        <span class="onboard-icon">${done ? '<i class="ti ti-check"></i>' : ''}</span>
+        <div>
+          <b>${title}${optional ? '<span class="onboard-opt">選填</span>' : ''}</b>
+          <small>${desc}</small>
+        </div>
+        <i class="ti ti-chevron-right onboard-go"></i>
+      </li>`;
+    document.getElementById('onboardSteps').innerHTML =
+      step(false, '確認診所基本資料', '名稱、電話、地址、門診時間', "startOnboard()") +
+      step(false, '設定老人健檢可預約日期與時段', 'AI 語音助理會依照這裡的日期和時段詢問民眾', "startOnboard()") +
+      step(qCount > 0, '新增問診題目', qCount > 0 ? `目前已有 ${qCount} 題` : '例如 BMI、過敏史、慢性病，可之後再加', "closeOnboard(); switchView('questions')", true);
+    document.getElementById('onboardModal').classList.add('open');
+  } catch(e) { /* 引導失敗不影響正常使用 */ }
+}
+
+function closeOnboard() {
+  document.getElementById('onboardModal').classList.remove('open');
+  try { sessionStorage.setItem('onboard_dismissed', '1'); } catch(e) {}
+}
+
+function startOnboard() {
+  closeOnboard();
+  switchView('clinic');
+  setTimeout(() => document.getElementById('cName').focus(), 50);
+}
+
+/* ══ Toast ══ */
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.toggle('error', isError);
+  t.querySelector('i').className = isError ? 'ti ti-alert-circle' : 'ti ti-circle-check';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

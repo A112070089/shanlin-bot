@@ -1,0 +1,777 @@
+/* =========================================================
+   LINE 預約頁 liff-appt.html
+   （原本寫在 HTML 的 <style> 裡，已搬到這個檔案）
+========================================================= */
+
+:root {
+  --blue: #4a90c4;
+  --blue-d: #2e6ea6;
+  --blue-l: #eaf4fb;
+  --blue-ll: #f5fafd;
+  --red: #c0392b;
+  --green: #27ae60;
+  --text: #2c3e50;
+  --sub: #7f8c8d;
+  --hint: #bdc3c7;
+  --border: #d5e8f0;
+  --bg: #f0f7fc;
+  --white: #fff;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  font-family: "Noto Sans TC", sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TOPBAR - 頤典診所風格 */
+.topbar {
+  background: var(--blue-l);
+  border-bottom: 2px solid var(--blue);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-logo-ic {
+  width: 36px;
+  height: 36px;
+  background: var(--blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.topbar-logo-ic i {
+  font-size: 18px;
+  color: #fff;
+}
+.topbar-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blue-d);
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--sub);
+}
+
+/* SCREENS */
+.screen {
+  display: none;
+  flex: 1;
+  padding: 20px 18px 50px;
+  flex-direction: column;
+}
+.screen.active {
+  display: flex;
+}
+
+/* PAGE TITLE */
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--red);
+  background: #fffde7;
+  display: inline-block;
+  padding: 2px 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--red);
+}
+
+/* STEP BAR */
+.step-bar {
+  display: flex;
+  margin-bottom: 22px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.step-item {
+  flex: 1;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sub);
+  background: #fff;
+  border-right: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.step-item:last-child {
+  border-right: none;
+}
+.step-item.active {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+}
+.step-item.done {
+  background: var(--blue-l);
+  color: var(--blue-d);
+}
+
+/* INFO BOX */
+.info-box {
+  background: var(--blue-l);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.info-box-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-d);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.info-box ul {
+  padding-left: 18px;
+}
+.info-box li {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+/* PLAN CARDS */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.plan {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.plan:hover {
+  border-color: var(--blue);
+}
+.plan.sel {
+  border-color: var(--blue);
+  background: var(--blue-l);
+}
+.plan-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.plan-letter {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.plan.sel .plan-letter {
+  background: var(--blue-d);
+}
+.plan-nm {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.plan-tg {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+.plan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.chip {
+  font-size: 11px;
+  background: #f3f4f6;
+  color: var(--sub);
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.plan.sel .chip {
+  background: rgba(74, 144, 196, 0.15);
+  color: var(--blue-d);
+}
+
+/* QUALIFY SCREEN */
+.qualify-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.qualify-q {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.qualify-opts {
+  display: flex;
+  gap: 16px;
+}
+.qualify-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+.qualify-opt input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+}
+
+/* FORM */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 16px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.fl {
+  margin-bottom: 16px;
+}
+.fl:last-child {
+  margin-bottom: 0;
+}
+.fl-lbl {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.req {
+  color: var(--red);
+  margin-left: 2px;
+}
+.fi {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: "Noto Sans TC", sans-serif;
+  color: var(--text);
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.fi:focus {
+  border-color: var(--blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 144, 196, 0.1);
+}
+.fi::placeholder {
+  color: var(--hint);
+}
+.fi.err {
+  border-color: var(--red);
+  background: #fef9f9;
+}
+.fhint {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+.ferr {
+  font-size: 11px;
+  color: var(--red);
+  margin-top: 4px;
+  display: none;
+}
+.ferr.show {
+  display: block;
+}
+.fdiv {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+select.fi {
+  cursor: pointer;
+}
+
+/* SLOT GRID */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.slot {
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.slot:hover {
+  border-color: var(--blue);
+}
+.slot.sel {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+.slot.full {
+  background: #f3f4f6;
+  color: var(--hint);
+  cursor: not-allowed;
+  border-color: transparent;
+  font-size: 11px;
+}
+
+/* BUTTONS */
+.btn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: "Noto Sans TC", sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    opacity 0.15s,
+    transform 0.1s;
+  margin-bottom: 10px;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-blue {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-blue:hover {
+  background: var(--blue-d);
+}
+.btn-blue:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+.btn-outline {
+  background: #fff;
+  color: var(--blue-d);
+  border: 2px solid var(--blue);
+}
+.btn-outline:hover {
+  background: var(--blue-l);
+}
+.btn-red {
+  background: var(--red);
+  color: #fff;
+}
+.btn-red:hover {
+  opacity: 0.9;
+}
+
+/* CONFIRM TABLE */
+.cf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.cf-table tr {
+  border-bottom: 1px solid var(--border);
+}
+.cf-table td:first-child {
+  font-size: 13px;
+  color: var(--sub);
+  padding: 10px 8px;
+  width: 100px;
+  font-weight: 500;
+}
+.cf-table td:last-child {
+  font-size: 14px;
+  color: var(--text);
+  padding: 10px 8px;
+  font-weight: 500;
+}
+
+/* SUCCESS */
+.suc-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 18px 40px;
+}
+.suc-ic {
+  width: 80px;
+  height: 80px;
+  background: #e8f8ef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+.suc-ic i {
+  font-size: 40px;
+  color: var(--green);
+}
+
+/* SPINNER */
+.spin-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--blue-l);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* VOICE MODAL */
+.modal-ov {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-ov.open {
+  display: flex;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 22px 18px 44px;
+  width: 100%;
+  max-width: 480px;
+}
+.mh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.mh-t {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mc-x {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--sub);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wave-w {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 44px;
+  margin-bottom: 10px;
+}
+.wb {
+  width: 5px;
+  background: #d1d5db;
+  border-radius: 3px;
+  height: 10px;
+}
+.wb.on {
+  background: var(--blue);
+  animation: wv 0.6s ease-in-out infinite alternate;
+}
+.wb.on:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.wb.on:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.wb.on:nth-child(4) {
+  animation-delay: 0.05s;
+}
+.wb.on:nth-child(5) {
+  animation-delay: 0.15s;
+}
+@keyframes wv {
+  from {
+    height: 8px;
+  }
+  to {
+    height: 36px;
+  }
+}
+.vst {
+  text-align: center;
+  font-size: 13px;
+  color: var(--sub);
+  margin-bottom: 12px;
+  min-height: 20px;
+}
+.vres {
+  display: none;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.vsingle {
+  display: none;
+  background: var(--blue-l);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--blue-d);
+  line-height: 1.6;
+}
+.btn-mic {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  border: none;
+  background: var(--blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: "Noto Sans TC", sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.btn-mic.rec {
+  background: var(--red);
+  animation: pr 1s ease-in-out infinite;
+}
+@keyframes pr {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* WARNING */
+.warn-box {
+  background: #fff8e1;
+  border: 1px solid #ffd54f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #5d4037;
+  line-height: 1.6;
+}
+.warn-box i {
+  color: #f57f17;
+  margin-right: 4px;
+}
+
+/* =========================================================
+   頁面元件（原本直接寫在 HTML 標籤上的 style，集中到這裡）
+========================================================= */
+
+/* 步驟 0：資格確認說明 */
+.intro-text {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+/* 「語音輸入」按鈕 */
+.btn.btn-voice {
+  height: 42px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* 步驟 2：已選方案 */
+.plan-chosen {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+#selPlanLabel {
+  color: var(--red);
+}
+
+.form-sub {
+  font-size: 12px;
+  color: var(--sub);
+  margin-bottom: 16px;
+}
+
+.field-options {
+  margin-top: 8px;
+}
+
+.slot-hint {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+
+/* 「上一步」按鈕 */
+.btn.btn-back {
+  margin-top: 0;
+}
+
+/* 步驟 3：確認資料 */
+.confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.info-box.info-box-spaced {
+  margin-bottom: 16px;
+}
+
+/* 步驟 4：預約中 */
+.status-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.status-sub {
+  font-size: 13px;
+  color: var(--sub);
+}
+
+/* 步驟 5：預約成功 */
+.success-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.success-desc {
+  font-size: 14px;
+  color: var(--sub);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.card.success-card {
+  width: 100%;
+  text-align: left;
+}
+
+.btn.btn-full {
+  width: 100%;
+}
+
+/* 語音輸入視窗 */
+.mh-t .ti-microphone {
+  color: var(--blue);
+}
+
+.info-box.voice-tip-box {
+  margin-bottom: 12px;
+}
+
+#vTip {
+  font-size: 12px;
+  color: var(--blue-d);
+}
+
+.vres-label {
+  font-size: 10px;
+  color: var(--sub);
+  margin-bottom: 5px;
+}
+
+.mic-icon {
+  font-size: 20px;
+}
+
+/* 「關閉」按鈕：辨識完成後才由 JavaScript 顯示 */
+#btnVC {
+  display: none;
+  margin-top: 0;
+}

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>頤典診所 健檢預約</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<link rel="stylesheet" href="css/liff-appt.css"/>
+<!-- 部署設定：後端網址、LIFF ID（開通新診所時改這個檔） -->
+<script src="site-config.js"></script>
+<!-- 診所設定：名稱 -->
+<script src="clinic.js" data-api="admin"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-ic"><i class="ti ti-building-hospital"></i></div>
+    <div>
+      <div class="topbar-name" data-clinic="name">頤典診所</div>
+      <div class="topbar-sub">老人健康檢查預約</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 0: 資格確認 -->
+<div class="screen active" id="s0">
+  <div class="page-title">預約健檢</div>
+  <div class="intro-text">請點選以下三事項，若未符合，將無法進行下一步</div>
+
+  <div class="qualify-item">
+    <div class="qualify-q">1. 您是設籍台北市的市民嗎？</div>
+    <div class="qualify-opts">
+      <label class="qualify-opt"><input type="radio" name="q1" value="yes" onchange="chkQ()"> 是</label>
+      <label class="qualify-opt"><input type="radio" name="q1" value="no" onchange="chkQ()"> 不是</label>
+    </div>
+  </div>
+
+  <div class="qualify-item">
+    <div class="qualify-q">2. 您是年滿65歲以上長者或55歲以上原住民嗎？</div>
+    <div class="qualify-opts">
+      <label class="qualify-opt"><input type="radio" name="q2" value="yes" onchange="chkQ()"> 是</label>
+      <label class="qualify-opt"><input type="radio" name="q2" value="no" onchange="chkQ()"> 不是</label>
+    </div>
+  </div>
+
+  <div class="qualify-item">
+    <div class="qualify-q">3. 您若不符合受檢資格及未依照特約醫事機構規定辦理登記，醫事機構將取消已取號後之登記資格，您同意嗎？</div>
+    <div class="qualify-opts">
+      <label class="qualify-opt"><input type="radio" name="q3" value="yes" onchange="chkQ()"> 同意</label>
+      <label class="qualify-opt"><input type="radio" name="q3" value="no" onchange="chkQ()"> 不同意</label>
+    </div>
+  </div>
+
+  <button class="btn btn-blue" id="btnQ" onclick="goS('s1')" disabled>下一步</button>
+</div>
+
+<!-- SCREEN 1: 選方案 -->
+<div class="screen" id="s1">
+  <div class="step-bar">
+    <div class="step-item active">選擇方案</div>
+    <div class="step-item">填寫資料</div>
+    <div class="step-item">確認預約</div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-box-title"><i class="ti ti-info-circle"></i>流程說明</div>
+    <ul>
+      <li>線上預約登記健康檢查：網站 / Line / 電話預約</li>
+      <li>預約需提供：姓名、出生年月日（民國）、身分證字號、電話</li>
+      <li>健檢前須空腹8小時、穿著輕便衣物鞋子、務必攜帶雙證件（健保卡、身分證）</li>
+    </ul>
+  </div>
+
+  <button class="btn btn-outline btn-voice" onclick="openVoice('plan')">
+    <i class="ti ti-microphone"></i>語音說症狀，幫我選方案
+  </button>
+
+  <div class="plan-grid">
+    <div class="plan" id="pA" onclick="selPlan('A')">
+      <div class="plan-hd">
+        <div class="plan-letter">A</div>
+        <div><div class="plan-nm">腦肺方案</div><div class="plan-tg">適合：頭暈、記憶衰退、胸悶、呼吸問題</div></div>
+      </div>
+      <div class="plan-chips">
+        <span class="chip">胸部X光</span><span class="chip">甲狀腺刺激素</span><span class="chip">維他命B12</span>
+        <span class="chip">葉酸</span><span class="chip">血液常規</span><span class="chip">失智症篩檢(AD-8)</span>
+        <span class="chip">憂鬱症篩檢(GDS-15)</span><span class="chip">早餐(葷素選擇)</span><span class="chip">醫師諮詢</span>
+      </div>
+    </div>
+    <div class="plan" id="pB" onclick="selPlan('B')">
+      <div class="plan-hd">
+        <div class="plan-letter">B</div>
+        <div><div class="plan-nm">腹部方案</div><div class="plan-tg">適合：腸胃問題、糖尿病、血糖偏高</div></div>
+      </div>
+      <div class="plan-chips">
+        <span class="chip">腹部超音波</span><span class="chip">糖化血色素</span><span class="chip">白蛋白</span>
+        <span class="chip">球蛋白</span><span class="chip">尿液常規</span><span class="chip">失智症篩檢(AD-8)</span>
+        <span class="chip">憂鬱症篩檢(GDS-15)</span><span class="chip">早餐(葷素選擇)</span><span class="chip">醫師諮詢</span>
+      </div>
+    </div>
+    <div class="plan" id="pC" onclick="selPlan('C')">
+      <div class="plan-hd">
+        <div class="plan-letter">C</div>
+        <div><div class="plan-nm">骨密肌力方案</div><div class="plan-tg">適合：骨質疏鬆、肌肉無力、易跌倒</div></div>
+      </div>
+      <div class="plan-chips">
+        <span class="chip">DXA骨密度(髖骨或腰椎)</span><span class="chip">肌少症篩檢(小腿圍)</span>
+        <span class="chip">肌少症體能表現評估</span><span class="chip">ALK-P</span>
+        <span class="chip">鈣</span><span class="chip">尿液常規</span><span class="chip">血液常規</span>
+        <span class="chip">白蛋白</span><span class="chip">球蛋白</span><span class="chip">尿素氮</span>
+        <span class="chip">失智症篩檢(AD-8)</span><span class="chip">憂鬱症篩檢(GDS-15)</span>
+        <span class="chip">早餐(葷素選擇)</span><span class="chip">醫師諮詢</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-blue" id="btnS1" onclick="goS('s2')" disabled>下一步：填寫基本資料</button>
+</div>
+
+<!-- SCREEN 2: 填寫資料 -->
+<div class="screen" id="s2">
+  <div class="step-bar">
+    <div class="step-item done">選擇方案</div>
+    <div class="step-item active">填寫資料</div>
+    <div class="step-item">確認預約</div>
+  </div>
+
+  <div class="plan-chosen">您已選擇：<span id="selPlanLabel"></span></div>
+  <div class="form-sub">請填寫以下基本資料</div>
+
+  <div class="warn-box">
+    <i class="ti ti-alert-triangle"></i>
+    當天來現場除了可以確認老人健檢項目之外，另外可查詢是否符合可做「成人預防保健服務」、「糞便潛血免疫分析」(50-75歲每2年一次)、「B、C型肝炎篩檢」(終身一次)
+  </div>
+
+  <button class="btn btn-outline btn-voice" onclick="openVoice('form')">
+    <i class="ti ti-microphone"></i>語音輸入資料
+  </button>
+
+  <div class="card">
+    <div class="fl">
+      <div class="fl-lbl">姓名<span class="req">*</span></div>
+      <input class="fi" id="iName" type="text" placeholder="請輸入姓名" oninput="chkS2()"/>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">出生年月日（民國）<span class="req">*</span></div>
+      <input class="fi" id="iBirth" type="text" maxlength="7" placeholder="例：民國50年6月19日 → 輸入 500619" inputmode="numeric" oninput="chkS2()"/>
+      <div class="fhint">需為年滿65歲（民國50年以前）</div>
+      <div class="ferr" id="errBirth">請輸入7位數民國出生年月日</div>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">身分證字號<span class="req">*</span>（需為台北市戶籍）</div>
+      <input class="fi" id="iID" type="text" maxlength="10" placeholder="例：A123456789" autocorrect="off" autocapitalize="characters" oninput="onIDI(this)"/>
+      <div class="ferr" id="errID">格式不符，請重新確認</div>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">手機號碼<span class="req">*</span></div>
+      <input class="fi" id="iPhone" type="tel" maxlength="10" placeholder="例：0912345678" inputmode="numeric" oninput="chkS2()"/>
+      <div class="ferr" id="errPhone">請輸入09開頭的10位手機號碼</div>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">預約日期<span class="req">*</span></div>
+      <input class="fi" id="iDate" type="date" onchange="chkS2()"/>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">預約時段<span class="req">*</span></div>
+      <div class="slot-grid field-options">
+        <div class="slot" onclick="selSlot(this,'08:30')">08:30</div>
+        <div class="slot" onclick="selSlot(this,'09:00')">09:00</div>
+        <div class="slot full">09:30<br>額滿</div>
+        <div class="slot" onclick="selSlot(this,'10:00')">10:00</div>
+        <div class="slot" onclick="selSlot(this,'10:30')">10:30</div>
+        <div class="slot" onclick="selSlot(this,'11:00')">11:00</div>
+      </div>
+      <div class="slot-hint">灰色時段已額滿</div>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">早餐葷素選擇<span class="req">*</span></div>
+      <div class="qualify-opts field-options">
+        <label class="qualify-opt"><input type="radio" name="veg" value="葷" onchange="chkS2()"> 葷食</label>
+        <label class="qualify-opt"><input type="radio" name="veg" value="素" onchange="chkS2()"> 素食</label>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-blue" id="btnS2" onclick="goConfirm()" disabled>下一步：確認預約</button>
+  <button class="btn btn-outline btn-back" onclick="goS('s1')"><i class="ti ti-arrow-left"></i>上一步</button>
+</div>
+
+<!-- SCREEN 3: 確認 -->
+<div class="screen" id="s3">
+  <div class="step-bar">
+    <div class="step-item done">選擇方案</div>
+    <div class="step-item done">填寫資料</div>
+    <div class="step-item active">確認預約</div>
+  </div>
+
+  <div class="confirm-title">請確認以下預約資料</div>
+
+  <div class="card">
+    <table class="cf-table">
+      <tr><td>健檢方案</td><td id="cfPlan">—</td></tr>
+      <tr><td>姓名</td><td id="cfName">—</td></tr>
+      <tr><td>出生年月日</td><td id="cfBirth">—</td></tr>
+      <tr><td>身分證字號</td><td id="cfID">—</td></tr>
+      <tr><td>手機號碼</td><td id="cfPhone">—</td></tr>
+      <tr><td>預約日期</td><td id="cfDate">—</td></tr>
+      <tr><td>預約時段</td><td id="cfSlot">—</td></tr>
+      <tr><td>早餐葷素</td><td id="cfVeg">—</td></tr>
+    </table>
+  </div>
+
+  <div class="warn-box">
+    <i class="ti ti-alert-triangle"></i>
+    「受檢資格需至現場經本院確認，若於檢查當天發現資格不符，將無法進行檢查，敬請見諒。」
+  </div>
+
+  <div class="info-box info-box-spaced">
+    <div class="info-box-title"><i class="ti ti-info-circle"></i>健檢注意事項</div>
+    <ul>
+      <li>健檢前須空腹 8 小時</li>
+      <li>穿著輕便衣物鞋子</li>
+      <li>務必攜帶雙證件（健保卡 + 身分證）</li>
+      <li>失智症篩檢／憂鬱症篩檢：現場拿資料或網路下載後填寫（帶在健康檢查當天攜帶）</li>
+    </ul>
+  </div>
+
+  <button class="btn btn-red" id="btnConfirm" onclick="doConfirm()">確認預約</button>
+  <button class="btn btn-outline btn-back" onclick="goS('s2')"><i class="ti ti-arrow-left"></i>上一步</button>
+</div>
+
+<!-- SCREEN 4: 預約中 -->
+<div class="screen" id="s4">
+  <div class="spin-wrap">
+    <div class="spinner"></div>
+    <div class="status-title">預約中...</div>
+    <div class="status-sub">請稍候</div>
+  </div>
+</div>
+
+<!-- SCREEN 5: 成功 -->
+<div class="screen" id="s5">
+  <div class="suc-wrap">
+    <div class="suc-ic"><i class="ti ti-calendar-check"></i></div>
+    <div class="success-title">預約成功！</div>
+    <div class="success-desc">
+      我們會在健檢前一天透過 LINE<br>發送禁食提醒給您
+    </div>
+    <div class="card success-card">
+      <table class="cf-table">
+        <tr><td>健檢方案</td><td id="sucPlan">—</td></tr>
+        <tr><td>姓名</td><td id="sucName">—</td></tr>
+        <tr><td>預約日期</td><td id="sucDate">—</td></tr>
+        <tr><td>預約時段</td><td id="sucSlot">—</td></tr>
+      </table>
+    </div>
+    <button class="btn btn-blue btn-full" onclick="closeLiff()">
+      <i class="ti ti-brand-line"></i>返回 LINE
+    </button>
+  </div>
+</div>
+
+<!-- 語音 Modal -->
+<div class="modal-ov" id="voiceModal">
+  <div class="modal-box">
+    <div class="mh">
+      <div class="mh-t"><i class="ti ti-microphone"></i><span id="vModalTitle">語音輸入</span></div>
+      <button class="mc-x" onclick="closeVoice()">✕</button>
+    </div>
+    <div class="info-box voice-tip-box"><p id="vTip">請說出您想輸入的資料</p></div>
+    <div class="wave-w" id="waveW">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
+    <div class="vst" id="vStat">按下麥克風開始說話</div>
+    <div class="vres" id="vRes"><div class="vres-label">辨識結果</div><div id="vResTxt">—</div></div>
+    <div class="vsingle" id="vSingle">—</div>
+    <button class="btn-mic" id="btnMic" onclick="togRec()">
+      <i class="ti ti-microphone mic-icon"></i><span id="btnMicTxt">按下開始說話</span>
+    </button>
+    <button class="btn btn-outline" id="btnVC" onclick="closeVoice()">關閉</button>
+  </div>
+</div>
+
+<script>
+// LIFF ID 與後端網址統一寫在 site-config.js
+const LIFF_ID  = window.SITE.liffApptId;
+const API_BASE = window.SITE.adminApi;
+const pNames   = { A:'A方案 腦肺方案', B:'B方案 腹部方案', C:'C方案 骨密肌力方案' };
+
+let lineUserId = null;
+let recognition = null, isRec = false, vMode = 'plan';
+let curPlan = null, curSlot = null;
+
+window.addEventListener('load', async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const p = await liff.getProfile();
+    lineUserId = p.userId;
+  } catch(e) { lineUserId = 'test_' + Date.now(); }
+  initSR();
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('iDate').min = today;
+});
+
+function closeLiff() {
+  try { liff.closeWindow(); }
+  catch(e) { alert('已完成！請返回 LINE 繼續使用。'); }
+}
+
+function goS(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* 資格確認 */
+function chkQ() {
+  const q1 = document.querySelector('input[name=q1]:checked');
+  const q2 = document.querySelector('input[name=q2]:checked');
+  const q3 = document.querySelector('input[name=q3]:checked');
+  const ok = q1?.value==='yes' && q2?.value==='yes' && q3?.value==='yes';
+  document.getElementById('btnQ').disabled = !ok;
+}
+
+/* 選方案 */
+function selPlan(p) {
+  curPlan = p;
+  ['A','B','C'].forEach(x => document.getElementById('p'+x).classList.remove('sel'));
+  document.getElementById('p'+p).classList.add('sel');
+  document.getElementById('btnS1').disabled = false;
+  document.getElementById('selPlanLabel').textContent = pNames[p];
+}
+
+/* 選時段 */
+function selSlot(el, t) {
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  curSlot = t;
+  chkS2();
+}
+
+/* 身分證格式 */
+function onIDI(el) {
+  el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  document.getElementById('errID').classList.remove('show');
+  chkS2();
+}
+
+function chkS2() {
+  const name  = document.getElementById('iName').value.trim();
+  const birth = document.getElementById('iBirth').value.trim();
+  const id    = document.getElementById('iID').value.trim();
+  const phone = document.getElementById('iPhone').value.trim();
+  const date  = document.getElementById('iDate').value;
+  const veg   = document.querySelector('input[name=veg]:checked');
+  const ok = name && /^\d{6,7}$/.test(birth) && /^[A-Z][12]\d{8}$/.test(id) && /^09\d{8}$/.test(phone) && date && curSlot && veg;
+  document.getElementById('btnS2').disabled = !ok;
+}
+
+function goConfirm() {
+  const id    = document.getElementById('iID').value.trim();
+  const phone = document.getElementById('iPhone').value.trim();
+  let err = false;
+  if (!/^[A-Z][12]\d{8}$/.test(id)) { document.getElementById('errID').classList.add('show'); err=true; }
+  if (!/^09\d{8}$/.test(phone)) { document.getElementById('errPhone').classList.add('show'); err=true; }
+  if (err) return;
+
+  const d = document.getElementById('iDate').value;
+  const vegChecked = document.querySelector('input[name=veg]:checked');
+  document.getElementById('cfPlan').textContent  = pNames[curPlan] || '—';
+  document.getElementById('cfName').textContent  = document.getElementById('iName').value.trim();
+  document.getElementById('cfBirth').textContent = document.getElementById('iBirth').value.trim();
+  document.getElementById('cfID').textContent    = id;
+  document.getElementById('cfPhone').textContent = phone;
+  document.getElementById('cfDate').textContent  = d ? new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  document.getElementById('cfSlot').textContent  = curSlot || '—';
+  document.getElementById('cfVeg').textContent   = vegChecked ? vegChecked.value + '食' : '—';
+  goS('s3');
+}
+
+async function doConfirm() {
+  document.getElementById('btnConfirm').disabled = true;
+  goS('s4');
+  const d = document.getElementById('iDate').value;
+  const vegChecked = document.querySelector('input[name=veg]:checked');
+  try {
+    await fetch(`${API_BASE}/api/appointment/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:         document.getElementById('iName').value.trim(),
+        birth:        document.getElementById('iBirth').value.trim(),
+        id_number:    document.getElementById('iID').value.trim(),
+        phone:        document.getElementById('iPhone').value.trim(),
+        plan:         curPlan,
+        date:         d,
+        time_slot:    curSlot,
+        veg:          vegChecked ? vegChecked.value : '',
+        line_user_id: lineUserId
+      })
+    });
+  } catch(e) { console.error(e); }
+
+  document.getElementById('sucPlan').textContent = pNames[curPlan] || '—';
+  document.getElementById('sucName').textContent = document.getElementById('iName').value.trim();
+  document.getElementById('sucDate').textContent = d ? new Date(d+'T00:00:00').toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  document.getElementById('sucSlot').textContent = curSlot || '—';
+  goS('s5');
+}
+
+/* 語音 */
+function initSR() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang = 'zh-TW'; recognition.interimResults = true;
+  recognition.onstart = () => { setWave(true); document.getElementById('vStat').textContent='聆聽中，請說話...'; document.getElementById('btnMic').classList.add('rec'); document.getElementById('btnMicTxt').textContent='點擊停止'; };
+  recognition.onresult = (e) => {
+    let fin='',intr='';
+    for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else intr+=t; }
+    const txt=fin||intr;
+    document.getElementById('vRes').style.display='block';
+    document.getElementById('vResTxt').textContent=txt;
+    if(fin) parseVoice(fin);
+  };
+  recognition.onerror = (e) => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='按下開始說話'; document.getElementById('vStat').textContent=e.error==='not-allowed'?'⚠️ 請允許麥克風權限':'辨識失敗，請再試'; };
+  recognition.onend = () => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='再說一次'; };
+}
+
+function setWave(on) { document.querySelectorAll('.wb').forEach(b=>on?b.classList.add('on'):b.classList.remove('on')); }
+
+function togRec() {
+  if(!recognition){ document.getElementById('vStat').textContent='請使用 Chrome 瀏覽器'; return; }
+  if(isRec){ recognition.stop(); isRec=false; }
+  else{ document.getElementById('vRes').style.display='none'; document.getElementById('vSingle').style.display='none'; document.getElementById('btnVC').style.display='none'; recognition.start(); isRec=true; }
+}
+
+function zhN(s) {
+  const m={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','○':'0'};
+  return s.replace(/[零一二三四五六七八九○]/g,c=>m[c]||c);
+}
+
+function parseVoice(txt) {
+  if(vMode==='plan'){
+    let rec=null;
+    if(/頭暈|記憶|忘|胸|呼吸|肺/.test(txt)) rec='A';
+    else if(/肚|腸|胃|糖尿|血糖|腹/.test(txt)) rec='B';
+    else if(/骨|跌|無力|肌肉|走路|腰/.test(txt)) rec='C';
+    const msg=rec?`根據您的症狀，建議選擇「${pNames[rec]}」✅`:`我聽到：「${txt}」\n如不確定，可諮詢診所護理師`;
+    document.getElementById('vSingle').style.display='block';
+    document.getElementById('vSingle').textContent=msg;
+    document.getElementById('btnVC').style.display='flex';
+    document.getElementById('vStat').textContent=rec?`建議：${pNames[rec]}`:'請參考上方說明';
+    if(rec) setTimeout(()=>{ selPlan(rec); closeVoice(); },800);
+  } else if(vMode==='form'){
+    const n=zhN(txt.toUpperCase().replace(/\s/g,''));
+    const idM=n.match(/([A-Z][12]\d{8})/);
+    const phM=n.match(/(09\d{8})/);
+    if(idM){ document.getElementById('iID').value=idM[1]; onIDI(document.getElementById('iID')); }
+    if(phM){ document.getElementById('iPhone').value=phM[1]; chkS2(); }
+    const msg=(idM||phM)?`辨識到：${idM?'身分證 '+idM[1]+' ':''}${phM?'手機 '+phM[1]:''}`:`我聽到：「${txt}」\n請手動填寫`;
+    document.getElementById('vSingle').style.display='block';
+    document.getElementById('vSingle').textContent=msg;
+    document.getElementById('btnVC').style.display='flex';
+    document.getElementById('vStat').textContent=(idM||phM)?'✅ 辨識成功':'未能辨識，請手動填寫';
+  } else {
+    const n2=zhN(txt);
+    const sm=n2.match(/(\d{1,2})[點:：時]/);
+    const slotStr=sm?`${String(parseInt(sm[1])).padStart(2,'0')}:00`:null;
+    const msg=slotStr?`辨識到時段：${slotStr}\n請在下方點選確認`:`我聽到：「${txt}」\n請手動選擇`;
+    document.getElementById('vSingle').style.display='block';
+    document.getElementById('vSingle').textContent=msg;
+    document.getElementById('btnVC').style.display='flex';
+    document.getElementById('vStat').textContent=slotStr?`建議時段：${slotStr}`:'請手動選擇';
+  }
+}
+
+const vCfg={
+  plan:{title:'語音說明症狀',tip:'例如說：「我最近常頭暈、記憶力變差」或「我腸胃不好、血糖高」'},
+  form:{title:'語音輸入身分資料',tip:'請說：「身分證 A 一二三四五六七八九，手機 零九一二三四五六七八」'},
+  time:{title:'語音說出想要時間',tip:'例如說：「我想約早上九點」'},
+};
+
+function openVoice(mode){
+  vMode=mode;
+  const c=vCfg[mode];
+  document.getElementById('vModalTitle').textContent=c.title;
+  document.getElementById('vTip').textContent=c.tip;
+  document.getElementById('vRes').style.display='none';
+  document.getElementById('vSingle').style.display='none';
+  document.getElementById('btnVC').style.display='none';
+  document.getElementById('vStat').textContent='按下麥克風開始說話';
+  document.getElementById('btnMicTxt').textContent='按下開始說話';
+  document.getElementById('btnMic').classList.remove('rec');
+  setWave(false);
+  document.getElementById('voiceModal').classList.add('open');
+}
+
+function closeVoice(){
+  if(isRec&&recognition){recognition.stop();isRec=false;}
+  document.getElementById('voiceModal').classList.remove('open');
+}
+</script>
+</body>
+</html>

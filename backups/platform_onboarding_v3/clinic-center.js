@@ -1,0 +1,18 @@
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api='/api/pilot/platform/console/clinic-registry';
+let csrf='',registry=null,editing=null;
+async function req(url,opts={}){const r=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});const obj=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(obj.detail||('HTTP '+r.status));e.status=r.status;throw e;}return obj;}
+function message(text){$('status').textContent=text;}
+function render(){
+  $('existing').innerHTML=registry.existingClinics.map(c=>`<article class="card"><h3>${esc(c.displayName)}</h3><span class="pill">${esc(c.clinicId)}</span><p>既有診所：沿用現行獨立後台與資料；此處不修改。</p></article>`).join('');
+  $('drafts').innerHTML=registry.drafts.length?registry.drafts.map(d=>`<article class="card draft-card"><h3>${esc(d.displayName)}</h3><span class="pill">${esc(d.clinicId)}</span><p>${d.archived?'已封存':'導入草稿（未開通）'}</p><p class="muted">${esc(d.notes||'尚無備註')}</p><p class="muted-warning">未建立診所帳號・未連接資料庫・不可預約</p><button type="button" data-edit="${esc(d.clinicId)}" class="outline">編輯／封存</button></article>`).join(''):'<div class="card">尚未建立新診所草稿。</div>';
+  $('drafts').querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>openEditor(btn.dataset.edit)));
+}
+async function reload(){registry=await req(api);render();const audit=await req(api+'/audit');$('clinicAudit').innerHTML=audit.entries.length?audit.entries.map(a=>`<div>${esc(a.timestamp)} · ${esc(a.actor)} · ${esc(a.clinicId)} · ${esc(a.action)}</div>`).join(''):'尚無草稿操作紀錄。';}
+function openEditor(slug){const obj=registry.drafts.find(x=>x.clinicId===slug);if(!obj)return;editing=slug;$('editingClinic').textContent='· '+slug;$('editName').value=obj.displayName;$('editNotes').value=obj.notes;$('archived').checked=obj.archived;$('editor').hidden=false;$('editor').scrollIntoView({behavior:'smooth',block:'start'});}
+$('editCancelBtn').onclick=()=>{editing=null;$('editor').hidden=true;};
+$('createForm').addEventListener('submit',async event=>{event.preventDefault();const btn=$('createBtn');btn.disabled=true;message('正在建立草稿…');try{await req(api+'/drafts',{method:'POST',headers:{'Content-Type':'application/json','X-Pilot-CSRF':csrf,'Origin':location.origin},body:JSON.stringify({clinicId:$('clinicId').value.trim(),displayName:$('displayName').value.trim(),notes:$('notes').value,expectedRevision:registry.revision})});$('createForm').reset();await reload();message('草稿已儲存（尚未建立正式診所帳號或預約功能）');}catch(e){message(e.message);if(e.status===409)await reload();}finally{btn.disabled=false;}});
+$('editForm').addEventListener('submit',async event=>{event.preventDefault();if(!editing)return;const btn=$('editSaveBtn');btn.disabled=true;message('正在更新草稿…');try{await req(api+'/drafts/'+encodeURIComponent(editing),{method:'PATCH',headers:{'Content-Type':'application/json','X-Pilot-CSRF':csrf,'Origin':location.origin},body:JSON.stringify({displayName:$('editName').value.trim(),notes:$('editNotes').value,archived:$('archived').checked,expectedRevision:registry.revision})});$('editor').hidden=true;editing=null;await reload();message('診所導入草稿已更新');}catch(e){message(e.message);if(e.status===409)await reload();}finally{btn.disabled=false;}});
+(async()=>{try{const s=await req('/api/pilot/platform/console/session');csrf=s.csrf;await reload();$('clinicCenterMain').hidden=false;$('content').hidden=false;message('已登入工程師總控台；目前只能建立本機導入草稿。');}catch(e){if(e.status===401||e.status===403){location.replace('/platform/admin?next=%2Fplatform%2Fclinics');return;}$('clinicCenterMain').hidden=false;message('目前無法載入診所管理中心：'+e.message);}})();

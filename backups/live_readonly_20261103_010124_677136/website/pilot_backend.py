@@ -1,0 +1,1186 @@
+"""Two-clinic local pilot, v5.
+
+Shanlin clinic settings: read-only session snapshot of its ORIGINAL 8001 admin API.
+Shanlin self-pay catalog: read-only snapshot of the ORIGINAL local JSON.
+Yidian: separate local credentials/config; no Firebase provisioned by this pilot.
+Never writes into original booking_config, appointments or self-pay data.
+"""
+from __future__ import annotations
+
+from collections import defaultdict, deque
+from copy import deepcopy
+from datetime import datetime, timezone, timedelta
+from hmac import compare_digest
+from hashlib import pbkdf2_hmac, sha256
+from pathlib import Path
+from threading import RLock
+from typing import Literal
+from zoneinfo import ZoneInfo
+import base64
+import json
+import os
+import re
+import secrets
+import tempfile
+import time
+import urllib.error
+import urllib.request
+from urllib.parse import urlsplit
+
+from fastapi import APIRouter, Request, Response, UploadFile, File, HTTPException, Depends
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pilot_excel import parse_xlsx, CATEGORIES
+from pilot_shanlin_catalog import snapshot_source_catalog
+
+try:
+    from dotenv import load_dotenv
+    _website_dir = Path(__file__).resolve().parent
+    load_dotenv(_website_dir.parent / '.env', override=False)
+    load_dotenv(_website_dir / '.env', override=False)
+except ImportError:
+    pass
+
+ClinicId = Literal['shanlin', 'yidian']
+CLINICS = {'shanlin': '山林診所', 'yidian': '頤典診所'}
+HERE = Path(__file__).resolve().parent
+PRIVATE_DIR = Path(os.environ.get('PILOT_DATA_DIR', str(Path.home() / '.yidian_pilot_private'))).expanduser().resolve()
+STORAGE_MODE = os.getenv('PILOT_STORAGE', 'local-demo').strip()
+TPE = ZoneInfo('Asia/Taipei')
+_lock = RLock()
+_sessions: dict[str, dict] = {}
+_failed: dict[str, deque] = defaultdict(deque)
+CSRF_HEADER = 'X-Pilot-CSRF'
+COOKIE = 'yidian_pilot_session'
+AUTH_TTL = 2*60*60
+
+
+def now_iso(): return datetime.now(TPE).isoformat(timespec='seconds')
+
+
+def default_config(clinic_id: ClinicId) -> dict:
+    return {
+        'clinicId': clinic_id,
+        'name': CLINICS[clinic_id],
+        'phone': '', 'address': '', 'directions': '',
+        'hours': '', 'intro': '此為頤典雙診所公版展示環境，尚未開放正式病患預約。',
+        'elderlyDates': [],
+        'timeSlots': [],
+        'departments': [], 'physicians': [],
+        'updatedAt': None,
+    }
+
+
+def default_catalog() -> dict:
+    return {'schemaVersion':'clinic-catalog/v1','categories':deepcopy(CATEGORIES),
+            'items':[], 'status':'draft_not_published'}
+
+
+
+def catalog_revision(data) -> str:
+    # Existing catalogs without a revision remain compatible.
+    if not isinstance(data, dict):
+        data = default_catalog()
+
+    revision = data.get('_revision')
+
+    if isinstance(revision, str) and re.fullmatch(
+        r'[0-9a-f]{32}', revision
+    ):
+        return revision
+
+    encoded = json.dumps(
+        data,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(',', ':')
+    ).encode('utf-8')
+
+    return 'legacy-' + sha256(encoded).hexdigest()
+
+
+def private_dir() -> Path:
+    PRIVATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try: PRIVATE_DIR.chmod(0o700)
+    except OSError: pass
+    return PRIVATE_DIR
+
+
+def _file_path(clinic: ClinicId, kind: str) -> Path:
+    if clinic not in CLINICS or kind not in ('config','catalog_draft','catalog_published','demo_bookings'):
+        raise ValueError('Unrecognized clinic or data section')
+    root = private_dir() / clinic
+    root.mkdir(exist_ok=True, mode=0o700)
+    return root / (kind+'.json')
+
+
+def _read_json(path: Path, default):
+    if not path.exists(): return deepcopy(default)
+    with path.open('r', encoding='utf-8') as f: return json.load(f)
+
+
+def _write_json(path: Path, data):
+    fd, pathname = tempfile.mkstemp(prefix='.pilot-', suffix='.tmp', dir=path.parent)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush(); os.fsync(f.fileno())
+        os.replace(pathname,path)
+    finally:
+        if os.path.exists(pathname): os.unlink(pathname)
+
+
+class LocalStore:
+    def read(self, clinic, kind):
+        default = (default_config(clinic) if kind == 'config' else
+                   default_catalog() if kind.startswith('catalog_') else [])
+        with _lock: return _read_json(_file_path(clinic,kind), default)
+    def write(self, clinic, kind, value):
+        with _lock: _write_json(_file_path(clinic,kind), value)
+    def append_demo_booking(self, clinic, booking):
+        with _lock:
+            path = _file_path(clinic,'demo_bookings')
+            all_items = _read_json(path, [])
+            all_items.append(booking)
+            _write_json(path,all_items[-500:])
+
+
+class FirebaseStore:
+    """Manual provisioning: each clinic uses its own named Firebase app/RTDB.
+
+    Only touches pilot_v1/*; never touches existing appointments/booking_config.
+    """
+    _apps = {}
+    _apps_lock=RLock()
+    def _app(self, clinic):
+        from firebase_admin import credentials, initialize_app, get_app
+        with self._apps_lock:
+            if clinic in self._apps: return self._apps[clinic]
+            prefix='PILOT_'+clinic.upper()+'_'
+            url=os.getenv(prefix+'FIREBASE_URL','').strip()
+            cred_string=os.getenv(prefix+'FIREBASE_CREDENTIALS','').strip()
+            if not url or not cred_string:
+                raise HTTPException(503,'尚未為此診所設定獨立 Firebase URL 與服務帳戶憑證')
+            # Defensive guard against copy-pasting Shanlin credentials into Yidian.
+            other='yidian' if clinic=='shanlin' else 'shanlin'
+            other_url=os.getenv('PILOT_'+other.upper()+'_FIREBASE_URL','').strip()
+            other_cred=os.getenv('PILOT_'+other.upper()+'_FIREBASE_CREDENTIALS','').strip()
+            if other_url and url.rstrip('/')==other_url.rstrip('/'):
+                raise HTTPException(503,'兩家診所不得使用相同的 Firebase 資料庫 URL')
+            if other_cred and other_cred==cred_string:
+                raise HTTPException(503,'兩家診所不得使用相同的 Firebase 服務帳戶憑證')
+            try:
+                if cred_string.startswith('{'):
+                    key=json.loads(cred_string)
+                else:
+                    path=Path(cred_string).expanduser().resolve()
+                    key=json.loads(path.read_text(encoding='utf-8'))
+                if key.get('type')!='service_account': raise ValueError('Service account required')
+                if clinic == 'yidian':
+                    expected_host = 'yidian-clinic-bef23-default-rtdb.asia-southeast1.firebasedatabase.app'
+                    parsed_db = urlsplit(url)
+                    if (parsed_db.scheme != 'https'
+                            or parsed_db.hostname != expected_host
+                            or parsed_db.port is not None
+                            or parsed_db.path not in ('', '/')
+                            or parsed_db.query or parsed_db.fragment
+                            or parsed_db.username or parsed_db.password):
+                        raise ValueError('Yidian Firebase database URL mismatch')
+                    if key.get('project_id') != 'yidian-clinic-bef23':
+                        raise ValueError('Yidian Firebase project ID mismatch')
+                if other_cred:
+                    other_key=(json.loads(other_cred) if other_cred.startswith('{') else
+                               json.loads(Path(other_cred).expanduser().read_text(encoding='utf-8')))
+                    if key.get('project_id') and key.get('project_id')==other_key.get('project_id'):
+                        raise ValueError('Same Firebase project is not allowed for two clinics')
+                self._apps[clinic]=initialize_app(credentials.Certificate(key),{'databaseURL':url},name='pilot-'+clinic)
+                return self._apps[clinic]
+            except Exception as exc:
+                # Do not echo exception; it may contain secrets, paths or project details.
+                raise HTTPException(503,'Firebase 尚未正確開通，請檢查該診所的環境變數') from exc
+    def _ref(self,clinic,kind):
+        from firebase_admin import db
+        return db.reference('pilot_v1/'+kind,app=self._app(clinic))
+    def read(self,clinic,kind):
+        default=(default_config(clinic) if kind=='config' else
+                 default_catalog() if kind.startswith('catalog_') else [])
+        try: return self._ref(clinic,kind).get() or deepcopy(default)
+        except HTTPException:raise
+        except Exception as exc:raise HTTPException(503,'資料庫讀取失敗，請檢查此診所 Firebase 權限') from exc
+    def write(self,clinic,kind,value):
+        try: self._ref(clinic,kind).set(value)
+        except HTTPException:raise
+        except Exception as exc:raise HTTPException(503,'資料庫寫入失敗，請檢查此診所 Firebase 權限') from exc
+    def append_demo_booking(self,clinic,booking):
+        try: self._ref(clinic,'demo_bookings').child(booking['id']).set(booking)
+        except HTTPException:raise
+        except Exception as exc:raise HTTPException(503,'資料庫展示紀錄寫入失敗') from exc
+
+
+def clinic_storage_mode(clinic):
+    if clinic not in CLINICS:
+        raise HTTPException(400, '不支援的診所')
+
+    mode = os.getenv(
+        'PILOT_' + clinic.upper() + '_STORAGE',
+        STORAGE_MODE
+    ).strip()
+
+    if mode not in ('local-demo', 'firebase'):
+        raise HTTPException(503, '診所儲存模式設定錯誤')
+
+    return mode
+
+
+class ClinicStorageRouter:
+    def backend(self, clinic):
+        mode = clinic_storage_mode(clinic)
+        return FirebaseStore() if mode == 'firebase' else LocalStore()
+
+    def read(self, clinic, kind):
+        return self.backend(clinic).read(clinic, kind)
+
+    def write(self, clinic, kind, value):
+        return self.backend(clinic).write(clinic, kind, value)
+
+    def append_demo_booking(self, clinic, booking):
+        return self.backend(clinic).append_demo_booking(clinic, booking)
+
+
+def store():
+    return ClinicStorageRouter()
+
+
+def all_demo_bookings(clinic):
+    entries=store().read(clinic,'demo_bookings')
+    if isinstance(entries,dict):return list(entries.values())
+    return entries if isinstance(entries,list) else []
+
+
+def make_hash(password: str, salt: bytes | None=None) -> str:
+    salt=salt or secrets.token_bytes(24)
+    digest=pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 310_000)
+    return base64.urlsafe_b64encode(salt).decode()+':'+base64.urlsafe_b64encode(digest).decode()
+
+
+def verify_hash(password: str, password_hash: str) -> bool:
+    try:
+        salt_part, key_part=password_hash.split(':',1)
+        salt=base64.urlsafe_b64decode(salt_part); key=base64.urlsafe_b64decode(key_part)
+        return compare_digest(pbkdf2_hmac('sha256',password.encode(),salt,310_000),key)
+    except (ValueError, TypeError):return False
+
+
+def accounts_path():return private_dir() / 'accounts.json'
+
+
+def _password_policy(password: str):
+    if len(password) < 12 or len(password) > 256:
+        raise ValueError('Password must have 12-256 characters')
+
+
+def _validate_username(username: str):
+    if not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_.-]{3,63}', username):
+        raise ValueError('Username must be 4-64 ASCII letters, numbers or ._-')
+
+
+def setup_platform_account(username: str, password: str):
+    """Local-only bootstrap; existing platform administrator cannot be silently overwritten."""
+    _password_policy(password)
+    _validate_username(username)
+    with _lock:
+        data = _read_json(accounts_path(), {})
+        if 'platform' in data:
+            raise ValueError('Platform administrator already exists')
+        data['platform'] = {'username':username, 'passwordHash':make_hash(password),
+                            'role':'platform_admin', 'createdAt':now_iso()}
+        _write_json(accounts_path(), data)
+
+
+def platform_account_exists() -> bool:
+    return bool(_read_json(accounts_path(), {}).get('platform'))
+
+
+def tenant_provisioning_state():
+    # This only describes the PILOT process, NOT whether a Firebase project exists.
+    # Env-variable presence is never a connection or successful write/read test.
+    result = {}
+    for clinic in CLINICS:
+        prefix = 'PILOT_' + clinic.upper() + '_'
+        configured = bool(os.getenv(prefix+'FIREBASE_URL','').strip() and
+                          os.getenv(prefix+'FIREBASE_CREDENTIALS','').strip())
+        mode = clinic_storage_mode(clinic)
+        if configured and mode == 'firebase':
+            note = '本機公版已設定 Firebase 模式；尚未驗證資料庫連線。'
+        elif configured:
+            note = '已提供公版專用 Firebase 設定，但目前仍使用本機資料。'
+        else:
+            note = '本機公版未提供獨立 Firebase 設定；無法由此判斷 Firebase 專案是否已建立。'
+        result[clinic] = {
+            'pilotFirebaseCredentialsProvided': configured,
+            'pilotFirebaseConnected': False,
+            'pilotFirebaseConnectionVerified': False,
+            'pilotStorage': mode,
+            'notice': note,
+        }
+    return result
+
+
+def setup_account(clinic: ClinicId, password: str):
+    """Compatibility for existing v1 Yidian test accounts; never provision Shanlin here."""
+    if clinic != 'yidian':
+        raise ValueError('Shanlin uses its original legacy authentication service')
+    return provision_yidian_account('yidian_admin',password,reset=True)
+
+
+def provision_yidian_account(username: str, password: str, *, reset: bool=False):
+    _password_policy(password)
+    _validate_username(username)
+    with _lock:
+        data = _read_json(accounts_path(), {})
+        if 'yidian' in data and not reset:
+            raise ValueError('Yidian administrator exists; explicit reset required')
+        if username == data.get('platform', {}).get('username'):
+            raise ValueError('Clinic username must differ from platform username')
+        data['yidian']={'username':username,'passwordHash':make_hash(password),
+                        'role':'clinic_admin','mustChangePassword':True,
+                        'createdAt':data.get('yidian',{}).get('createdAt') or now_iso(),
+                        'updatedAt':now_iso()}
+        _write_json(accounts_path(),data)
+        invalidate_sessions('yidian')
+
+
+def account_ok(key,username,password):
+    data=_read_json(accounts_path(),{})
+    stored=data.get(key,{})
+    if not isinstance(stored,dict):return False
+    return compare_digest(username,stored.get('username','')) and verify_hash(password,stored.get('passwordHash',''))
+
+
+def _account_data(key):
+    return _read_json(accounts_path(), {}).get(key, {})
+
+
+def invalidate_sessions(clinic):
+    with _lock:
+        for digest, session in list(_sessions.items()):
+            if session.get('clinic') == clinic:
+                _sessions.pop(digest,None)
+
+
+def audit(action, actor='system', clinic=''):
+    # Local demo log intentionally excludes passwords, patient identifiers and request bodies.
+    logpath=private_dir()/'security_audit.jsonl'
+    with _lock:
+        with logpath.open('a',encoding='utf-8') as f:
+            try:os.chmod(logpath,0o600)
+            except OSError:pass
+            f.write(json.dumps({'time':now_iso(),'event':action,'actor':actor,'clinic':clinic},ensure_ascii=False)+'\n')
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _legacy_url_for(path='/api/admin/login'):
+    """Only connect to the verified Shanlin Railway API over HTTPS."""
+    url = os.getenv('PILOT_SHANLIN_LEGACY_URL', '').strip()
+    parsed = urlsplit(url)
+
+    if (parsed.scheme != 'https'
+            or parsed.netloc != 'shanlin-bot-production.up.railway.app'
+            or parsed.path != '/api/admin/login'
+            or parsed.query or parsed.fragment):
+        raise HTTPException(
+            503, '山林後台連線設定不正確；僅允許山林 Railway HTTPS API'
+        )
+
+    if path not in ('/api/admin/login', '/api/admin/clinic-config', '/api/admin/change-password'):
+        raise HTTPException(503, '不允許的山林後台 API 路徑')
+
+    return 'https://shanlin-bot-production.up.railway.app' + path
+
+
+def _legacy_request(url, *, password='', method='GET', body=None):
+    headers={'Content-Type':'application/json'} if method=='POST' else {'X-Admin-Password':password}
+    request=urllib.request.Request(url, data=(json.dumps(body).encode('utf-8') if body is not None else None),
+                                   headers=headers, method=method)
+    with urllib.request.build_opener(_NoRedirect()).open(request, timeout=30 if url.endswith('/api/admin/change-password') else 5) as response:
+        if not (200 <= response.status < 300):raise ValueError('Unexpected legacy API status')
+        raw=response.read(64*1024+1)
+        if len(raw)>64*1024:raise ValueError('Legacy API response too large')
+        return json.loads(raw.decode('utf-8')) if raw else {}
+
+
+def verify_shanlin_legacy(password:str) -> bool:
+    """Verify the real Shanlin account; never cache/store the password."""
+    if os.getenv('PILOT_SHANLIN_LEGACY_AUTH','0') != '1':
+        raise HTTPException(503,'山林原後台本機登入橋接未開啟')
+    url=_legacy_url_for()
+    try:
+        data=_legacy_request(url,method='POST',body={'password':password})
+        if isinstance(data,dict) and data.get('success') is False:return False
+        return True
+    except urllib.error.HTTPError as exc:
+        if exc.code in (400,401,403):return False
+        raise HTTPException(503,'山林原後台驗證服務目前無法使用') from None
+    except (urllib.error.URLError,TimeoutError,ValueError) as exc:
+        raise HTTPException(503,'無法連接山林 Railway 正式後台；請確認 HTTPS API 是否正常') from None
+
+
+def fetch_shanlin_clinic_config(password:str):
+    """One-time, session-only snapshot. Original 8001 remains authoritative.
+
+    Never store Shanlin's admin password or write the fetched fields to pilot files.
+    """
+    try:
+        data=_legacy_request(_legacy_url_for('/api/admin/clinic-config'),password=password)
+        clinic=data.get('clinic') if isinstance(data,dict) else None
+        if not isinstance(clinic,dict):return None,'原後台回傳格式與預期不符'
+        actual_name=str(clinic.get('name') or '').strip()
+        # A successful 8001 password check alone does NOT prove this endpoint
+        # belongs to Shanlin. Fail closed to prevent silent cross-tenant mixing.
+        if actual_name.replace(' ','') != CLINICS['shanlin']:
+            return None,'山林 Railway 後台回傳的診所名稱「'+actual_name[:50]+'」不是山林；為避免資料混用，已停止自動帶入，請核對 site-config.js／診所設定。'
+        safe=default_config('shanlin')
+        for new, old,limit in [('name','name',80),('phone','phone',60),('address','address',250),
+                              ('directions','addressNote',500),('hours','hours',800)]:
+            if old in clinic and isinstance(clinic[old],str):safe[new]=clinic[old][:limit]
+        # Don't inject fake dates/slots when legacy schema differs.
+        dates=clinic.get('elderlyDates',[])
+        times=clinic.get('elderlyTimes',[])
+        safe['elderlyDates']=[v for v in dates[:100] if isinstance(v,str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}',v)] if isinstance(dates,list) else []
+        safe['timeSlots']=[v for v in times[:30] if isinstance(v,str) and re.fullmatch(r'([01]\d|2[0-3]):[0-5]\d',v)] if isinstance(times,list) else []
+        return safe,''
+    except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError,TypeError):
+        return None,'無法從山林 Railway 後台讀取基本資料；請確認正式後台是否正常'
+
+
+def prune_failed(ip):
+    cutoff=time.monotonic()-600
+    q=_failed[ip]
+    while q and q[0]<cutoff:q.popleft()
+    return q
+
+
+def new_session(clinic, role='clinic_admin', username='', must_change=False):
+    value=secrets.token_urlsafe(36)
+    with _lock:
+        _sessions[sha256(value.encode()).hexdigest()]={
+            'clinic':clinic,'role':role,'username':username,'mustChangePassword':must_change,
+            'csrf':secrets.token_urlsafe(26),'expires':time.time()+AUTH_TTL}
+    return value
+
+
+def issue_cookie(request, response, token):
+    response.set_cookie(COOKIE,token,max_age=AUTH_TTL,httponly=True,samesite='strict',
+                        secure=request.url.scheme=='https',path='/api/pilot')
+
+
+def authorized(request: Request) -> dict:
+    raw=request.cookies.get(COOKIE, '')
+    if not raw: raise HTTPException(401,'請先登入診所管理後台')
+    digest=sha256(raw.encode()).hexdigest()
+    with _lock:
+        sess=_sessions.get(digest)
+        if not sess or sess['expires']<time.time():
+            _sessions.pop(digest,None)
+            raise HTTPException(401,'登入已逾時，請重新登入')
+    return sess
+
+
+def require_mutation(request: Request, session=Depends(authorized)) -> dict:
+    if not compare_digest(request.headers.get(CSRF_HEADER,''),session['csrf']):
+        raise HTTPException(403,'安全驗證失敗，請重新登入')
+    # Only same-origin browser mutations. CSRF header is needed for scripts/curl.
+    origin=request.headers.get('origin')
+    if origin:
+        own=str(request.base_url).rstrip('/')
+        if origin.rstrip('/')!=own:raise HTTPException(403,'跨站寫入已拒絕')
+    return session
+
+
+
+def require_clinic(sess=Depends(authorized)):
+    if sess.get('role')!='clinic_admin' or sess.get('clinic') not in CLINICS:
+        raise HTTPException(403,'此操作僅限診所管理員')
+    if sess.get('mustChangePassword'):
+        raise HTTPException(403,'請先變更首次登入的初始密碼')
+    return sess
+
+
+def require_clinic_mutation(request:Request, sess=Depends(require_mutation)):
+    if sess.get('role')!='clinic_admin' or sess.get('clinic') not in CLINICS:
+        raise HTTPException(403,'此操作僅限診所管理員')
+    if sess.get('mustChangePassword'):
+        raise HTTPException(403,'請先變更首次登入的初始密碼')
+    return sess
+
+
+def require_platform(sess=Depends(authorized)):
+    if sess.get('role') != 'platform_admin':
+        raise HTTPException(403,'此操作僅限頤典平台總管理員')
+    return sess
+
+
+def require_platform_mutation(request:Request, sess=Depends(require_mutation)):
+    if sess.get('role') != 'platform_admin':
+        raise HTTPException(403,'此操作僅限頤典平台總管理員')
+    return sess
+
+class LoginIn(BaseModel):
+    clinicId: ClinicId
+    username: str = Field(min_length=3,max_length=80)
+    password: str = Field(min_length=1,max_length=256)
+
+class CredentialsIn(BaseModel):
+    username:str=Field(min_length=4,max_length=64)
+    password:str=Field(min_length=12,max_length=256)
+
+class ProvisionIn(CredentialsIn):
+    reset:bool=False
+
+class LegacyLoginIn(BaseModel):
+    # The username is checked locally; Railway still verifies its existing password.
+    username:str=Field(min_length=4,max_length=64)
+    password:str=Field(min_length=1,max_length=256)
+
+class LegacyPublicPreviewIn(BaseModel):
+    password: str = Field(min_length=1, max_length=256)
+
+
+class ChangePasswordIn(BaseModel):
+    oldPassword:str=Field(min_length=1,max_length=256)
+    newPassword:str=Field(min_length=12,max_length=256)
+
+class DepartmentIn(BaseModel):
+    id:str=Field(pattern=r'^[a-z][a-z0-9_-]{2,39}$')
+    name:str=Field(min_length=2,max_length=50)
+    enabled:bool=True
+
+class PhysicianIn(BaseModel):
+    id:str=Field(pattern=r'^[a-z][a-z0-9_-]{2,39}$')
+    name:str=Field(min_length=2,max_length=60)
+    departmentId:str=Field(pattern=r'^[a-z][a-z0-9_-]{2,39}$')
+    title:str=Field(default='',max_length=70)
+    enabled:bool=True
+
+class StaffIn(BaseModel):
+    departments:list['DepartmentIn']=Field(default_factory=list,max_length=40)
+    physicians:list['PhysicianIn']=Field(default_factory=list,max_length=100)
+    expectedRevision:str=Field(min_length=64,max_length=64,pattern=r'^[0-9a-f]{64}$')
+
+    @model_validator(mode='after')
+    def check_membership(self):
+        ids=[d.id for d in self.departments]
+        staff=[p.id for p in self.physicians]
+        if len(ids)!=len(set(ids)) or len(staff)!=len(set(staff)):
+            raise ValueError('科別或醫師識別碼不可重複')
+        if any(p.departmentId not in ids for p in self.physicians):
+            raise ValueError('醫師必須指定本診所已建立的科別')
+        return self
+
+class ConfigIn(BaseModel):
+    name:str=Field(min_length=2,max_length=80)
+    phone:str=Field(default='',max_length=60)
+    address:str=Field(default='',max_length=250)
+    directions:str=Field(default='',max_length=500)
+    hours:str=Field(default='',max_length=800)
+    intro:str=Field(default='',max_length=600)
+    elderlyDates:list[str]=Field(default_factory=list,max_length=100)
+    timeSlots:list[str]=Field(default_factory=list,max_length=30)
+    departments:list['DepartmentIn']=Field(default_factory=list,max_length=40)
+    physicians:list['PhysicianIn']=Field(default_factory=list,max_length=100)
+
+    @field_validator('elderlyDates')
+    @classmethod
+    def valid_dates(cls,values):
+        for v in values:
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}',v):raise ValueError('日期須為 YYYY-MM-DD')
+            try: datetime.strptime(v,'%Y-%m-%d')
+            except ValueError as e:raise ValueError('包含無效日期') from e
+        if len(set(values))!=len(values):raise ValueError('日期不可重複')
+        return sorted(values)
+
+    @field_validator('timeSlots')
+    @classmethod
+    def valid_times(cls,values):
+        for v in values:
+            if not re.fullmatch(r'([01]\d|2[0-3]):[0-5]\d',v):raise ValueError('時段須為 HH:MM')
+        if len(set(values))!=len(values):raise ValueError('時段不可重複')
+        return sorted(values)
+
+    @model_validator(mode='after')
+    def validate_people(self):
+        dep_ids=[x.id for x in self.departments]
+        staff_ids=[x.id for x in self.physicians]
+        if len(dep_ids)!=len(set(dep_ids)) or len(staff_ids)!=len(set(staff_ids)):
+            raise ValueError('科別或醫師識別碼不可重複')
+        if any(p.departmentId not in dep_ids for p in self.physicians):
+            raise ValueError('醫師必須指定已存在的科別')
+        return self
+
+class CatalogIn(BaseModel):
+    schemaVersion:str=Field(default='clinic-catalog/v1')
+    sourceFilename:str=Field(default='',max_length=180)
+    categories:list[dict]=Field(default_factory=lambda:deepcopy(CATEGORIES))
+    items:list[dict]=Field(default_factory=list,max_length=1000)
+    expectedRevision:str=Field(..., pattern=r'^(?:[0-9a-f]{32}|legacy-[0-9a-f]{64})$')
+
+class DemoBookingIn(BaseModel):
+    plan:Literal['A','B','C']
+    date:str=Field(min_length=10,max_length=10)
+    time:str=Field(min_length=5,max_length=5)
+    itemIds:list[str]=Field(default_factory=list,max_length=30)
+
+
+def validate_catalog(payload:dict, publish=False):
+    allowed={c['id'] for c in CATEGORIES}
+    used=set();cleaned=[]
+    for item in payload.get('items',[]):
+        if not isinstance(item,dict):raise HTTPException(422,'健檢項目格式錯誤')
+        uid=item.get('id'); title=item.get('name'); category=item.get('categoryId')
+        if not isinstance(uid,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{2,64}',uid):
+            raise HTTPException(422,'健檢項目識別碼無效')
+        if uid in used:raise HTTPException(422,'健檢項目識別碼重複')
+        used.add(uid)
+        if not isinstance(title,str) or not (1<=len(title.strip())<=150):
+            raise HTTPException(422,'健檢項目名稱無效')
+        if category not in allowed:raise HTTPException(422,'健檢分類無效')
+        p=item.get('price')
+        if p is not None and (type(p) is not int or p<0 or p>10_000_000):
+            raise HTTPException(422,'價格必須是有效的整數')
+        reviewed=(item.get('reviewed') is True)
+        enabled=(item.get('enabled') is True)
+        if enabled and publish and (not reviewed or p is None):
+            raise HTTPException(422,f'「{title[:30]}」尚未核對價格或內容，不能發布')
+        description=item.get('description','')
+        if not isinstance(description,str) or len(description)>4000:raise HTTPException(422,'檢查說明超過上限')
+        comps=item.get('components',[])
+        if not isinstance(comps,list) or len(comps)>100:raise HTTPException(422,'套組內容超過上限')
+        components=[]
+        for c in comps:
+            if not isinstance(c,dict) or not isinstance(c.get('name'),str) or len(c['name'])>150:raise HTTPException(422,'套組細項格式錯誤')
+            components.append({'name':c['name'].strip(),'meaning':str(c.get('meaning',''))[:1000]})
+        cleaned.append({
+            'id':uid,'name':title.strip(),'categoryId':category,'type':'package' if item.get('type')=='package' else 'single',
+            'description':description.strip(),'price':p,'components':components,'reviewed':reviewed,'enabled':enabled,
+            'originalGroup':str(item.get('originalGroup',''))[:150],
+            'sourceSheet':str(item.get('sourceSheet',''))[:150],
+            'sourceRows':str(item.get('sourceRows',''))[:30],
+            'issue':str(item.get('issue',''))[:180],
+        })
+    if publish and not any(e['enabled'] for e in cleaned):
+        raise HTTPException(422,'請至少核對並啟用一個自費項目才能發布')
+    return {'schemaVersion':'clinic-catalog/v1','categories':deepcopy(CATEGORIES),
+            'sourceFilename':str(payload.get('sourceFilename',''))[:180], 'items':cleaned}
+
+
+router=APIRouter()
+
+@router.get('/pilot',include_in_schema=False)
+@router.get('/pilot/',include_in_schema=False)
+def portal_html(): return FileResponse(HERE/'pilot_static'/'index.html',media_type='text/html')
+
+@router.get('/pilot/assets/{filename}',include_in_schema=False)
+def asset(filename:str):
+    if filename not in ('pilot.css','pilot.js'):raise HTTPException(404)
+    return FileResponse(HERE/'pilot_static'/filename)
+
+@router.get('/api/pilot/clinics')
+def available_clinics(sess=Depends(require_platform)):
+    return {'clinics':[{'id':c,'name':CLINICS[c]} for c in CLINICS], 'storage':STORAGE_MODE,
+            'disclaimer':'校外展示用，勿輸入真實病患資料'}
+
+@router.get('/api/pilot/clinics/{clinic}/public')
+def public_clinic(clinic:ClinicId):
+    data=store().read(clinic,'config')
+    published=store().read(clinic,'catalog_published')
+    visible=[{k:v for k,v in e.items() if k in ('id','name','categoryId','type','description','components','price')}
+             for e in published.get('items',[]) if e.get('enabled') and e.get('reviewed')]
+    source='pilot_published' if visible else 'unpublished'
+    if clinic=='shanlin':
+        # Original Shanlin site is the authoritative *preview* regardless of
+        # stale v3 pilot-published test data. Never conceal the real catalog.
+        original=snapshot_source_catalog(HERE)
+        if original['available']:
+            visible=[{k:v for k,v in item.items() if k in ('id','name','categoryId','type','description','components','price')}
+                     for item in original['items']]
+            source='legacy_file_unverified_preview'  # Catalog file owner is not proven by its location.
+    public={k:data.get(k,'') for k in ('name','phone','address','directions','hours','intro','elderlyDates','timeSlots','departments','physicians')}
+    if clinic=='shanlin':
+        # The original Shanlin config belongs to its 8001 backend; never advertise
+        # stale pilot copies of Shanlin business fields as authoritative.
+        public.update({k:'' for k in ('phone','address','directions','hours','elderlyDates','timeSlots')})
+        public['name']='山林診所'
+    return {'clinicId':clinic,'clinic':public,'categories':CATEGORIES,'items':visible,
+            'catalogSource':source,
+            'catalogVersion':published.get('publishedVersion'), 'storage':STORAGE_MODE,
+            'demoOnly':True, 'yidianAccountProvisioned':bool(_account_data('yidian')) if clinic=='yidian' else None}
+
+@router.get('/api/pilot/clinics/yidian/account-status')
+def yidian_account_status(response:Response):
+    response.headers['Cache-Control'] = 'no-store'
+    state = tenant_provisioning_state()['yidian']
+    # Distinguish account login, pilot storage mode and externally provisioned
+    # Firebase. Do not mistake an unverified connection for a missing project.
+    return {
+        'clinicId': 'yidian',
+        'accountProvisioned': bool(_account_data('yidian')),
+        'pilotStorage': state['pilotStorage'],
+        'pilotFirebaseCredentialsProvided': state['pilotFirebaseCredentialsProvided'],
+        'firebaseConnected': None,  # unknown: not tested, NOT disconnected
+        'firebaseConnectionVerified': False,
+        'notice': state['notice'],
+    }
+
+
+@router.post('/api/pilot/clinics/{clinic}/demo-booking')
+def demo_booking_removed(clinic:ClinicId):
+    # v3 intentionally removes fictitious booking to avoid confusion with existing production appointments.
+    raise HTTPException(410,'展示預約功能已移除，請使用診所的正式預約後台')
+
+def check_login_limit(request):
+    ip=request.client.host if request.client else 'unknown'
+    with _lock:
+        if len(prune_failed(ip))>=10:raise HTTPException(429,'嘗試次數過多，請稍後再試')
+    return ip
+
+
+def fail_login(ip):
+    with _lock:_failed[ip].append(time.monotonic())
+    raise HTTPException(401,'帳號或密碼不正確')
+
+
+@router.post('/api/pilot/platform/login')
+def platform_login(body:CredentialsIn, request:Request, response:Response):
+    ip=check_login_limit(request)
+    if not account_ok('platform',body.username,body.password):fail_login(ip)
+    token=new_session(None,role='platform_admin',username=body.username)
+    sess=_sessions[sha256(token.encode()).hexdigest()]
+    issue_cookie(request,response,token)
+    audit('platform_login',body.username)
+    return {'success':True,'role':'platform_admin','csrf':sess['csrf'],'expiresIn':AUTH_TTL}
+
+
+@router.get('/api/pilot/platform/state')
+def platform_state(sess=Depends(require_platform)):
+    accounts=_read_json(accounts_path(),{})
+    return {'role':'platform_admin','clinics':[
+        {'clinicId':'shanlin','name':'山林診所','authMode':'legacy_bridge',
+         'provisioned':'原本後台管理，不在公版重設密碼',
+         'bridgeEnabled':os.getenv('PILOT_SHANLIN_LEGACY_AUTH','0')=='1'},
+        {'clinicId':'yidian','name':'頤典診所','authMode':'pilot_local',
+         'provisioned':bool(accounts.get('yidian')),
+         'username':accounts.get('yidian',{}).get('username') if accounts.get('yidian') else None}
+    ],'storage':STORAGE_MODE,'firebaseProvisioning':tenant_provisioning_state(),
+      'notice':'各診所 Firebase 與本機公版設定彼此獨立；未檢測連線時不得宣稱資料庫未開通。'}
+
+
+@router.post('/api/pilot/platform/clinics/yidian/account')
+def platform_provision_yidian(body:ProvisionIn,sess=Depends(require_platform_mutation)):
+    try:provision_yidian_account(body.username,body.password,reset=body.reset)
+    except ValueError as e:raise HTTPException(409,str(e)) from e
+    audit('yidian_account_reset' if body.reset else 'yidian_account_created',sess['username'],'yidian')
+    return {'success':True,'clinicId':'yidian','username':body.username,'initialPasswordMustChange':True}
+
+
+@router.post('/api/pilot/admin/legacy-shanlin-login')
+def shanlin_login(body:LegacyLoginIn, request:Request, response:Response):
+    ip=check_login_limit(request)
+    # A local tenant login identity (NOT a second Railway account).
+    # A wrong username must never trigger an upstream password attempt.
+    if not compare_digest(body.username, 'shanlin_admin'):fail_login(ip)
+    if not verify_shanlin_legacy(body.password):fail_login(ip)
+    # Read legacy clinic settings only AFTER validating the original password.
+    # The password is NEVER stored in pilot files or in the session.
+    legacy_config, legacy_error=fetch_shanlin_clinic_config(body.password)
+    # CRITICAL: an accepted password at 8001 does not prove the database
+    # belongs to Shanlin. Never give access to Shanlin's pilot data when the
+    # legacy server identifies itself as Yidian or cannot be verified.
+    if legacy_config is None:
+        audit('legacy_source_ownership_rejected','legacy_identity_mismatch','shanlin')
+        raise HTTPException(409, legacy_error or '原後台診所歸屬未驗證，不可登入山林公版')
+    token=new_session('shanlin',role='clinic_admin',username=body.username)
+    sess=_sessions[sha256(token.encode()).hexdigest()]
+    sess['legacyConfig']=legacy_config
+    sess['legacyConfigError']=legacy_error
+    sess['legacyConfigReadAt']=now_iso() if legacy_config else None
+    issue_cookie(request,response,token)
+    audit('shanlin_legacy_bridge_login',body.username,'shanlin')
+    return {'success':True,'clinicId':'shanlin','role':'clinic_admin',
+            'csrf':sess['csrf'],'mustChangePassword':False,'expiresIn':AUTH_TTL}
+
+
+@router.post('/api/pilot/admin/login')
+def login(body:LoginIn, request:Request, response:Response):
+    if body.clinicId=='shanlin':
+        # Same API contract for both clinics, independently verified.
+        return shanlin_login(
+            LegacyLoginIn(username=body.username,password=body.password),
+            request,response
+        )
+    ip=check_login_limit(request)
+    if not account_ok('yidian',body.username,body.password):fail_login(ip)
+    account=_account_data('yidian')
+    must_change=bool(account.get('mustChangePassword'))
+    token=new_session('yidian',role='clinic_admin',username=body.username,must_change=must_change)
+    sess=_sessions[sha256(token.encode()).hexdigest()]
+    issue_cookie(request,response,token)
+    audit('clinic_login',body.username,'yidian')
+    return {'success':True,'clinicId':'yidian','role':'clinic_admin',
+            'csrf':sess['csrf'],'mustChangePassword':must_change,'expiresIn':AUTH_TTL}
+
+
+@router.post('/api/pilot/admin/yidian/legacy-public-preview')
+def preview_yidian_legacy_public_fields(
+    sess=Depends(require_clinic_mutation)
+):
+    # Retired endpoint: never contact the legacy backend.
+    raise HTTPException(
+        status_code=410,
+        detail='舊版資料預覽功能已停用'
+    )
+
+
+@router.get('/api/pilot/admin/session')
+def session_state(sess=Depends(authorized)):
+    return {'clinicId':sess['clinic'],'role':sess.get('role','clinic_admin'),
+            'username':sess.get('username',''),'mustChangePassword':sess.get('mustChangePassword',False),
+            'csrf':sess['csrf'],'expiresAt':sess['expires']}
+
+
+@router.post('/api/pilot/admin/change-password')
+def change_password(body:ChangePasswordIn,request:Request,sess=Depends(require_mutation)):
+    # DOUBTS-SHANLIN-PASSWORD-V1: authenticated + CSRF-protected, no password retained.
+    if sess.get('role')=='clinic_admin' and sess.get('clinic')=='shanlin':
+        if os.getenv('PILOT_SHANLIN_LEGACY_AUTH','0') != '1':
+            raise HTTPException(503,'山林原後台登入橋接未開啟')
+        check_login_limit(request)
+        try:
+            result=_legacy_request(_legacy_url_for('/api/admin/change-password'),method='POST',
+                                   body={'oldPassword':body.oldPassword,'newPassword':body.newPassword})
+        except urllib.error.HTTPError as exc:
+            messages={401:'目前密碼不正確',403:'山林後台拒絕此操作',404:'正式站尚未部署修改密碼功能',
+                      422:'新密碼須至少 12 字元，且不可與目前密碼相同',429:'嘗試次數過多，請五分鐘後再試',
+                      503:'正式站密碼儲存未就緒，請工程師檢查 Railway Volume'}
+            raise HTTPException(exc.code if exc.code in messages else 502,
+                                messages.get(exc.code,'山林後台暫時無法完成操作')) from None
+        except Exception:
+            raise HTTPException(502,'連線中斷，結果尚未確認；請先嘗試以新密碼重新登入，再決定是否重送') from None
+        if not isinstance(result,dict) or result.get('success') is not True:
+            raise HTTPException(502,'山林後台未確認密碼更新，請先重新登入確認')
+        invalidate_sessions('shanlin')
+        audit('clinic_password_changed',sess.get('username',''),'shanlin')
+        return {'success':True,'reloginRequired':True}
+    if sess.get('role')!='clinic_admin' or sess.get('clinic')!='yidian':
+        raise HTTPException(403,'僅頤典診所管理員可修改本示範帳號密碼')
+    with _lock:
+        data=_read_json(accounts_path(),{})
+        account=data.get('yidian') or {}
+        if not verify_hash(body.oldPassword,account.get('passwordHash','')):
+            raise HTTPException(401,'原密碼不正確')
+        if body.oldPassword==body.newPassword:raise HTTPException(422,'新密碼不可與初始密碼相同')
+        account['passwordHash']=make_hash(body.newPassword)
+        account['mustChangePassword']=False
+        account['updatedAt']=now_iso()
+        data['yidian']=account
+        _write_json(accounts_path(),data)
+        invalidate_sessions('yidian')
+    audit('clinic_password_changed',sess.get('username',''),'yidian')
+    return {'success':True,'reloginRequired':True}
+
+
+@router.post('/api/pilot/admin/logout')
+def logout(response:Response,request:Request, sess=Depends(require_mutation)):
+    raw=request.cookies.get(COOKIE,'')
+    with _lock:_sessions.pop(sha256(raw.encode()).hexdigest(),None)
+    response.delete_cookie(COOKIE,path='/api/pilot')
+    return {'success':True}
+
+def staff_revision(data):
+    import json
+    sections = {
+        'departments': data.get('departments', []),
+        'physicians': data.get('physicians', [])
+    }
+    encoded = json.dumps(
+        sections, ensure_ascii=False,
+        sort_keys=True, separators=(',', ':')
+    ).encode('utf-8')
+    return sha256(encoded).hexdigest()
+
+
+@router.get('/api/pilot/admin/state')
+def admin_state(sess=Depends(require_clinic)):
+    slug=sess['clinic']; s=store()
+    config=s.read(slug,'config')
+    staff_rev=staff_revision(config)
+    source='pilot_local_editable'
+    if slug=='shanlin':
+        # Keep local pilot staff, but NEVER show the v3 Shanlin duplicate settings
+        # as though those were sourced from the original 8001 appointment backend.
+        staff={key:config.get(key,[]) for key in ('departments','physicians')}
+        original=sess.get('legacyConfig')
+        config=(deepcopy(original) if original else default_config('shanlin'))
+        config.update(staff)
+        source='shanlin_legacy_verified_snapshot' if original else 'shanlin_legacy_unavailable'
+    current_draft=s.read(slug,'catalog_draft')
+    return {'clinicId':slug,'config':config,'configSource':source,
+            'staffRevision':staff_rev,
+            'legacyConfigReadAt':sess.get('legacyConfigReadAt'),
+            'legacyConfigError':sess.get('legacyConfigError',''),
+            'catalogDraft':current_draft,
+            'catalogDraftRevision':catalog_revision(current_draft),
+            'catalogPublished':s.read(slug,'catalog_published'),
+            'storage':clinic_storage_mode(slug)}
+
+@router.put('/api/pilot/admin/config')
+def update_config(body:ConfigIn,sess=Depends(require_clinic_mutation)):
+    slug=sess['clinic']
+    if slug=='shanlin':
+        raise HTTPException(409,'山林基本資料由山林 Railway 正式後台維護，此處僅供唯讀查看，避免重複修改')
+    data=body.model_dump()
+    # Staff are managed by their own endpoint. Do NOT overwrite them with an
+    # old copy submitted by another open tab or unsaved form.
+    with _lock:
+        existing=store().read(slug,'config')
+        for section in ('departments','physicians'):
+            data[section]=existing.get(section,[])
+        data.update({'clinicId':slug,'updatedAt':now_iso()})
+        store().write(slug,'config',data)
+    return {'success':True,'clinic':data,'publishedToLegacySite':False}
+
+@router.put('/api/pilot/admin/staff')
+def update_staff(body:StaffIn,sess=Depends(require_clinic_mutation)):
+    slug=sess['clinic']
+    backend=store().backend(slug)
+
+    departments=[x.model_dump() for x in body.departments]
+    physicians=[x.model_dump() for x in body.physicians]
+
+    def apply_update(existing):
+        if not isinstance(existing,dict) or not existing:
+            existing=default_config(slug)
+
+        if staff_revision(existing)!=body.expectedRevision:
+            raise HTTPException(
+                409,
+                '科別與醫師已有新版本，請重新整理後再編輯；本次未儲存'
+            )
+
+        updated=deepcopy(existing)
+        updated['departments']=departments
+        updated['physicians']=physicians
+        updated['clinicId']=slug
+        updated['updatedAt']=now_iso()
+        return updated
+
+    if isinstance(backend,LocalStore):
+        import fcntl
+
+        with _lock:
+            path=_file_path(slug,'config')
+            path.parent.mkdir(parents=True,exist_ok=True)
+            lock_path=path.parent/'.config.lock'
+            fd=os.open(str(lock_path),os.O_CREAT|os.O_RDWR,0o600)
+
+            try:
+                fcntl.flock(fd,fcntl.LOCK_EX)
+                existing=_read_json(path,default_config(slug))
+                updated=apply_update(existing)
+                _write_json(path,updated)
+            finally:
+                fcntl.flock(fd,fcntl.LOCK_UN)
+                os.close(fd)
+
+    elif isinstance(backend,FirebaseStore):
+        try:
+            updated=backend._ref(slug,'config').transaction(
+                apply_update
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                503,
+                '科別與醫師儲存失敗，請稍後再試'
+            ) from exc
+    else:
+        raise HTTPException(503,'不支援的儲存方式')
+
+    return {
+        'success':True,
+        'clinicId':slug,
+        'departments':updated['departments'],
+        'physicians':updated['physicians'],
+        'staffRevision':staff_revision(updated),
+        'publishedToLegacySite':False
+    }
+
+@router.get('/api/pilot/admin/shanlin/source-catalog')
+def read_shanlin_catalog(sess=Depends(require_clinic)):
+    if sess['clinic']!='shanlin':
+        raise HTTPException(403,'只有山林診所管理員可讀取山林原網站檔案')
+    return snapshot_source_catalog(HERE)
+
+@router.post('/api/pilot/admin/shanlin/source-catalog')
+def forbid_source_catalog_writes(sess=Depends(require_clinic_mutation)):
+    raise HTTPException(405,'原山林價目表僅可讀取；建立公版草稿請走獨立的草稿儲存 API')
+
+@router.post('/api/pilot/admin/import-excel')
+async def import_excel(file:UploadFile=File(...),sess=Depends(require_clinic_mutation)):
+    if not file.filename or not file.filename.lower().endswith('.xlsx'):
+        raise HTTPException(422,'僅支援 .xlsx 格式')
+    body=await file.read(5*1024*1024+1)
+    if len(body)>5*1024*1024:raise HTTPException(413,'Excel 檔案不可超過 5 MB')
+    try: parsed=parse_xlsx(body,file.filename)
+    except ValueError as e:raise HTTPException(422,str(e)) from e
+    return parsed  # preview, not saved or published
+
+def write_catalog_with_revision(clinic, value, expected_revision):
+    # Generate a unique revision for this successful update.
+    new_data = deepcopy(value)
+    revision = secrets.token_hex(16)
+    new_data['_revision'] = revision
+
+    backend = store().backend(clinic)
+
+    if isinstance(backend, LocalStore):
+        import fcntl
+
+        with _lock:
+            path = _file_path(clinic, 'catalog_draft')
+            lock_path = path.parent / '.catalog_draft.lock'
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR, 0o600)
+
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+
+                existing = _read_json(path, default_catalog())
+
+                if catalog_revision(existing) != expected_revision:
+                    raise HTTPException(
+                        409,
+                        '健檢草稿已有新版本，請重新載入後再編輯；本次未儲存'
+                    )
+
+                _write_json(path, new_data)
+
+            finally:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+                os.close(fd)
+
+    elif isinstance(backend, FirebaseStore):
+        try:
+            ref = backend._ref(clinic, 'catalog_draft')
+
+            def transaction_update(existing):
+                if not isinstance(existing, dict) or not existing:
+                    existing = default_catalog()
+
+                if catalog_revision(existing) != expected_revision:
+                    raise HTTPException(
+                        409,
+                        '健檢草稿已有新版本，請重新載入後再編輯；本次未儲存'
+                    )
+
+                return new_data
+
+            ref.transaction(transaction_update)
+
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                503,
+                '健檢草稿儲存失敗，請聯絡系統管理員'
+            ) from exc
+
+    else:
+        raise HTTPException(503, '不支援的草稿儲存方式')
+
+    return revision
+
+
+@router.put('/api/pilot/admin/catalog/draft')
+def save_draft(payload:CatalogIn,sess=Depends(require_clinic_mutation)):
+    normalized = validate_catalog(payload.model_dump())
+    normalized.update({
+        'status': 'draft_not_published',
+        'savedAt': now_iso()
+    })
+
+    revision = write_catalog_with_revision(
+        sess['clinic'],
+        normalized,
+        payload.expectedRevision
+    )
+
+    return {
+        'success': True,
+        'count': len(normalized['items']),
+        'revision': revision,
+        'message': '已儲存為草稿，尚未發布'
+    }
+
+@router.post('/api/pilot/admin/catalog/publish')
+def publish_catalog(sess=Depends(require_clinic_mutation)):
+    slug=sess['clinic'];s=store()
+    draft=s.read(slug,'catalog_draft')
+    cleaned=validate_catalog(draft,publish=True)
+    version='v'+datetime.now(TPE).strftime('%Y%m%d%H%M%S')+'_'+secrets.token_hex(3)
+    cleaned.update({'status':'published','publishedAt':now_iso(),'publishedVersion':version})
+    s.write(slug,'catalog_published',cleaned)
+    return {'success':True,'version':version,
+            'publishedCount':sum(x['enabled'] for x in cleaned['items'])}
+
+# v4: the status is evidence-based, never a fake green "synced" badge.
+@router.get('/api/pilot/admin/integration')
+def clinic_integration_state(sess=Depends(require_clinic)):
+    clinic=sess['clinic']
+    if clinic=='shanlin':
+        verified=bool(sess.get('legacyConfig'))
+        source=snapshot_source_catalog(HERE)
+        return {'clinicId':clinic,'connected':False,'mode':'legacy_admin_link',
+                'label':'山林 Railway 正式後台是基本資料來源',
+                'url':('https://shanlin-bot-production.up.railway.app/admin.html'
+                       if verified else None),
+                'legacyConfigRead':verified,'legacyConfigReadAt':sess.get('legacyConfigReadAt'),
+                'originalCatalogAvailable':source['available'],'originalCatalogCount':source['count'],
+                'yidianFirebaseConnected':False,'writebackToLegacySite':False,
+                'details':('已從原山林後台取得基本資料（本次登入唯讀快照）' if verified else
+                           '尚未完成山林資料來源的歸屬核對；Railway 可能可連線，但名稱或所屬資料庫不符。請核對來源，不要重複填寫或直接複製') +
+                          '；科別醫師與 Excel 草稿只儲存於 8005，尚未寫回原預約網站。'}
+    firebase=tenant_provisioning_state()['yidian']
+    yidian_firebase_configured = (
+        clinic_storage_mode('yidian') == 'firebase'
+        and firebase['pilotFirebaseCredentialsProvided']
+    )
+    return {'clinicId':clinic,'connected':False,'mode':'pilot_storage_unverified',
+            'label':(
+                '頤典公版已設定使用 Firebase（連線未驗證）；正式預約尚未串接'
+                if yidian_firebase_configured else
+                '頤典公版目前未驗證 Firebase 連線；正式預約尚未串接'
+            ), 'url':None,
+            'legacyConfigRead':False,'originalCatalogAvailable':False,
+            'originalCatalogCount':0,'yidianFirebaseConnected':None,
+            'firebaseConnectionVerified':False,
+            'pilotStorage':clinic_storage_mode('yidian'),
+            'firebaseCredentialsProvided':firebase['pilotFirebaseCredentialsProvided'],
+            'writebackToLegacySite':False,
+            'details':(
+                '頤典本機公版設定為專屬 Firebase 模式，仍須獨立驗證連線。'
+                '正式預約與病歷系統尚未串接。'
+                if yidian_firebase_configured else
+                '本機公版尚未驗證 Firebase 連線；這不代表既有頤典 Firebase 專案未開通。'
+                '正式預約與病歷系統尚未串接。'
+            )}
+
+@router.get('/api/pilot/admin/health')
+def clinic_admin_health(sess=Depends(require_clinic)):
+    return {'clinicId':sess['clinic'],'managementApi':'ok',
+            'appointmentApi':'not_integrated', 'catalogStore':clinic_storage_mode(sess['clinic']),
+            'legacyWritesEnabled':False,'originalShanlinCatalogMode':'read_only'}

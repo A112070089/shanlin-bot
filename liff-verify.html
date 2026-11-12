@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>頤典診所 LINE 帳號綁定</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<link rel="stylesheet" href="css/liff-verify.css"/>
+<!-- 部署設定：後端網址、LIFF ID（開通新診所時改這個檔） -->
+<script src="site-config.js"></script>
+<!-- 診所設定：名稱 -->
+<script src="clinic.js" data-api="admin"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-ic"><i class="ti ti-building-hospital"></i></div>
+    <div>
+      <div class="topbar-name" data-clinic="name">頤典診所</div>
+      <div class="topbar-sub">LINE 帳號綁定</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 1: 輸入 -->
+<div class="screen active" id="sLogin">
+  <div class="page-title">LINE 帳號綁定</div>
+
+  <div class="info-box">
+    <p>
+      如果您已在診所、電話或官網完成預約，<br>
+      請輸入預約時填寫的身分證字號與手機號碼，<br>
+      綁定後即可透過 LINE 接收健檢提醒與報告通知 🔔
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="fl">
+      <div class="fl-lbl">身分證字號<span class="req">*</span></div>
+      <input class="fi" id="inputID" type="text" maxlength="10" placeholder="例：A123456789" autocorrect="off" autocapitalize="characters" oninput="onIDI(this)"/>
+      <div class="fhint">請輸入中華民國身分證字號（共10碼）</div>
+      <div class="ferr" id="errID">格式不符，請重新確認</div>
+    </div>
+    <hr class="fdiv"/>
+    <div class="fl">
+      <div class="fl-lbl">預約時填寫的手機號碼<span class="req">*</span></div>
+      <input class="fi" id="inputPhone" type="tel" maxlength="10" placeholder="例：0912345678" inputmode="numeric" oninput="onPhI(this)"/>
+      <div class="fhint">請輸入預約時登記的手機號碼</div>
+      <div class="ferr" id="errPhone">請輸入09開頭的10位手機號碼</div>
+    </div>
+  </div>
+
+  <button class="btn btn-blue" id="btnVerify" onclick="doVerify()" disabled>
+    <i class="ti ti-shield-check"></i>驗證並綁定帳號
+  </button>
+  <div class="or-divider">
+    <div class="or-divider-line"></div>或<div class="or-divider-line"></div>
+  </div>
+  <button class="btn btn-outline" onclick="openVoice()">
+    <i class="ti ti-microphone"></i>用語音輸入資料
+  </button>
+  <div class="info-box privacy-note">
+    <p><i class="ti ti-lock"></i>您的個人資料僅用於核對預約紀錄，不會儲存於 LINE 平台，符合個資法相關規定。</p>
+  </div>
+</div>
+
+<!-- SCREEN 2: 讀取中 -->
+<div class="screen" id="sLoading">
+  <div class="spin-wrap">
+    <div class="spinner"></div>
+    <div class="status-title" id="loadTxt">比對資料中...</div>
+    <div class="status-sub">請稍候，正在核對您的預約資料</div>
+  </div>
+</div>
+
+<!-- SCREEN 3: 成功 -->
+<div class="screen" id="sSuccess">
+  <div class="suc-wrap">
+    <div class="suc-ic"><i class="ti ti-circle-check"></i></div>
+    <div class="success-title">綁定成功！</div>
+    <div class="success-desc">
+      LINE 帳號已成功綁定<br>之後健檢前會主動提醒您禁食注意事項
+    </div>
+    <div class="appt-card">
+      <div class="ac-title">您的預約資料</div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-user"></i></div><div><div class="ac-lbl">姓名</div><div class="ac-val" id="sucName">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-calendar"></i></div><div><div class="ac-lbl">預約日期</div><div class="ac-val" id="sucDate">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-clock"></i></div><div><div class="ac-lbl">時段</div><div class="ac-val" id="sucTime">—</div></div></div>
+      <div class="ac-row"><div class="ac-ic"><i class="ti ti-clipboard-list"></i></div><div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="sucPlan">—</div></div></div>
+    </div>
+    <button class="btn btn-blue btn-full" onclick="closeLiff()">
+      <i class="ti ti-brand-line"></i>返回 LINE 使用服務
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN 4: 失敗 -->
+<div class="screen" id="sError">
+  <div class="suc-wrap">
+    <div class="err-ic"><i class="ti ti-alert-triangle"></i></div>
+    <div class="error-title">查無資料</div>
+    <div class="error-desc">
+      找不到符合的預約紀錄<br>請確認身分證字號與手機號碼<br>是否與預約時填寫的一致
+    </div>
+    <button class="btn btn-blue btn-retry" onclick="goS('sLogin')">
+      <i class="ti ti-refresh"></i>重新輸入
+    </button>
+  </div>
+</div>
+
+<!-- 語音 Modal -->
+<div class="modal-ov" id="voiceModal">
+  <div class="modal-box">
+    <div class="mh">
+      <div class="mh-t"><i class="ti ti-microphone"></i>語音輸入身分資料</div>
+      <button class="mc-x" onclick="closeVoice()">✕</button>
+    </div>
+    <div class="info-box voice-tip-box">
+      <p>請說：「身分證 A 一二三四五六七八九，手機 零九一二三四五六七八」</p>
+    </div>
+    <div class="wave-w" id="waveW">
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    </div>
+    <div class="vst" id="vStat">按下麥克風開始說話</div>
+    <div class="vres" id="vRes"><div class="vres-label">辨識結果</div><div id="vResTxt">—</div></div>
+    <div class="vprev" id="vPrev">
+      <div class="vprev-label">即將填入</div>
+      <div class="vchips">
+        <div class="vchip"><div class="vchip-l">身分證字號</div><div class="vchip-v" id="vPID">—</div></div>
+        <div class="vchip"><div class="vchip-l">手機號碼</div><div class="vchip-v" id="vPPh">—</div></div>
+      </div>
+    </div>
+    <button class="btn-mic" id="btnMic" onclick="togRec()">
+      <i class="ti ti-microphone mic-icon"></i><span id="btnMicTxt">按下開始說話</span>
+    </button>
+    <button class="btn btn-blue" id="btnFill" onclick="fillV()">✓ 填入資料</button>
+    <button class="btn btn-outline" id="btnVC" onclick="closeVoice()">關閉</button>
+  </div>
+</div>
+
+<script>
+// LIFF ID 與後端網址統一寫在 site-config.js
+const LIFF_ID  = window.SITE.liffVerifyId;
+const API_BASE = window.SITE.adminApi;
+
+let lineUserId = null;
+let recognition = null, isRec = false;
+let parsedID = null, parsedPh = null;
+
+window.addEventListener('load', async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const p = await liff.getProfile();
+    lineUserId = p.userId;
+  } catch(e) { lineUserId = 'test_' + Date.now(); }
+  initSR();
+});
+
+function closeLiff() {
+  try { liff.closeWindow(); }
+  catch(e) { alert('已完成！請返回 LINE 繼續使用。'); }
+}
+
+function goS(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function onIDI(el) {
+  el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  el.classList.remove('err');
+  document.getElementById('errID').classList.remove('show');
+  chkReady();
+}
+function onPhI(el) {
+  el.value = el.value.replace(/[^0-9]/g,'');
+  el.classList.remove('err');
+  document.getElementById('errPhone').classList.remove('show');
+  chkReady();
+}
+function chkReady() {
+  const id = document.getElementById('inputID').value;
+  const ph = document.getElementById('inputPhone').value;
+  document.getElementById('btnVerify').disabled = !(/^[A-Z][12]\d{8}$/.test(id) && /^09\d{8}$/.test(ph));
+}
+
+async function doVerify() {
+  const id = document.getElementById('inputID').value.trim();
+  const ph = document.getElementById('inputPhone').value.trim();
+  goS('sLoading');
+  const msgs = ['比對資料中...','核對預約紀錄...','綁定 LINE 帳號...'];
+  let mi = 0;
+  const ticker = setInterval(() => { mi=(mi+1)%3; document.getElementById('loadTxt').textContent=msgs[mi]; }, 900);
+  try {
+    const res = await fetch(`${API_BASE}/api/liff/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_number: id, phone: ph, line_user_id: lineUserId })
+    });
+    clearInterval(ticker);
+    if (res.ok) {
+      const data = await res.json();
+      const pNames = { A:'A方案（腦肺方案）', B:'B方案（腹部方案）', C:'C方案（骨密肌力方案）' };
+      document.getElementById('sucName').textContent = data.name || '—';
+      document.getElementById('sucDate').textContent = data.date || '—';
+      document.getElementById('sucTime').textContent = data.time || '—';
+      document.getElementById('sucPlan').textContent = pNames[data.plan] || data.plan || '—';
+      goS('sSuccess');
+    } else { goS('sError'); }
+  } catch(e) { clearInterval(ticker); goS('sError'); }
+}
+
+/* 語音 */
+function initSR() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang = 'zh-TW'; recognition.interimResults = true;
+  recognition.onstart = () => { setWave(true); document.getElementById('vStat').textContent='聆聽中，請說話...'; document.getElementById('btnMic').classList.add('rec'); document.getElementById('btnMicTxt').textContent='點擊停止'; };
+  recognition.onresult = (e) => {
+    let fin='',intr='';
+    for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else intr+=t; }
+    const txt=fin||intr;
+    document.getElementById('vRes').style.display='block';
+    document.getElementById('vResTxt').textContent=txt||'（辨識中...）';
+    if(fin) parseVoice(fin);
+  };
+  recognition.onerror = (e) => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='按下開始說話'; document.getElementById('vStat').textContent=e.error==='not-allowed'?'⚠️ 請允許麥克風權限':'辨識失敗，請再試'; };
+  recognition.onend = () => { setWave(false); isRec=false; document.getElementById('btnMic').classList.remove('rec'); document.getElementById('btnMicTxt').textContent='再說一次'; };
+}
+
+function setWave(on) { document.querySelectorAll('.wb').forEach(b=>on?b.classList.add('on'):b.classList.remove('on')); }
+
+function togRec() {
+  if(!recognition){ document.getElementById('vStat').textContent='請使用 Chrome 瀏覽器'; return; }
+  if(isRec){ recognition.stop(); isRec=false; }
+  else{ parsedID=parsedPh=null; ['vPrev','btnFill','btnVC'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';}); document.getElementById('vRes').style.display='none'; recognition.start(); isRec=true; }
+}
+
+function zhN(s) {
+  const m={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','○':'0'};
+  return s.replace(/[零一二三四五六七八九○]/g,c=>m[c]||c);
+}
+
+function parseVoice(txt) {
+  const n=zhN(txt.toUpperCase().replace(/\s/g,''));
+  const im=n.match(/([A-Z][12]\d{8})/);
+  const pm=n.match(/(09\d{8})/);
+  if(im) parsedID=im[1];
+  if(pm) parsedPh=pm[1];
+  if(parsedID||parsedPh){
+    document.getElementById('vPrev').style.display='block';
+    document.getElementById('vPID').textContent=parsedID||'未辨識';
+    document.getElementById('vPPh').textContent=parsedPh||'未辨識';
+    document.getElementById('btnFill').style.display='flex';
+    document.getElementById('vStat').textContent=parsedID&&parsedPh?'✅ 辨識成功！請確認後填入':'部分辨識，請確認';
+  } else { document.getElementById('vStat').textContent='未能辨識，請再試一次'; }
+}
+
+function fillV() {
+  if(parsedID){ document.getElementById('inputID').value=parsedID; onIDI(document.getElementById('inputID')); }
+  if(parsedPh){ document.getElementById('inputPhone').value=parsedPh; onPhI(document.getElementById('inputPhone')); }
+  closeVoice();
+}
+
+function openVoice(){
+  parsedID=parsedPh=null;
+  ['vPrev','btnFill','btnVC'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  document.getElementById('vRes').style.display='none';
+  document.getElementById('vStat').textContent='按下麥克風開始說話';
+  document.getElementById('btnMicTxt').textContent='按下開始說話';
+  document.getElementById('btnMic').classList.remove('rec');
+  setWave(false);
+  document.getElementById('voiceModal').classList.add('open');
+}
+function closeVoice(){
+  if(isRec&&recognition){recognition.stop();isRec=false;}
+  document.getElementById('voiceModal').classList.remove('open');
+}
+</script>
+</body>
+</html>
