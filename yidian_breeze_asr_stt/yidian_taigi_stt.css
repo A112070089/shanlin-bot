@@ -1,0 +1,15 @@
+/* Additional accessible STT status, separate from the existing speech controls. */
+#yidian-taigi-stt-status {
+  margin: 7px 12px 7px;
+  padding: 8px 12px;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.55;
+  background: #f3f7ff;
+  border: 1px solid #ccdaf2;
+  border-radius: 12px;
+  color: #183f77;
+}
+@media (max-width: 600px) {
+  #yidian-taigi-stt-status { font-size: 18px; margin: 5px 9px; }
+}

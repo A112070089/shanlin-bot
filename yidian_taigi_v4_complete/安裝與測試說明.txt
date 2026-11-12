@@ -1,0 +1,126 @@
+頤典診所｜V4 台語檢查說明＋全對話本機翻譯／朗讀（本機測試）
+日期：2026-10-20
+
+【先確認：本版的真實完成範圍】
+1. 診所既有資料庫：101 個檢查單項＋9 個套組，共 110 筆。
+2. 舊版僅 4 筆具有未審核台羅語音稿；其餘 106 筆原本缺稿。
+3. 本包增加 110 筆「台語漢字待審核稿」，原有 4 筆台羅草稿保留，不改原始國語文字、檢查項目、價格、預算與預約流程。
+4. 「這是什麼？」依單項 ID 與套組 ID 比對現有資料，台語草稿轉 POJ 後送 8002 MMS-TTS。
+5. 一般新增 AI 回覆將以完整文字交給本機 8004 台語翻譯，再交 8002 朗讀；不用按「朗讀對話」。
+6. 已加入項目的金額回覆採後端固定數字模板，避免翻譯模型擅自變更金額。
+7. 未通過審核的口語和醫療內容都僅限本機試聽；如 8004 不可用、台羅無法轉寫或翻譯失敗，系統改朗讀完整國語原文，不假裝台語正確。
+8. 確實能否產生自然台語語音，要在您的 Apple M 24GB Mac 上實測；本包沒有經過實體 Mac 模型語音測試。
+
+【非常重要的使用授權】
+facebook/mms-tts-nan：CC-BY-NC-4.0（非商業）。
+Bohanlu/Taigi-Llama-2-Translator-7B：CC-BY-NC-SA-4.0（非商業、相同方式分享）。
+因此本包僅供本機研究／非商業驗證，不得直接接到正式對外的自費診所收費系統。
+正式上線需先完成合法授權或換用允許商業用途的替代模型，並完成母語與臨床醫療審核。
+來源：https://huggingface.co/facebook/mms-tts-nan
+      https://huggingface.co/Bohanlu/Taigi-Llama-2-Translator-7B
+
+【0. 放置資料夾】
+先用 VS Code Command+S 儲存所有目前開啟的程式。
+解壓縮後把 yidian_taigi_v4_complete 整個資料夾放在：
+~/Downloads/頤典_本機測試版 5/yidian_taigi_v4_complete
+應與 website 並排，不能放入 website 或 Taigi-MMS-Test 內。
+
+【1. 先預檢，再正式更新】
+新增一個終端機，輸入：
+cd "$HOME/Downloads/頤典_本機測試版 5"
+python3 yidian_taigi_v4_complete/安全安裝_110項台語與動態朗讀.py --dry-run
+
+看到「DRY RUN 通過，沒有修改任何檔案」後，再執行：
+python3 yidian_taigi_v4_complete/安全安裝_110項台語與動態朗讀.py
+
+安裝程式會備份並修改：
+website/appointment2.html（原地只修改提取朗讀文字的 1 行，保留其他 7 千餘行）
+website/yidian_speech.js（台語優先朗讀完整回覆）
+website/yidian_taigi_router.py（檢查說明、固定金額、動態台語路由）
+website/yidian_taigi_medical_review.json（補上全部 110 筆待審核台語漢字稿）
+
+不修改 main.py、既有自費項目資料庫、價格、加購、STT 8003、TTS 8002、CSS。
+若程式版本與原有 V3 不一致，安全安裝會停止，不會直接覆蓋您的修改。
+
+【2. 第五個服務：8004 的獨立 Python 環境】
+Mac M 系列、Python 3.11：
+cd "$HOME/Downloads/頤典_本機測試版 5/yidian_taigi_v4_complete/translator"
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+
+確認 8004 的轉寫器套件：
+python -c 'from taibun import Converter; print(Converter(system="POJ").get("你好"))'
+
+【3. 準備 7B 台語動態翻譯模型（首次才做）】
+需下載原始 7B 模型並輸出 MLX 4bit，原始下載可超過 13GB，需預留約 20GB 以上磁碟空間；實際會受 Hub 快取／權重格式影響。
+
+仍在上述 translator 虛擬環境與資料夾時執行：
+python -m mlx_lm.convert --hf-path Bohanlu/Taigi-Llama-2-Translator-7B --mlx-path models/taigi-translator-7b-mlx-4bit -q --q-bits 4
+
+要等到 Terminal 出現 % 再繼續；首次下載與轉換可能較久。
+如果轉換期間出現記憶體不足，先關閉多餘程式、停止 8002/8003 再試；不需更動原本預約主程式。
+若 Hub 下載需要登入，請遵守模型頁面之條款；不要把 Hugging Face Token 放進網頁或 GitHub。
+
+【4. 啟動 8004 台語文字服務】
+在同一個環境輸入：
+export TAIGI_TRANSLATOR_MODEL="$PWD/models/taigi-translator-7b-mlx-4bit"
+export TAIGI_DYNAMIC_DRAFT=1
+python -m uvicorn taigi_text_service:app --host 127.0.0.1 --port 8004
+
+或在 macOS Finder 雙擊：工具/啟動8004_台語文字服務.command（需要前述虛擬環境與模型已存在）。
+8004 的 /health 在首次執行翻譯之前可能顯示 dynamic_translation_ready=false，這是懶載入設計；只要 translator_model_configured=true 即代表路徑存在。
+8004 不提供公開網路；僅接受 127.0.0.1。
+
+【5. 重新啟動 8000 啟用 V4】
+保持 8004、8002（台語 TTS）、8003（台語 STT）、5500（網頁）開啟。
+在「舊的 8000 Terminal」按 Control+C，只停掉 8000。
+然後在該 Terminal 輸入：
+cd "$HOME/Downloads/頤典_本機測試版 5"
+source .venv/bin/activate
+cd website
+TAIGI_TTS_ENABLED=1 TAIGI_STT_ENABLED=1 TAIGI_TTS_DRAFT_MODE=1 TAIGI_DYNAMIC_DRAFT=1 python -m uvicorn main:app --host 127.0.0.1 --reload --port 8000
+
+若看到 Address already in use，代表舊 8000 還未停止，請先回舊的 8000 Terminal 按 Control+C。
+原有 8002/8003/5500 不需重新安裝模型。
+
+【6. 語音實測】
+Chrome 開啟：
+http://127.0.0.1:5500/website/appointment2.html?p=SELF_PAY&directSelfPay=1
+按 Command+Shift+R 強制重新整理，選「台語」。
+試 A：右側「尿液檢查」->「這是什麼？」：先朗讀單項，再朗讀套組的完整原文對應台語初稿。
+試 B：右側「靜態心電圖」->「＋加入」：自動用台語朗讀金額、總額和剩餘預算。
+試 C：「繼續選其他項目」與「我不知道要選什麼」：由 8004 翻譯完整回覆後，8002 自動播放台語。
+試 D：按「朗讀對話」：重播最近一則 AI 回覆。
+注意瀏覽器可能阻擋未經使用者互動的自動音訊；請先點一次頁面或檢查 Chrome 聲音權限。
+
+【7. 診斷和審核】
+診斷所有服務：
+cd "$HOME/Downloads/頤典_本機測試版 5"
+python3 yidian_taigi_v4_complete/檢查服務是否啟動.py
+
+用瀏覽器打開（僅本機）：
+http://127.0.0.1:8000/api/taigi_tts/explanation/coverage
+http://127.0.0.1:8004/health
+
+110 項審閱資料：
+台語缺稿盤點及110筆試用稿.txt
+台語110項審核對照清單.html（可搜尋、列印）
+
+若希望先檢查漢字是否完整轉成台羅：
+cd "$HOME/Downloads/頤典_本機測試版 5"
+source yidian_taigi_v4_complete/translator/.venv/bin/activate
+python yidian_taigi_v4_complete/台語110項轉寫檢查.py
+
+會產生 CSV（候選台羅及需人工修正清單）；這不代表正式審核通過。
+
+【疑似原始資料需診所確認】
+I011 「醣化白蛋白 (HbA1c)」名稱疑似與糖化血色素混淆。
+I015 「低密度脂蛋白膽固醇 (HDL)」縮寫疑似應為 LDL。
+P006 資料原文標示套組價格仍待診所確認。
+V4 不會自行更動這些醫療項目或價格；請由診所人員核定。
+
+【如何判斷成功】
+程式碼語法與模擬測試通過，只表示整合流程相容，不表示真實台語模型已經正常朗讀。
+最終驗收要錄音比對這四項：內容完整、發音可理解、金額與數字正確、醫療限制沒有漏講。
+對外提供服務前，所有台語稿需經母語者與醫療專業人員審核，並重新確認模型授權。

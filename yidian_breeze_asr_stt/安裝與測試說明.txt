@@ -1,0 +1,83 @@
+頤典診所｜Breeze-ASR-26 Apple MLX 台語語音辨識 V1（本機試驗）
+============================================================
+
+【此版本解決什麼問題】
+- 選「台語」時，頁面麥克風改用本機 Breeze-ASR 辨識台語。
+- 選「國語」時，不干擾原有瀏覽器 SpeechRecognition 或 Groq 備援。
+- 辨識出的中文會先填到原本對話框，使用者確認後才按「傳送」。
+- 原本 5500 網頁、8000 預約、8002 台語 TTS、預算與加購不更動。
+- 台語 STT 與 TTS 是不同功能。此包「不」解決所有國語回答自動翻成台語的需求。
+
+【來源及限制】
+- 上游原始模型：MediaTek-Research/Breeze-ASR-26（Apache 2.0）。
+- Apple Silicon 量化模型：doggy8088/Breeze-ASR-26-MLX-4bit（第三方 4-bit MLX，模型約 877 MB）。
+- 本工具使用 mlx-whisper，輸出主要是中文漢字，不是臺羅。
+- 不需 Groq 金鑰；首次下載權重時需要上網；隨後語音推論在本機完成。
+- 只在 127.0.0.1 上測試。一般手機若透過外部網頁使用，還需 HTTPS／認證／
+  正式伺服器的部署規劃，不能直接讓手機連本機 127.0.0.1。
+- STT 可能錯認數字與醫療名詞；使用者應先確認文字才繼續原本流程。
+- 請避免將實際病患語音當作測試樣本。原型不保存錄音，正式上線仍須完成
+  個資保護、使用者告知與醫療場域審查。
+- 目前 MMS-TTS 模型的非商業授權問題仍然存在，不因本次 STT 更新而解除。
+
+【A. 放置整合包】
+把解壓縮後的整個 yidian_breeze_asr_stt 資料夾放在：
+  ~/Downloads/頤典_本機測試版 5/
+與 website、yidian_taigi_web_patch、yidian_taigi_dialogue_v2 並列。
+先在 VS Code 按 Command+S 儲存目前未儲存的程式。
+
+【B. 安裝到舊版網頁／8000（不覆寫舊檔）】
+新開 Terminal：
+  cd "$HOME/Downloads/頤典_本機測試版 5"
+  python3 yidian_breeze_asr_stt/install_breeze_stt.py --dry-run
+若顯示 DRY RUN 完成，才執行：
+  python3 yidian_breeze_asr_stt/install_breeze_stt.py
+已修改的 main.py、appointment2.html 會先備份到 backup_before_breeze_stt_日期時間。
+安裝程式遇到不同版程式會停止，不會硬覆蓋。
+
+【C. 在全新的 Python 環境安裝 8003】
+不要在頤典原有 .venv，也不要在 Taigi-MMS-Test 的 .venv 安裝！
+在頤典專案根目錄：
+  cd "$HOME/Downloads/頤典_本機測試版 5"
+  python3.11 -m venv yidian_breeze_asr_stt/.venv
+  source yidian_breeze_asr_stt/.venv/bin/activate
+  python -m pip install -r yidian_breeze_asr_stt/requirements-asr.txt
+  ffmpeg -version
+
+先下載台語 MLX 4-bit 模型（約 877 MB；需要網路）：
+  python -c 'from huggingface_hub import snapshot_download; snapshot_download(repo_id="doggy8088/Breeze-ASR-26-MLX-4bit")'
+
+【D. 啟動 8003 台語辨識】
+在同一個 Terminal：
+  cd "$HOME/Downloads/頤典_本機測試版 5/yidian_breeze_asr_stt"
+  python -m uvicorn asr_service:app --host 127.0.0.1 --port 8003
+不要關掉這個 Terminal。
+開啟 http://127.0.0.1:8003/health
+應看到 status: ok、ffmpeg_ready: true、mlx_whisper_ready: true。
+注意：model_loaded_once: false 表示尚未完成第一次推論，並非故障。
+
+【E. 啟動 8000（需要同時保留之前的 TTS 開關）】
+在原來的 8000 Terminal 按 Control+C 停止 8000，不要停止 8002、5500 或 8003。
+  cd "$HOME/Downloads/頤典_本機測試版 5"
+  source .venv/bin/activate
+  cd website
+  TAIGI_TTS_ENABLED=1 TAIGI_STT_ENABLED=1 python -m uvicorn main:app --host 127.0.0.1 --reload --port 8000
+開啟 http://127.0.0.1:8000/api/taigi_stt/health
+應看到 enabled: true、ready: true。
+
+【F. 在網頁上測試】
+確保 5500、8000、8002、8003 四個 Terminal 都在運作。
+Chrome 開啟：
+  http://127.0.0.1:5500/website/appointment2.html?p=SELF_PAY&directSelfPay=1
+Command+Shift+R 重新整理。
+- 選「台語」→ 按「🎤」→ 用台語說「我想做心臟檢查」→ 再按一次。
+- 等待轉寫結果填入左下角文字輸入框。
+- 先核對中文轉寫，正確才按右下角「傳送」。
+- 測試預算：「五萬」等有關金額的話一定要檢查數字是否正確。
+- 選「國語」→ 麥克風應回到原本國語辨識，其他按鈕照常運作。
+
+【重要提醒】
+第一版不會自動替所有 AI 回答進行台語翻譯朗讀，該需求需要獨立的
+中文→台語譯稿及台羅轉換、台語母語人士及醫療人員校對，勿假裝已完成。
+若 8003 是首次啟動、首次轉錄需要幾十秒至數分鐘（下載模型可能更久）。
+若 dry-run 停止、或健康檢查回覆不同，請截圖完整訊息再繼續。

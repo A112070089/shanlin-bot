@@ -1,0 +1,4 @@
+# Install into a separate Python 3.11 virtual environment, never the booking/TTS venv.
+mlx-whisper
+fastapi
+uvicorn

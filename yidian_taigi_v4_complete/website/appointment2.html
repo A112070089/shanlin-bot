@@ -1,0 +1,7804 @@
+<!doctype html>
+<html lang="zh-Hant">
+
+<head>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js"></script>
+  <!-- 部署設定：後端網址（開通新診所時改這個檔） -->
+  <script src="site-config.js"></script>
+  <!-- 診所設定：名稱、電話、可預約日期與時段 -->
+  <script src="clinic.js" data-api="booking"></script>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>
+    填寫基本資料 - 頤典診所
+  </title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="512x512"
+    href="./assets/favicon/favicon.png"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&family=Satisfy&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./assets/css/main.css"
+  >
+
+
+  <link rel="stylesheet" href="./assets/css/appointment2.css"/>
+
+  <style>
+    /* 長者可手動重新朗讀說明；不影響檢查項目選購功能。 */
+    .selfpay-explanation-replay {
+      display: block;
+      width: 100%;
+      min-height: 58px;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border: 2px solid #4053bc;
+      border-radius: 14px;
+      background: #fff;
+      color: #2942aa;
+      font-size: 23px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .selfpay-explanation-replay:focus-visible {
+      outline: 4px solid #f2b544;
+      outline-offset: 3px;
+    }
+    @media (max-width: 600px) {
+      .selfpay-explanation-replay { font-size: 21px; }
+    }
+  </style>
+
+<!-- Yidian local speech prototype -->
+  <link rel="stylesheet" href="yidian_speech.css">
+  <script src="yidian_speech.js" defer></script>
+  <!-- YIDIAN-BREEZE-STT-V1 -->
+  <link rel="stylesheet" href="yidian_taigi_stt.css">
+  <script src="yidian_taigi_stt.js" defer></script>
+</head>
+
+
+<body
+  data-bs-spy="scroll"
+  data-bs-target="#bsb-tpl-navbar"
+  data-bs-smooth-scroll="true"
+  tabindex="0"
+>
+
+
+  <!-- =========================================
+       Header
+  ========================================= -->
+
+  <header
+    id="header"
+    class="sticky-top bsb-tpl-header-sticky"
+  >
+
+    <nav class="navbar navbar-expand-lg bsb-tpl-bg-blue">
+
+      <div class="container">
+
+        <a
+          class="navbar-brand"
+          href="index.html"
+        >
+
+          <img
+            src="./assets/img/branding/logo.png"
+            class="bsb-tpl-logo"
+            alt=""
+          >
+
+          <span data-clinic="name">頤典診所</span>
+
+        </a>
+
+      </div>
+
+    </nav>
+
+  </header>
+
+
+  <!-- =========================================
+       基本資料頁
+  ========================================= -->
+
+  <main id="main">
+
+    <section class="py-5">
+
+      <div class="container">
+
+        <h1 class="display-5 fw-bold mb-4">
+
+          <mark class="bsb-tpl-highlight bsb-tpl-highlight-yellow">
+            填寫基本資料
+          </mark>
+
+        </h1>
+
+
+        <div class="form-section">
+
+          <h4
+            id="plan_display"
+            class="display-plan"
+          >
+            您已選擇：載入中...
+          </h4>
+
+
+          <form id="bookingForm">
+
+
+            <!-- 姓名 -->
+
+            <div class="mb-3">
+
+              <label class="form-label">
+                姓名
+              </label>
+
+              <input
+                type="text"
+                name="name"
+                class="form-control"
+                placeholder="請輸入姓名"
+                required
+              >
+
+            </div>
+
+
+            <!-- 出生年月日 -->
+
+            <div class="mb-3">
+
+              <label class="form-label">
+
+                出生年月日(民國)
+                *需為年滿65歲
+                (民國50年以前)
+
+              </label>
+
+              <input
+                type="text"
+                name="birthday"
+                class="form-control"
+                placeholder="例如：450101"
+                required
+              >
+
+              <div class="hint-text">
+
+                (範例：
+                出生日期為民國45年1月1日，
+                請輸入450101)
+
+              </div>
+
+            </div>
+
+
+            <!-- 身分證 -->
+
+            <div class="mb-3">
+
+              <label class="form-label">
+                身分證字號
+              </label>
+
+              <input
+                type="text"
+                name="pid"
+                class="form-control"
+                placeholder="請輸入身分證字號"
+                required
+              >
+
+              <div class="hint-text">
+                ( 需為臺北市戶籍 )
+              </div>
+
+            </div>
+
+
+            <!-- 手機 -->
+
+            <div class="mb-3">
+
+              <label class="form-label">
+                手機號碼
+              </label>
+
+              <input
+                type="text"
+                name="phone"
+                class="form-control"
+                placeholder="請輸入手機號碼"
+                required
+              >
+
+              <div class="hint-text">
+                ( 範例：0912345678 )
+              </div>
+
+            </div>
+
+
+            <!-- 日期與時間 -->
+
+            <div class="row">
+
+              <div class="col-md-6 mb-3">
+
+                <label class="form-label">
+                  預約日期
+                </label>
+
+                <select
+                  name="book_date"
+                  data-clinic-options="elderlyDates"
+                  class="form-select form-control"
+                  required
+                >
+
+                  <option value="">
+                    --請選擇--
+                  </option>
+
+                  <option value="2026-11-02">
+                    2026-11-02 (一)
+                  </option>
+
+                  <option value="2026-11-04">
+                    2026-11-04 (三)
+                  </option>
+
+                  <option value="2026-11-09">
+                    2026-11-09 (一)
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="col-md-6 mb-3">
+
+                <label class="form-label">
+                  預約時間
+                </label>
+
+                <select
+                  name="book_time"
+                  data-clinic-options="elderlyTimes"
+                  class="form-select form-control"
+                  required
+                >
+
+                  <option value="">
+                    --請選擇--
+                  </option>
+
+                  <option value="08:00">
+                    08:00 - 09:00
+                  </option>
+
+                  <option value="09:00">
+                    09:00 - 10:00
+
+                  <option value="10:00">
+                    10:00 - 11:00
+                  </option>
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
+
+
+            <!-- 早餐 -->
+
+            <div class="mb-4 mt-3">
+
+              <label class="form-label d-block">
+                早餐：
+              </label>
+
+
+              <div class="mt-2">
+
+                <label>
+
+                  <input
+                    type="radio"
+                    name="breakfast"
+                    value="1"
+                    checked
+                  >
+
+                  葷食
+                  (豆奶+三明治)
+
+                </label>
+
+
+                <label class="ms-4">
+
+                  <input
+                    type="radio"
+                    name="breakfast"
+                    value="2"
+                  >
+
+                  素食
+                  (豆奶+超商50元禮券)
+
+                </label>
+
+              </div>
+
+            </div>
+
+
+            <!-- 驗證碼 -->
+
+            <div class="mb-4 row align-items-center mt-3">
+
+              <div class="col-auto">
+
+                <div class="mb-4 mt-3">
+
+                  <label
+                    for="captchaInput"
+                    class="form-label"
+                  >
+                    驗證碼
+                  </label>
+
+
+                  <div class="captcha-row">
+
+                    <input
+                      type="text"
+                      id="captchaInput"
+                      name="captcha"
+                      class="form-control"
+                      placeholder="請輸入驗證碼"
+                      autocomplete="off"
+                      maxlength="5"
+                      required
+                    >
+
+
+                    <canvas
+                      id="captchaCanvas"
+                      width="180"
+                      height="58"
+                    ></canvas>
+
+
+                    <button
+                      type="button"
+                      id="refreshCaptchaBtn"
+                    >
+                      ↻ 重新產生驗證碼
+                    </button>
+                                        <button
+                      type="button"
+                      id="speakCaptchaBtn"
+                    >
+                      🔊 語音播放
+                    </button>
+
+                  </div>
+
+
+                  <!-- 驗證失敗訊息 -->
+
+                  <div
+                    id="captchaError"
+                  >
+                    驗證碼錯誤，請重新輸入。
+                  </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     確認資料
+                ========================================== -->
+
+                <div class="mt-5">
+
+                  <button
+                    type="submit"
+                    id="confirmDataBtn"
+                    class="btn-send"
+                  >
+                    確認資料並繼續
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================
+       AI 自費聊天室
+  ========================================= -->
+
+  <div
+    id="selfpay-chat-overlay"
+    class="selfpay-chat-overlay"
+  >
+
+    <div class="selfpay-chat-box">
+
+
+      <!-- Header -->
+
+      <div class="selfpay-chat-header">
+
+        <div>
+
+          <div class="selfpay-chat-title-small">
+            <span data-clinic="name">頤典診所</span>
+          </div>
+
+          <div class="selfpay-chat-title">
+            🏥 AI 自費健康管理助理
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          id="selfpay-close-btn"
+          class="selfpay-chat-close"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- 訊息區 -->
+
+      <div
+        id="selfpay-chat-body"
+        class="selfpay-chat-body"
+      ></div>
+
+
+      <!-- 快速按鈕 -->
+
+      <div
+        id="selfpay-chat-options"
+        class="selfpay-chat-options"
+      ></div>
+
+
+      <!-- 狀態 -->
+
+      <div
+        id="selfpay-status"
+        class="selfpay-status"
+      >
+        正在處理...
+      </div>
+
+
+      <!-- 輸入區 -->
+
+      <div class="selfpay-chat-input-area">
+
+        <input
+          id="selfpay-chat-input"
+          type="text"
+          placeholder="請輸入訊息..."
+          autocomplete="off"
+        >
+
+
+        <button
+          type="button"
+          id="selfpay-mic-btn"
+          class="selfpay-mic-btn"
+          title="按一下開始說話，再按一下結束"
+          aria-label="語音輸入：開始說話"
+          aria-pressed="false"
+        >
+          🎤
+        </button>
+
+        
+        <button
+          type="button"
+          id="selfpay-send-btn"
+          class="selfpay-send-btn"
+        >
+          傳送
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- 自費項目選單：電腦版在聊天框右邊、手機版從下方滑出（selfpay_panel.js） -->
+    <aside id="selfpay-panel" class="selfpay-panel" aria-label="自費檢查項目選單"></aside>
+
+  </div>
+
+
+  <!-- =========================================
+       JavaScript
+  ========================================= -->
+
+  <script>
+
+    "use strict";
+
+
+    /* =========================================
+       API
+    ========================================= */
+
+    // 後端網址統一寫在 site-config.js
+    const API_BASE =
+      window.SITE.bookingApi;
+
+
+    const SELF_PAY_API_BASE =
+      `${API_BASE}/api/self_pay`;
+
+
+    /* =========================================
+       老人健檢方案
+    ========================================= */
+
+    const planMap = {
+
+      A:
+        "A方案 腦肺方案",
+
+      B:
+        "B方案 腹部方案",
+
+      C:
+        "C方案 骨密肌力方案"
+
+    };
+
+
+    /* =========================================
+       狀態
+    ========================================= */
+
+    let currentPlan =
+      "A";
+
+
+    let appointmentData =
+      {};
+
+
+    let selfPayChatMode =
+      "ask";
+
+    let selfPayStep =
+      "";
+
+    let selfPaySelectedDate =
+      "";
+
+    let selfPaySelectedSession =
+      "";
+
+    let selfPayBudget =
+      0;
+
+    let selfPayRemainingBudget =
+      0;
+
+    let selfPaySelectedTotal =
+      0;
+
+    let pendingOverBudgetSelection =
+      null;
+
+
+    let selfPayCategories =
+      [];
+
+
+    let currentSelfPayCategory =
+      null;
+
+
+    let currentSelfPayItems =
+      [];
+
+
+    let currentSelfPayItem =
+      null;
+
+
+    let currentSelfPayBillable =
+      null;
+
+
+    let selfPaySelectedItems =
+      [];
+
+
+    let pendingDeleteSelfPayIndex =
+      null;
+
+
+    let selfPayMediaRecorder =
+      null;
+
+
+    let selfPayAudioChunks =
+      [];
+
+
+    let selfPayStream =
+      null;
+
+
+    let selfPayRecording =
+      false;
+
+    // 長者自費健檢 STT：優先用瀏覽器內建的繁體中文辨識，
+    // 當瀏覽器無法辨識時，允許使用者主動切換至 Groq 備援。
+    let selfPayNativeRecognition = null;
+    let selfPaySTTMode = "";
+    let selfPaySTTBusy = false;
+    let selfPaySTTTimer = null;
+
+
+    /* =========================================
+       頁面初始化
+    ========================================= */
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+
+        /* =====================================
+           1. 取得網址參數
+        ===================================== */
+
+        const params =
+          new URLSearchParams(
+            window.location.search
+          );
+
+
+        currentPlan =
+          params.get("p") ||
+          params.get("plan") ||
+          "A";
+
+
+        const directSelfPayBasicData =
+          JSON.parse(
+            sessionStorage.getItem(
+              "directSelfPayBasicData"
+            ) || "{}"
+          );
+
+
+        const name =
+          params.get("name") ||
+          directSelfPayBasicData.name ||
+          "";
+
+
+        const pid =
+          params.get("pid") ||
+          directSelfPayBasicData.pid ||
+          "";
+
+
+        const phone =
+          params.get("phone") ||
+          directSelfPayBasicData.phone ||
+          "";
+
+
+        const birthday =
+          params.get("birthday") ||
+          directSelfPayBasicData.birthday ||
+          "";
+
+
+        const rawDate =
+          params.get("date") ||
+          "";
+
+
+        const rawTime =
+          params.get("time") ||
+          "";
+
+
+        /* =====================================
+           2. 日期格式統一
+
+           支援：
+           2026-05-01
+           2026/05/01
+           5/1
+           5月1日
+           5月1號
+        ===================================== */
+
+        function normalizeBookingDate(value) {
+
+          const text =
+            String(value || "").trim();
+
+          if (!text) {
+            return "";
+          }
+
+
+          /* YYYY-MM-DD / YYYY/MM/DD */
+
+          let match =
+            text.match(
+              /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/
+            );
+
+          if (match) {
+
+            const year =
+              match[1];
+
+            const month =
+              String(
+                Number(match[2])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            const day =
+              String(
+                Number(match[3])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            return (
+              `${year}-${month}-${day}`
+            );
+
+          }
+
+
+          /* M/D */
+
+          match =
+            text.match(
+              /^(\d{1,2})\/(\d{1,2})$/
+            );
+
+          if (match) {
+
+            const month =
+              String(
+                Number(match[1])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            const day =
+              String(
+                Number(match[2])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            return (
+              `2026-${month}-${day}`
+            );
+
+          }
+
+
+          /* M月D日 / M月D號 */
+
+          match =
+            text
+              .replace(
+                /\s+/g,
+                ""
+              )
+              .match(
+                /^(\d{1,2})月(\d{1,2})(?:日|號)?$/
+              );
+
+          if (match) {
+
+            const month =
+              String(
+                Number(match[1])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            const day =
+              String(
+                Number(match[2])
+              ).padStart(
+                2,
+                "0"
+              );
+
+            return (
+              `2026-${month}-${day}`
+            );
+
+          }
+
+
+          return "";
+
+        }
+
+
+        function normalizeBookingTime(value) {
+
+          const text =
+            String(value || "")
+              .trim()
+              .replace(
+                /\s+/g,
+                ""
+              );
+
+          if (!text) {
+            return "";
+          }
+
+
+          /* HH:MM / H:MM */
+
+          let match =
+            text.match(
+              /^(\d{1,2}):(\d{2})$/
+            );
+
+          if (match) {
+
+            const hour =
+              Number(match[1]);
+
+            const minute =
+              Number(match[2]);
+
+
+            if (
+              hour >= 0 &&
+              hour <= 23 &&
+              minute >= 0 &&
+              minute <= 59
+            ) {
+
+              return (
+                `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+              );
+
+            }
+
+          }
+
+
+          /* 上午 / 下午 + H點 */
+
+          match =
+            text.match(
+              /^(上午|下午)?(\d{1,2})點(?:(\d{1,2})分|半)?$/
+            );
+
+          if (match) {
+
+            let hour =
+              Number(match[2]);
+
+            const minute =
+              text.endsWith("半")
+                ? 30
+                : Number(
+                    match[3] || 0
+                  );
+
+
+            if (
+              match[1] === "下午" &&
+              hour < 12
+            ) {
+              hour += 12;
+            }
+
+
+            if (
+              match[1] === "上午" &&
+              hour === 12
+            ) {
+              hour = 0;
+            }
+
+
+            if (
+              hour >= 0 &&
+              hour <= 23 &&
+              minute >= 0 &&
+              minute <= 59
+            ) {
+
+              return (
+                `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+              );
+
+            }
+
+          }
+
+
+          return "";
+
+        }
+
+
+        const date =
+          normalizeBookingDate(
+            rawDate
+          );
+
+
+        const time =
+          normalizeBookingTime(
+            rawTime
+          );
+
+
+        /* =====================================
+           3. 顯示方案名稱
+        ===================================== */
+
+        const planDisplay =
+          document.getElementById(
+            "plan_display"
+          );
+
+
+        if (planDisplay) {
+
+          if (
+            currentPlan === "SELF_PAY"
+          ) {
+
+            planDisplay.textContent =
+              "自費健康檢查";
+
+          } else {
+
+            planDisplay.textContent =
+              `您已選擇：${
+                planMap[currentPlan] ||
+                planMap.A
+              }`;
+
+          }
+
+        }
+
+
+        /* =====================================
+           4. 找到表單欄位
+        ===================================== */
+
+        const nameInput =
+          document.querySelector(
+            'input[name="name"]'
+          );
+
+
+        const birthdayInput =
+          document.querySelector(
+            'input[name="birthday"]'
+          );
+
+
+        const pidInput =
+          document.querySelector(
+            'input[name="pid"]'
+          );
+
+
+        const phoneInput =
+          document.querySelector(
+            'input[name="phone"]'
+          );
+
+
+        const dateSelect =
+          document.querySelector(
+            'select[name="book_date"]'
+          );
+
+
+        const timeSelect =
+          document.querySelector(
+            'select[name="book_time"]'
+          );
+
+
+        /* =====================================
+           5. 自動帶入基本資料
+        ===================================== */
+
+        if (
+          nameInput &&
+          name
+        ) {
+
+          nameInput.value =
+            name;
+
+        }
+
+
+        if (
+          birthdayInput &&
+          birthday
+        ) {
+
+          birthdayInput.value =
+            birthday;
+
+        }
+
+
+        if (
+          pidInput &&
+          pid
+        ) {
+
+          pidInput.value =
+            pid.toUpperCase();
+
+        }
+
+
+        if (
+          phoneInput &&
+          phone
+        ) {
+
+          phoneInput.value =
+            phone;
+
+        }
+
+
+        /* =====================================
+           6. 自動帶入預約日期
+        ===================================== */
+
+        if (
+          dateSelect &&
+          date
+        ) {
+
+          const dateExists =
+            Array
+              .from(
+                dateSelect.options
+              )
+              .some(
+                function (option) {
+
+                  return (
+                    option.value ===
+                    date
+                  );
+
+                }
+              );
+
+
+          if (!dateExists) {
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+            option.value =
+              date;
+
+            option.textContent =
+              date;
+
+            dateSelect.appendChild(
+              option
+            );
+
+          }
+
+
+          dateSelect.value =
+            date;
+
+
+          dateSelect.dispatchEvent(
+            new Event(
+              "change",
+              {
+                bubbles: true
+              }
+            )
+          );
+
+        }
+
+
+        /* =====================================
+           7. 自動帶入預約時間
+        ===================================== */
+
+        if (
+          timeSelect &&
+          time
+        ) {
+
+          const timeExists =
+            Array
+              .from(
+                timeSelect.options
+              )
+              .some(
+                function (option) {
+
+                  return (
+                    option.value ===
+                    time
+                  );
+
+                }
+              );
+
+
+          if (!timeExists) {
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+            option.value =
+              time;
+
+            option.textContent =
+              time;
+
+            timeSelect.appendChild(
+              option
+            );
+
+          }
+
+
+          timeSelect.value =
+            time;
+
+
+          timeSelect.dispatchEvent(
+            new Event(
+              "change",
+              {
+                bubbles: true
+              }
+            )
+          );
+
+        }
+
+
+        /* =====================================
+           8. Debug
+        ===================================== */
+
+        console.log(
+          "✅ 預約資料已帶入：",
+          {
+
+            plan:
+              currentPlan,
+
+            name:
+              name,
+
+            birthday:
+              birthday,
+
+            pid:
+              pid,
+
+            phone:
+              phone,
+
+            rawDate:
+              rawDate,
+
+            date:
+              date,
+
+            rawTime:
+              rawTime,
+
+            time:
+              time,
+
+            dateSelected:
+              dateSelect
+                ? dateSelect.value
+                : "",
+
+            timeSelected:
+              timeSelect
+                ? timeSelect.value
+                : ""
+
+          }
+        );
+
+
+        /* =====================================
+           9. 基本資料確認
+        ===================================== */
+
+        const form =
+          document.getElementById(
+            "bookingForm"
+          );
+
+
+        if (form) {
+
+          form.addEventListener(
+            "submit",
+            function (event) {
+
+              event.preventDefault();
+
+
+              /* 檢查基本欄位 */
+
+              if (
+                !form.checkValidity()
+              ) {
+
+                form.reportValidity();
+
+                return;
+
+              }
+
+
+              /* 檢查驗證碼 */
+
+              if (
+                !validateCaptcha()
+              ) {
+
+                return;
+
+              }
+
+
+              /* 收集基本資料 */
+
+              collectAppointmentData();
+
+
+              /* 進入 AI 自費聊天室 */
+
+              openSelfPayChat();
+
+            }
+          );
+
+        }
+
+
+        /* =====================================
+           10. 關閉聊天室
+        ===================================== */
+
+        const closeButton =
+          document.getElementById(
+            "selfpay-close-btn"
+          );
+
+
+        if (closeButton) {
+
+          closeButton.addEventListener(
+            "click",
+            closeSelfPayChat
+          );
+
+        }
+
+
+        /* =====================================
+           11. 自費聊天室文字傳送
+        ===================================== */
+
+        const sendButton =
+          document.getElementById(
+            "selfpay-send-btn"
+          );
+
+
+        if (sendButton) {
+
+          sendButton.addEventListener(
+            "click",
+            sendSelfPayText
+          );
+
+        }
+
+
+        const selfPayInput =
+          document.getElementById(
+            "selfpay-chat-input"
+          );
+
+
+        if (selfPayInput) {
+
+          selfPayInput.addEventListener(
+            "keydown",
+            function (event) {
+
+              if (
+                event.key ===
+                "Enter"
+              ) {
+
+                event.preventDefault();
+
+                sendSelfPayText();
+
+              }
+
+            }
+          );
+
+        }
+
+
+        /* =====================================
+           12. 自費聊天室麥克風
+        ===================================== */
+
+        const micButton =
+          document.getElementById(
+            "selfpay-mic-btn"
+          );
+
+
+        if (micButton) {
+
+          micButton.addEventListener(
+            "click",
+            function () {
+
+              if (
+                selfPayRecording
+              ) {
+
+                stopSelfPayVoice();
+
+              } else {
+
+                startSelfPayVoice();
+
+              }
+
+            }
+          );
+
+        }
+
+
+        console.log(
+          "================================"
+        );
+
+        console.log(
+          "表單目前日期：",
+          dateSelect
+            ? dateSelect.value
+            : "找不到日期 select"
+        );
+
+        console.log(
+          "表單目前時間：",
+          timeSelect
+            ? timeSelect.value
+            : "找不到時間 select"
+        );
+
+        console.log(
+          "================================"
+        );
+
+      }
+    );
+
+
+    /* =========================================
+       收集基本資料
+    ========================================= */
+
+    function collectAppointmentData() {
+
+      const form =
+        document.getElementById(
+          "bookingForm"
+        );
+
+
+      const data =
+        new FormData(
+          form
+        );
+
+
+      appointmentData = {
+
+        plan:
+          currentPlan,
+
+        planName:
+          currentPlan === "SELF_PAY"
+            ? "自費健康檢查"
+            : (
+                planMap[currentPlan] ||
+                planMap.A
+              ),
+
+        name:
+          String(
+            data.get("name") ||
+            ""
+          ).trim(),
+
+        birthday:
+          String(
+            data.get("birthday") ||
+            ""
+          ).trim(),
+
+        pid:
+          String(
+            data.get("pid") ||
+            ""
+          )
+            .trim()
+            .toUpperCase(),
+
+        phone:
+          String(
+            data.get("phone") ||
+            ""
+          ).trim(),
+
+        date:
+          String(
+            data.get("book_date") ||
+            ""
+          ),
+
+        time:
+          String(
+            data.get("book_time") ||
+            ""
+          ),
+
+        breakfast:
+          String(
+            data.get("breakfast") ||
+            ""
+          ),
+
+        captcha:
+          String(
+            data.get("captcha") ||
+            ""
+          ).trim(),
+
+        selfPayItems:
+          [],
+
+        selfPayTotal:
+          0
+
+      };
+
+
+      console.log(
+        "預約基本資料：",
+        appointmentData
+      );
+
+    }
+        /* =========================================
+       HTML Escape
+    ========================================= */
+
+    function escapeHtml(value) {
+
+      return String(
+        value ?? ""
+      )
+        .replaceAll(
+          "&",
+          "&amp;"
+        )
+        .replaceAll(
+          "<",
+          "&lt;"
+        )
+        .replaceAll(
+          ">",
+          "&gt;"
+        )
+        .replaceAll(
+          '"',
+          "&quot;"
+        )
+        .replaceAll(
+          "'",
+          "&#039;"
+        );
+
+    }
+
+
+    /* =========================================
+       AI 訊息
+    ========================================= */
+
+    function addSelfPayAIMessage(
+      html,
+      speak = true
+    ) {
+
+      const body =
+        document.getElementById(
+          "selfpay-chat-body"
+        );
+
+      if (!body) {
+        return;
+      }
+
+
+      const message =
+        document.createElement(
+          "div"
+        );
+
+      message.className =
+        "selfpay-message ai";
+
+      message.innerHTML =
+        html;
+
+      body.appendChild(
+        message
+      );
+
+      scrollSelfPayChat();
+
+
+      if (speak) {
+        // 新的 AI 訊息預設直接朗讀。台語由受審核的本機語音路由處理。
+        const text = message.dataset.yidianSpeechText || (message.innerText || message.textContent || "");
+        if (window.YidianSpeech && typeof window.YidianSpeech.autoSpeak === "function") {
+          window.YidianSpeech.autoSpeak(text, message._yidianSpeechContext || null);
+        } else {
+          speakSelfPayText(text);
+        }
+      }
+
+      return message;
+
+    }
+
+
+    /* =========================================
+       使用者訊息
+    ========================================= */
+
+    function addSelfPayUserMessage(text) {
+
+      const body =
+        document.getElementById(
+          "selfpay-chat-body"
+        );
+
+      if (!body) {
+        return;
+      }
+
+
+      const message =
+        document.createElement(
+          "div"
+        );
+
+      message.className =
+        "selfpay-message user";
+
+      message.textContent =
+        text;
+
+      // 當長者提出新問題／選擇選項，停止前一段尚未播完的語音。
+      if (window.YidianSpeech) window.YidianSpeech.stopAll();
+
+      body.appendChild(
+        message
+      );
+
+      scrollSelfPayChat();
+
+    }
+
+
+    /* =========================================
+       聊天室捲到底
+    ========================================= */
+
+    function scrollSelfPayChat() {
+
+      const body =
+        document.getElementById(
+          "selfpay-chat-body"
+        );
+
+      if (!body) {
+        return;
+      }
+
+
+      requestAnimationFrame(
+        function () {
+
+          body.scrollTop =
+            body.scrollHeight;
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       顯示處理狀態
+    ========================================= */
+
+    function setSelfPayStatus(
+      show,
+      text = "正在處理..."
+    ) {
+
+      const status =
+        document.getElementById(
+          "selfpay-status"
+        );
+
+      if (!status) {
+        return;
+      }
+
+
+      status.textContent =
+        text;
+
+      status.style.display =
+        show
+          ? "block"
+          : "none";
+
+    }
+
+
+    /* =========================================
+       AI 語音播報
+    ========================================= */
+
+    // 保留 utterance 參照，避免某些 Safari 版本提早回收而中止朗讀。
+    let selfPayActiveUtterance = null;
+
+    function speakSelfPayText(text, context = null) {
+      const content = String(text || "").trim();
+      if (window.YidianSpeech) {
+        window.YidianSpeech.remember(content, context);
+        if (window.YidianSpeech.getLanguage() === "nan") {
+          return window.YidianSpeech.speakTaiwanese(content, context);
+        }
+      }
+
+      if (!content || !("speechSynthesis" in window) ||
+          !("SpeechSynthesisUtterance" in window)) {
+        console.warn("此瀏覽器無法使用語音朗讀，請閱讀畫面上的文字說明。");
+        return false;
+      }
+
+      try {
+        const synth = window.speechSynthesis;
+        synth.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(content);
+        utterance.lang = "zh-TW";
+        utterance.rate = window.YidianSpeech ? window.YidianSpeech.getRate() : 0.88;  // 略放慢，適合長者聆聽
+        utterance.pitch = 1;
+
+        // 優先使用繁體中文／臺灣中文語音；無合適語音則交由瀏覽器選擇。
+        const voices = synth.getVoices();
+        const taiwanVoice = voices.find(v =>
+          /^zh[-_](TW|Hant)/i.test(v.lang) || /Taiwan/i.test(v.name)
+        );
+        if (taiwanVoice) utterance.voice = taiwanVoice;
+
+        utterance.onerror = function (event) {
+          if (event.error !== "interrupted" && event.error !== "canceled") {
+            console.warn("自費說明語音播放失敗：", event.error);
+          }
+        };
+        selfPayActiveUtterance = utterance;
+
+        // 同步觸發，讓長者點選「再聽一次」時能保留 Safari 的使用者互動授權。
+        synth.resume();
+        synth.speak(utterance);
+        return true;
+      } catch (error) {
+        console.error("無法朗讀自費檢查說明：", error);
+        return false;
+      }
+    }
+
+
+    /* =========================================
+       顯示快速選項
+    ========================================= */
+
+    function showSelfPayOptions(options) {
+
+      const container =
+        document.getElementById(
+          "selfpay-chat-options"
+        );
+
+      if (!container) {
+        return;
+      }
+
+
+      container.innerHTML =
+        "";
+
+
+      options.forEach(
+        function (option) {
+
+          const button =
+            document.createElement(
+              "button"
+            );
+
+          button.type =
+            "button";
+
+          button.className =
+            "selfpay-option-btn";
+
+          if (
+            option.value ===
+            "start-direct-selfpay"
+          ) {
+
+            button.style.display =
+              "block";
+
+            button.style.margin =
+              "24px auto";
+
+            button.style.padding =
+              "18px 28px";
+
+            button.style.fontSize =
+              "24px";
+
+            button.style.fontWeight =
+              "700";
+
+            button.style.borderRadius =
+              "16px";
+
+            button.style.minWidth =
+              "280px";
+
+            button.style.textAlign =
+              "center";
+          }
+          if (
+            String(option.value).startsWith("category:")
+          ) {
+            button.classList.add(
+              "selfpay-category-btn"
+            );
+          }
+
+          button.textContent =
+            option.label;
+
+
+          button.addEventListener(
+            "click",
+            async function () {
+
+              await handleSelfPayAnswer(
+                option.value,
+                option.label
+              );
+
+            }
+          );
+
+          container.appendChild(
+            button
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       清除快速選項
+    ========================================= */
+
+    function clearSelfPayOptions() {
+
+      const container =
+        document.getElementById(
+          "selfpay-chat-options"
+        );
+
+      if (container) {
+
+        container.innerHTML =
+          "";
+
+      }
+
+    }
+
+
+    /* =========================================
+       開啟 AI 自費聊天室
+    ========================================= */
+
+    function openSelfPayChat() {
+
+      const overlay =
+        document.getElementById(
+          "selfpay-chat-overlay"
+        );
+
+
+      const body =
+        document.getElementById(
+          "selfpay-chat-body"
+        );
+
+
+      if (
+        !overlay ||
+        !body
+      ) {
+
+        return;
+
+      }
+
+
+      overlay.classList.add(
+        "show"
+      );
+
+
+      body.innerHTML =
+        "";
+
+
+      clearSelfPayOptions();
+
+
+      selfPayChatMode =
+        "ask";
+
+
+      selfPayStep =
+        "";
+/* =========================================
+   純 SELF_PAY：
+   不再詢問是否需要自費，
+   直接進入預算設定與項目選擇
+========================================= */
+
+if (currentPlan === "SELF_PAY") {
+
+  selfPayChatMode =
+    "budget";
+
+    const isIOS =
+      /iPhone|iPad|iPod/i.test(
+        navigator.userAgent
+      ) ||
+      (
+        navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1
+      );
+
+      if (isIOS) {
+
+        showSelfPayOptions([
+          {
+            label:
+              "開始自費健檢預約",
+
+            value:
+              "start-direct-selfpay"
+          }
+        ]);
+
+        return;
+      }
+
+  addSelfPayAIMessage(
+
+    `您好，${escapeHtml(
+      appointmentData.name
+    )}。<br><br>` +
+
+    `您的基本資料已經確認完成。<br><br>` +
+
+    `接下來請設定您的自費健檢參考預算，` +
+
+    `我會依照您的需求協助選擇檢查項目。<br><br>` +
+
+    `💰 請輸入或直接說出預算金額，例如：3000 或「三千元」`,
+
+    !isIOS
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+}
+
+      addSelfPayAIMessage(
+
+        `您好，${escapeHtml(
+          appointmentData.name
+        )}。<br><br>` +
+
+        `您的基本資料已經確認完成。<br><br>` +
+
+        `接下來我可以協助您了解及選擇` +
+
+        `<strong>自費健康檢查項目</strong>。<br><br>` +
+
+        `請問您需要查看自費檢查項目嗎？`,
+
+        true
+
+      );
+
+
+      showSelfPayOptions([
+
+        {
+          label:
+            "需要，我想看看",
+
+          value:
+            "start"
+        },
+
+        {
+          label:
+            "不需要，直接完成預約",
+
+          value:
+            "skip"
+        }
+
+      ]);
+
+    }
+
+
+    /* =========================================
+       關閉聊天室
+    ========================================= */
+
+    function closeSelfPayChat() {
+
+      // 同時停止 8002 台語音訊及瀏覽器國語朗讀，避免關閉視窗後繼續播報。
+      if (window.YidianSpeech) window.YidianSpeech.stopAll();
+
+      if (window.SelfPayPanel) {
+        SelfPayPanel.hide();
+      }
+
+
+      const overlay =
+        document.getElementById(
+          "selfpay-chat-overlay"
+        );
+
+
+      if (overlay) {
+
+        overlay.classList.remove(
+          "show"
+        );
+
+      }
+
+
+      if (
+        "speechSynthesis"
+        in window
+      ) {
+
+        window
+          .speechSynthesis
+          .cancel();
+
+      }
+
+    }
+
+
+    /* =========================================
+       取得自費分類
+       GET /api/self_pay/categories
+    ========================================= */
+
+    async function loadSelfPayCategories() {
+
+      setSelfPayStatus(
+        true,
+        "正在取得自費檢查分類..."
+      );
+
+
+      clearSelfPayOptions();
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${SELF_PAY_API_BASE}/categories`
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.detail ||
+            result.message ||
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        selfPayCategories =
+          Array.isArray(
+            result.categories
+          )
+            ? result.categories
+            : [];
+
+
+        if (
+          selfPayCategories.length ===
+          0
+        ) {
+
+          throw new Error(
+            "目前沒有取得自費檢查分類"
+          );
+
+        }
+
+
+        selfPayChatMode =
+          "category";
+
+
+        addSelfPayAIMessage(
+
+          `請問您比較在意哪方面的健康呢？<br><br>` +
+
+          `👉 請在${window.matchMedia("(max-width: 999px)").matches ? "下方" : "右邊"}的選單點一個最符合您的，` +
+
+          `我會列出適合的檢查；不知道選什麼也沒關係，可以選「不知道選什麼？」。`,
+
+          true
+
+        );
+
+
+        showSelfPayCategoryButtons();
+
+      } catch (error) {
+
+        console.error(
+          "取得自費分類失敗：",
+          error
+        );
+
+
+        addSelfPayAIMessage(
+
+          `⚠️ 目前無法取得自費檢查分類。<br><br>` +
+
+          `${escapeHtml(
+            error.message ||
+            "未知錯誤"
+          )}`
+
+        );
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "重新載入",
+
+            value:
+              "start"
+          },
+
+          {
+            label:
+              "不選自費項目",
+
+            value:
+              "skip"
+          }
+
+        ]);
+
+      } finally {
+
+        setSelfPayStatus(
+          false
+        );
+
+      }
+
+    }
+
+
+    /* =========================================
+       顯示分類按鈕
+    ========================================= */
+
+    function showSelfPayCategoryButtons() {
+
+      // 分類改顯示在旁邊的選單面板（selfpay_panel.js），聊天框只留常用按鈕
+      if (window.SelfPayPanel) {
+        SelfPayPanel.showCategories();
+      }
+
+      showSelfPayOptions([
+        { label: "← 修改預算", value: "change-budget" },
+        { label: "查看與修改已選項目", value: "view-selected" },
+        { label: "完成自費選擇", value: "finish" },
+      ]);
+
+    }
+
+
+    /* =========================================
+       取得某分類全部項目
+       GET /api/self_pay/category/{category_id}
+    ========================================= */
+
+    async function loadSelfPayCategoryItems(
+      categoryId
+    ) {
+
+      setSelfPayStatus(
+        true,
+        "正在取得檢查項目..."
+      );
+
+
+      clearSelfPayOptions();
+
+
+      try {
+
+        const response =
+          await fetch(
+
+            `${SELF_PAY_API_BASE}/category/${encodeURIComponent(
+              categoryId
+            )}`
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.detail ||
+            result.message ||
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        currentSelfPayCategory =
+          categoryId;
+
+
+        currentSelfPayItems =
+          Array.isArray(
+            result.items
+          )
+            ? result.items
+            : [];
+
+
+        if (
+          currentSelfPayItems.length ===
+          0
+        ) {
+
+          addSelfPayAIMessage(
+            "這個分類目前沒有可選擇的檢查項目。"
+          );
+
+
+          selfPayChatMode =
+            "category";
+
+
+          showSelfPayOptions([
+
+            {
+              label:
+                "回到分類",
+
+              value:
+                "back-category"
+            },
+
+            {
+              label:
+                "完成自費選擇",
+
+              value:
+                "finish"
+            }
+
+          ]);
+
+
+          return;
+
+        }
+
+
+        selfPayChatMode =
+          "item";
+
+
+        addSelfPayAIMessage(
+
+          `好的，相關的檢查已經列在${window.matchMedia("(max-width: 999px)").matches ? "下方" : "右邊"}的選單裡。<br><br>` +
+
+          `👉 不懂的項目可以按「這是什麼？」，我會用白話說明；` +
+
+          `想做的就按「＋ 加入」。`
+
+        );
+
+
+        showSelfPayItemButtons();
+
+      } catch (error) {
+
+        console.error(
+          "取得分類項目失敗：",
+          error
+        );
+
+
+        addSelfPayAIMessage(
+
+          `⚠️ 無法取得這個分類的檢查項目。<br><br>` +
+
+          `${escapeHtml(
+            error.message ||
+            "未知錯誤"
+          )}`
+
+        );
+
+
+        selfPayChatMode =
+          "category";
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "回到分類",
+
+            value:
+              "back-category"
+          }
+
+        ]);
+
+      } finally {
+
+        setSelfPayStatus(
+          false
+        );
+
+      }
+
+    }
+
+
+    /* =========================================
+       顯示分類中的檢查項目
+    ========================================= */
+
+    function showSelfPayItemButtons() {
+
+      // 項目改顯示在旁邊的選單面板（selfpay_panel.js），聊天框只留常用按鈕
+      if (window.SelfPayPanel) {
+        SelfPayPanel.showItems();
+      }
+
+      showSelfPayOptions([
+        { label: "換一個方面", value: "back-category" },
+        { label: "查看與修改已選項目", value: "view-selected" },
+        { label: "完成自費選擇", value: "finish" },
+      ]);
+
+    }
+
+
+    /* =========================================
+       取得單一自費項目資料與正確價格
+       POST /api/self_pay/select
+
+       價格以 billable.price 為準
+    ========================================= */
+
+    async function loadSelfPayItemDetail(
+      itemId,
+      explanationOnly = false
+    ) {
+
+      setSelfPayStatus(
+        true,
+        "正在取得檢查內容與價格..."
+      );
+
+
+      clearSelfPayOptions();
+
+
+      try {
+
+        const response =
+          await fetch(
+
+            `${SELF_PAY_API_BASE}/select`,
+
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  item_id:
+                    itemId
+
+                })
+
+            }
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+        console.log(
+          "自費項目 API 回傳：",
+          result
+        );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            result.detail ||
+            result.message ||
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        currentSelfPayItem =
+          result.item ||
+          {};
+
+
+        currentSelfPayBillable =
+          result.billable ||
+          {};
+
+
+        const itemName =
+          currentSelfPayBillable.name ||
+          currentSelfPayItem.name ||
+          "自費檢查";
+
+
+        // 長者說明採用固定且可由診所審核的內容。
+        const explanation = String(result.plain_explanation || currentSelfPayItem.plain_explanation || "").trim();
+        const packageExplanation = String(result.package_explanation || "").trim();
+        const isPackage = currentSelfPayBillable.type === "package";
+        const description = explanation || "這項檢查的白話說明尚待診所確認，請向醫護人員了解用途。";
+        const descriptionHtml =
+          `<strong>這項檢查在做什麼？</strong><br>${escapeHtml(description)}` +
+          (isPackage && packageExplanation
+            ? `<br><br><strong>整套檢查在做什麼？</strong><br>${escapeHtml(packageExplanation)}`
+            : "");
+
+        const spokenExplanation =
+          `${itemName}。這項檢查在做什麼？${description}` +
+          (isPackage && packageExplanation
+            ? `。整套檢查在做什麼？${packageExplanation}`
+            : "");
+
+        const rawPrice =
+          currentSelfPayBillable.price;
+
+
+        let price =
+          null;
+
+
+        if (
+          rawPrice !== null &&
+          rawPrice !== undefined &&
+          rawPrice !== ""
+        ) {
+
+          const converted =
+            Number(
+              rawPrice
+            );
+
+
+          if (
+            Number.isFinite(
+              converted
+            )
+          ) {
+
+            price =
+              converted;
+
+          }
+
+        }
+
+
+        const priceText =
+          price === null
+
+            ? "價格需向診所確認"
+
+            : `NT$${price.toLocaleString(
+                "zh-TW"
+              )}`;
+
+
+        const includedItems =
+          Array.isArray(
+            currentSelfPayBillable
+              .included_items
+          )
+
+            ? currentSelfPayBillable
+                .included_items
+
+            : [];
+
+
+        let includedHtml =
+          "";
+
+
+        if (
+          includedItems.length >
+          0
+        ) {
+
+          includedHtml =
+            `
+              <div class="sp-included">
+
+                <strong>
+                  套組包含：
+                </strong>
+
+                <br>
+
+                ${includedItems
+                  .map(
+                    function (included) {
+
+                      return (
+                        `• ${escapeHtml(
+                          included
+                        )}`
+                      );
+
+                    }
+                  )
+                  .join("<br>")}
+
+              </div>
+            `;
+
+        }
+
+
+        const detailMessage = addSelfPayAIMessage(
+
+          `
+            <div class="selfpay-item-card">
+
+              <div class="selfpay-item-name">
+                ${escapeHtml(
+                  itemName
+                )}
+              </div>
+
+              <div class="selfpay-item-price">
+                ${escapeHtml(
+                  priceText
+                )}
+              </div>
+
+              <div class="selfpay-item-description">
+                ${descriptionHtml}
+              </div>
+
+              ${includedHtml}
+
+              ${explanationOnly
+                ? `<button type="button" class="selfpay-explanation-replay">🔊 再聽一次檢查說明</button>`
+                : ""}
+
+            </div>
+          `,
+          false // 此說明下方會帶 itemId／套組上下文呼叫 TTS，避免重複朗讀
+        );
+
+
+        // 「這是什麼？」：保留後端提供的完整醫療說明，供國語／台語走相同語意內容。
+        // 台語需要對應的台語譯稿（台羅）及後端合成，不能把國語漢字直接當成台語唸。
+        // 本段僅朗讀說明，不會修改任何自費加購、價格或預算資料。
+        if (explanationOnly) {
+          const speechContext = {
+            kind: "exam_explanation",
+            itemId: String(itemId),
+            itemName: itemName,
+            plainExplanationZh: description,
+            packageExplanationZh: isPackage ? packageExplanation : ""
+          };
+          if (detailMessage) {
+            // 「朗讀目前對話」也要找到完整說明，而不是下方附加的醫療提醒。
+            detailMessage.dataset.yidianSpeechText = spokenExplanation;
+            detailMessage._yidianSpeechContext = speechContext;
+          }
+          const replayButton = detailMessage?.querySelector(".selfpay-explanation-replay");
+          if (replayButton) {
+            replayButton.addEventListener("click", function () {
+              speakSelfPayText(spokenExplanation, speechContext);
+            });
+          }
+          speakSelfPayText(spokenExplanation, speechContext);
+          const noteMessage = addSelfPayAIMessage(
+            "以上是診所提供的項目用途與內容說明；檢驗指標不等於疾病確診，" +
+            "實際是否適合及結果判讀，請由醫師依個人狀況評估。<br><br>" +
+            "如需選購，請另外按右側選單的「＋加入」。",
+            false
+          );
+          if (noteMessage) noteMessage.dataset.yidianSpeechSkip = "true";
+          return true;
+        }
+
+        selfPayChatMode =
+          "confirmItem";
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "加入這個項目",
+
+            value:
+              "add"
+          },
+
+          {
+            label:
+              "查看其他項目",
+
+            value:
+              "back-items"
+          },
+
+          {
+            label:
+              "回到分類",
+
+            value:
+              "back-category"
+          },
+
+          {
+            label:
+              "查看與修改已選項目",
+
+            value:
+              "view-selected"
+          },
+
+          {
+            label:
+              "完成自費選擇",
+
+            value:
+              "finish"
+          }
+
+        ]);
+        return true;
+
+      } catch (error) {
+
+        console.error(
+          "取得自費項目失敗：",
+          error
+        );
+
+
+        addSelfPayAIMessage(
+
+          `⚠️ 無法取得這個檢查項目的資料。<br><br>` +
+
+          `${escapeHtml(
+            error.message ||
+            "未知錯誤"
+          )}`
+
+        );
+
+
+        selfPayChatMode =
+          "item";
+
+
+        showSelfPayItemButtons();
+        return false;
+
+      } finally {
+
+        setSelfPayStatus(
+          false
+        );
+
+      }
+
+    }
+        /* =========================================
+       建立可加入清單的 billable unit
+
+       如果使用者點的是套組中的細項，
+       只要後端回傳相同 billable key，
+       就只加入一次、不重複計價。
+    ========================================= */
+
+    function buildCurrentSelfPaySelection() {
+
+      if (
+        !currentSelfPayItem ||
+        !currentSelfPayBillable
+      ) {
+
+        return null;
+
+      }
+
+
+      const itemId =
+        currentSelfPayItem.id ??
+        currentSelfPayItem.item_id ??
+        currentSelfPayItem.key ??
+        "";
+
+
+      const billableId =
+        currentSelfPayBillable.id ??
+        currentSelfPayBillable.billable_id ??
+        currentSelfPayBillable.key ??
+        itemId;
+
+
+      const name =
+        currentSelfPayBillable.name ||
+        currentSelfPayItem.name ||
+        "自費檢查";
+
+
+      const rawPrice =
+        currentSelfPayBillable.price;
+
+
+      let price =
+        null;
+
+
+      if (
+        rawPrice !== null &&
+        rawPrice !== undefined &&
+        rawPrice !== ""
+      ) {
+
+        const converted =
+          Number(
+            rawPrice
+          );
+
+
+        if (
+          Number.isFinite(
+            converted
+          )
+        ) {
+
+          price =
+            converted;
+
+        }
+
+      }
+
+
+      const includedItems =
+        Array.isArray(
+          currentSelfPayBillable
+            .included_items
+        )
+          ? currentSelfPayBillable
+              .included_items
+          : [];
+
+
+      return {
+
+        key:
+          String(
+            billableId
+          ),
+
+        itemId:
+          String(
+            itemId
+          ),
+
+        name:
+          String(
+            name
+          ),
+
+        price:
+          price,
+
+        type:
+          currentSelfPayBillable.type ||
+          (
+            includedItems.length
+              ? "package"
+              : "single"
+          ),
+
+        includedItems:
+          includedItems
+
+      };
+
+    }
+
+
+    /* =========================================
+       是否已加入同一個 billable unit
+    ========================================= */
+
+    function isSelfPayItemSelected(
+      selection
+    ) {
+
+      if (!selection) {
+
+        return false;
+
+      }
+
+
+      return selfPaySelectedItems.some(
+        function (selected) {
+
+          return (
+            String(selected.key || "") === String(selection.key || "") ||
+            (String(selected.itemId || "") === String(selection.itemId || "") &&
+             String(selected.itemId || "") !== "")
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =========================================
+       計算目前自費總額
+    ========================================= */
+
+    function calculateSelfPayTotal() {
+
+      return selfPaySelectedItems.reduce(
+        function (
+          total,
+          item
+        ) {
+
+          const price =
+            Number(
+              item.price
+            );
+
+
+          if (
+            !Number.isFinite(
+              price
+            )
+          ) {
+
+            return total;
+
+          }
+
+
+          return (
+            total +
+            price
+          );
+
+        },
+        0
+      );
+
+    }
+
+
+    /* =========================================
+       加入自費項目
+
+       注意：
+       預算是「參考預算」，
+       超過時不是禁止加入，
+       而是要求使用者二次確認。
+    ========================================= */
+
+    function addCurrentSelfPayItem() {
+
+      const selection =
+        buildCurrentSelfPaySelection();
+
+
+      if (!selection) {
+
+        return {
+
+          success:
+            false,
+
+          reason:
+            "missing"
+
+        };
+
+      }
+
+
+      if (
+        isSelfPayItemSelected(
+          selection
+        )
+      ) {
+
+        return {
+
+          success:
+            false,
+
+          reason:
+            "duplicate",
+
+          item:
+            selection
+
+        };
+
+      }
+
+
+      const currentTotal =
+        calculateSelfPayTotal();
+
+
+      const newItemPrice =
+        Number(
+          selection.price || 0
+        );
+
+
+      const newTotal =
+        currentTotal +
+        newItemPrice;
+
+
+      /* -----------------------------------------
+         超過參考預算
+      ----------------------------------------- */
+
+      if (
+        selfPayBudget > 0 &&
+        newTotal > selfPayBudget
+      ) {
+
+        const overAmount =
+          newTotal -
+          selfPayBudget;
+
+
+        return {
+
+          success:
+            false,
+
+          reason:
+            "budget_confirmation_required",
+
+          selection:
+            selection,
+
+          currentTotal:
+            currentTotal,
+
+          newTotal:
+            newTotal,
+
+          overAmount:
+            overAmount
+
+        };
+
+      }
+
+
+      /* -----------------------------------------
+         沒有超過預算，直接加入
+      ----------------------------------------- */
+
+      selfPaySelectedItems.push(
+        selection
+      );
+
+
+      selfPaySelectedTotal =
+        calculateSelfPayTotal();
+
+
+      selfPayRemainingBudget =
+        selfPayBudget -
+        selfPaySelectedTotal;
+
+
+      return {
+
+        success:
+          true,
+
+        item:
+          selection
+
+      };
+
+    }
+
+
+    /* =========================================
+       顯示目前已選清單
+    ========================================= */
+
+    function showSelectedSelfPayItems() {
+
+      if (
+        selfPaySelectedItems.length ===
+        0
+      ) {
+
+        addSelfPayAIMessage(
+          "目前還沒有加入任何自費檢查項目。"
+        );
+
+        return;
+
+      }
+
+
+      const rows =
+        selfPaySelectedItems.map(
+          function (
+            item,
+            index
+          ) {
+
+            const price =
+              Number(
+                item.price
+              );
+
+
+            const priceText =
+              Number.isFinite(
+                price
+              )
+                ? `NT$${price.toLocaleString(
+                    "zh-TW"
+                  )}`
+                : "價格需確認";
+
+
+            return (
+              `<div class="sp-item-line">` +
+                `${index + 1}. ` +
+                `${escapeHtml(item.name)}` +
+                `｜` +
+                `${escapeHtml(priceText)}` +
+                ` ` +
+                `<button type="button"` +
+                ` class="selfpay-delete-btn"` +
+                ` onclick="requestDeleteSelfPayItem(${index})">` +
+                `刪除` +
+                `</button>` +
+              `</div>`
+            );
+
+          }
+        );
+
+
+      const total =
+        calculateSelfPayTotal();
+
+
+      const budgetText =
+        selfPayBudget > 0
+
+          ? (
+              `<br><br>` +
+              `參考預算：` +
+              `<strong>NT$${selfPayBudget.toLocaleString(
+                "zh-TW"
+              )}</strong>`
+            )
+
+          : "";
+
+
+      const difference =
+        selfPayBudget > 0
+          ? selfPayBudget - total
+          : 0;
+
+
+      let remainingText =
+        "";
+
+
+      if (
+        selfPayBudget > 0
+      ) {
+
+        if (
+          difference >= 0
+        ) {
+
+          remainingText =
+            `<br>` +
+            `預算尚餘：` +
+            `<strong>NT$${difference.toLocaleString(
+              "zh-TW"
+            )}</strong>`;
+
+        } else {
+
+          remainingText =
+            `<br>` +
+            `目前超出參考預算：` +
+            `<strong>NT$${Math.abs(
+              difference
+            ).toLocaleString(
+              "zh-TW"
+            )}</strong>`;
+
+        }
+
+      }
+
+
+      addSelfPayAIMessage(
+        `
+          <div class="selfpay-summary-card">
+
+            <strong>
+              目前已選自費項目
+            </strong>
+
+            <br><br>
+
+            ${rows.join("")}
+
+            <div class="selfpay-summary-total">
+
+              自費合計：
+              NT$${total.toLocaleString(
+                "zh-TW"
+              )}
+
+              ${budgetText}
+
+              ${remainingText}
+
+            </div>
+
+          </div>
+        `
+      );
+
+    }
+
+    function requestDeleteSelfPayItem(index) {
+
+      const item =
+        selfPaySelectedItems[index];
+
+      if (!item) {
+        return;
+      }
+
+      pendingDeleteSelfPayIndex =
+        index;
+
+      clearSelfPayOptions();
+
+      addSelfPayAIMessage(
+        `⚠️ 是否確定要刪除此項目？<br><br>` +
+        `<strong>${escapeHtml(item.name)}</strong>`,
+        false
+      );
+
+      showSelfPayOptions([
+        {
+          label:
+            "確定刪除",
+          value:
+            "confirm-delete-selected"
+        },
+        {
+          label:
+            "取消",
+          value:
+            "cancel-delete-selected"
+        }
+      ]);
+
+    }
+
+    /* =========================================
+       加入後選項
+    ========================================= */
+
+    function showAfterAddOptions() {
+
+      selfPayChatMode =
+        "afterAdd";
+
+
+      showSelfPayOptions([
+
+        {
+          label:
+            "繼續選其他項目",
+
+          value:
+            "continue"
+        },
+
+        {
+          label:
+            "查看與修改已選項目",
+
+          value:
+            "view-selected"
+        },
+
+        {
+          label:
+            "完成自費選擇",
+
+          value:
+            "finish"
+        }
+
+      ]);
+
+    }
+
+
+    /* =========================================
+       最終確認選項
+    ========================================= */
+
+    function showFinalConfirmOptions() {
+
+      selfPayChatMode =
+        "finalConfirm";
+
+
+      showSelfPayOptions([
+
+        {
+          label:
+            "確認送出",
+
+          value:
+            "confirm-final"
+        },
+
+        {
+          label:
+            "回去繼續選",
+
+          value:
+            "continue"
+        },
+
+        {
+          label:
+            "查看與修改已選項目",
+
+          value:
+            "view-selected"
+        }
+
+      ]);
+
+    }
+
+
+    /* =========================================
+       整理自費資料到 appointmentData
+    ========================================= */
+
+    function syncSelfPayDataToAppointment() {
+
+      appointmentData.selfPayItems =
+        selfPaySelectedItems.map(
+          function (item) {
+
+            return {
+
+              key:
+                item.key ||
+                "",
+
+              item_id:
+                item.itemId ||
+                "",
+
+              name:
+                item.name ||
+                "",
+
+              price:
+                item.price ??
+                null,
+
+              type:
+                item.type ||
+                "item",
+
+              included_items:
+                Array.isArray(
+                  item.includedItems
+                )
+                  ? item.includedItems
+                  : []
+
+            };
+
+          }
+        );
+
+
+      appointmentData.selfPayTotal =
+        calculateSelfPayTotal();
+
+
+      if (window.SelfPayPanel) {
+        SelfPayPanel.refresh();
+      }
+    }
+
+
+    /* =========================================
+       自費選擇完成
+       下一步改成日曆選日期
+    ========================================= */
+
+    function confirmSelfPaySelection() {
+
+  syncSelfPayDataToAppointment();
+
+  const total =
+    appointmentData.selfPayTotal;
+
+
+  const isDirectSelfPayFlow =
+    currentPlan === "SELF_PAY" &&
+    new URLSearchParams(
+      window.location.search
+    ).get("directSelfPay") === "1";
+
+
+  /* =========================================
+     純自費
+  ========================================= */
+
+  if (isDirectSelfPayFlow) {
+
+    addSelfPayAIMessage(
+
+      `好的，自費項目已整理完成。<br><br>` +
+
+      `您共選擇 ` +
+      `<strong>${selfPaySelectedItems.length}</strong>` +
+      ` 項自費檢查。<br>` +
+
+      `自費合計：` +
+      `<strong>NT$${total.toLocaleString(
+        "zh-TW"
+      )}</strong><br><br>` +
+
+      `接下來請選擇自費健檢的預約日期。<br><br>` +
+
+      `📅 請直接從下方日曆選擇日期。`,
+
+      true
+
+    );
+
+  } else {
+
+    /* =========================================
+       老人健檢 + 自費加購
+    ========================================= */
+
+    addSelfPayAIMessage(
+
+      `好的，自費加購項目已整理完成。<br><br>` +
+
+      `您共加購 ` +
+      `<strong>${selfPaySelectedItems.length}</strong>` +
+      ` 項自費檢查。<br>` +
+
+      `自費合計：` +
+      `<strong>NT$${total.toLocaleString(
+        "zh-TW"
+      )}</strong><br><br>` +
+
+      `您原本的老人健檢預約為：<br>` +
+
+      `<strong>${appointmentData.date || ""} ` +
+      `${appointmentData.time || ""}</strong><br><br>` +
+
+      `📌 自費健檢的檢查時間需另外安排。<br><br>` +
+
+      `接下來請另外選擇自費健檢日期。`,
+
+      true
+
+    );
+
+  }
+
+
+  selfPayStep =
+    "date";
+
+  showSelfPayCalendar();
+
+}
+
+
+    /* =========================================
+       找分類
+    ========================================= */
+
+    function findCategoryIdByText(
+      text
+    ) {
+
+      const normalized =
+        String(
+          text ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+
+
+      if (!normalized) {
+
+        return null;
+
+      }
+
+
+      const matched =
+        selfPayCategories.find(
+          function (category) {
+
+            const id =
+              String(
+                category.id ||
+                ""
+              );
+
+
+            const name =
+              String(
+                category.name ||
+                ""
+              )
+                .toLowerCase();
+
+
+            if (
+              name &&
+              normalized.includes(
+                name
+              )
+            ) {
+
+              return true;
+
+            }
+
+
+            if (
+              id ===
+              "cardiovascular"
+            ) {
+
+              return (
+                normalized.includes(
+                  "心"
+                ) ||
+                normalized.includes(
+                  "血管"
+                )
+              );
+
+            }
+
+
+            if (
+              id ===
+              "pulmonary"
+            ) {
+
+              return (
+                normalized.includes(
+                  "肺"
+                )
+              );
+
+            }
+
+
+            if (
+              id ===
+              "hepatobiliary_gastrointestinal"
+            ) {
+
+              return (
+
+                normalized.includes(
+                  "肝"
+                ) ||
+
+                normalized.includes(
+                  "膽"
+                ) ||
+
+                normalized.includes(
+                  "胃"
+                ) ||
+
+                normalized.includes(
+                  "腸"
+                )
+
+              );
+
+            }
+
+
+            if (
+              id ===
+              "renal_urology"
+            ) {
+
+              return (
+
+                normalized.includes(
+                  "腎"
+                ) ||
+
+                normalized.includes(
+                  "泌尿"
+                )
+
+              );
+
+            }
+
+
+            if (
+              id ===
+              "other_value_added"
+            ) {
+
+              return (
+
+                normalized.includes(
+                  "其他"
+                ) ||
+
+                normalized.includes(
+                  "加值"
+                )
+
+              );
+
+            }
+
+
+            return false;
+
+          }
+        );
+
+
+      return matched
+        ? matched.id
+        : null;
+
+    }
+
+
+    /* =========================================
+       找檢查項目
+    ========================================= */
+
+    function findItemIdByText(
+      text
+    ) {
+
+      const normalized =
+        String(
+          text ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+
+
+      if (!normalized) {
+
+        return null;
+
+      }
+
+
+      const matched =
+        currentSelfPayItems.find(
+          function (item) {
+
+            const name =
+              String(
+                item.name ||
+                ""
+              )
+                .toLowerCase();
+
+
+            return (
+              name &&
+              (
+                normalized.includes(
+                  name
+                ) ||
+                name.includes(
+                  normalized
+                )
+              )
+            );
+
+          }
+        );
+
+
+      return matched
+        ? (
+            matched.id ??
+            matched.item_id ??
+            matched.key
+          )
+        : null;
+
+    }
+
+
+    /* =========================================
+       顯示預約日曆
+    ========================================= */
+
+    /* =========================================
+       自費健檢：某一天開哪些診、為什麼不能預約
+       門診時段、休診日、每日名額都在後台「診所設定」設定（clinic.js）
+    ========================================= */
+
+    const WEEK_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+    function isSameDay(a, b) {
+      return ClinicSchedule.ymd(a) === ClinicSchedule.ymd(b);
+    }
+
+    function selfPaySessionsAvailable(date) {
+      let sessions = ClinicSchedule.selfPaySessionsOn(date);
+      const now = new Date();
+      if (isSameDay(date, now)) {
+        // 當天上午診無法預約；10:30 後下午診也停止受理
+        sessions = sessions.filter(s => s === "afternoon");
+        if (now.getHours() * 60 + now.getMinutes() >= 10 * 60 + 30) sessions = [];
+      }
+      return sessions;
+    }
+
+    function selfPayDateBlockedReason(date) {
+      const d = new Date(date); d.setHours(0, 0, 0, 0);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (d < today) return "這一天已經過了。";
+      if (ClinicSchedule.isClosed(d)) return "這一天診所休診。";
+      if (!ClinicSchedule.selfPaySessionsOn(d).length) return `${WEEK_NAMES[d.getDay()]}診所沒有提供自費健檢。`;
+      if (ClinicSchedule.isFull(d, "selfPay")) return "這一天的自費健檢名額已經額滿。";
+      if (!selfPaySessionsAvailable(d).length) return "今天的預約受理時間已過（當日上午無法預約，10:30 後下午診也停止受理）。";
+      return "";
+    }
+
+    function showSelfPaySessionOptions(date, prefix) {
+      const sessions = selfPaySessionsAvailable(date);
+      const isToday = isSameDay(date, new Date());
+      const allDay = ClinicSchedule.selfPaySessionsOn(date);
+      let note = "";
+      if (isToday) note = "📌 當天上午診無法預約，目前可預約下午診。<br><br>";
+      else if (allDay.length === 1) note = `📌 ${WEEK_NAMES[new Date(date).getDay()]}只有${allDay[0] === "morning" ? "上午診" : "下午診"}。<br><br>`;
+      addSelfPayAIMessage(prefix + note + "👉 請選擇預約時段：", false);
+      showSelfPayOptions(
+        sessions.map(s => ({ label: ClinicSchedule.sessionLabel(s), value: s }))
+          .concat([{ label: "重新選擇日期", value: "change-date" }])
+      );
+    }
+
+
+    function showSelfPayCalendar() {
+
+      clearSelfPayOptions();
+
+      if (window.SelfPayPanel) {
+        SelfPayPanel.hide();
+      }
+
+
+      const optionsContainer =
+        document.getElementById(
+          "selfpay-chat-options"
+        );
+
+
+      if (!optionsContainer) {
+
+        return;
+
+      }
+
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.style.width =
+        "100%";
+
+      wrapper.style.padding =
+        "12px";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.type =
+        "text";
+
+      input.placeholder =
+        "請選擇預約日期";
+
+      input.readOnly =
+        true;
+
+
+      input.style.width =
+        "100%";
+
+      input.style.padding =
+        "14px";
+
+      input.style.fontSize =
+        "18px";
+
+      input.style.border =
+        "2px solid #4356c7";
+
+      input.style.borderRadius =
+        "14px";
+
+      input.style.background =
+        "#fff";
+
+      input.style.cursor =
+        "pointer";
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      optionsContainer.appendChild(
+        wrapper
+      );
+
+
+      // 圖例
+      const legend = document.createElement("div");
+      legend.className = "sp-cal-legend";
+      legend.innerHTML =
+        '<span><i class="ok"></i>可預約</span>' +
+        '<span><i class="off"></i>休診／已過</span>' +
+        '<span><i class="full"></i>額滿</span>';
+      wrapper.appendChild(legend);
+
+      const fp = flatpickr(
+        input,
+        {
+
+          locale:
+            "zh_tw",
+
+          dateFormat:
+            "Y-m-d",
+
+          minDate:
+            "today",
+
+          inline:
+            true,
+
+          /* 不能選的日子：不開診、休診日、額滿、今天已過受理時間 */
+          disable: [
+            function (date) {
+              return !!selfPayDateBlockedReason(date);
+            }
+          ],
+
+          /* 在日曆格子上標示「額滿」「休診」 */
+          onDayCreate:
+            function (dObj, dStr, fpInstance, dayElem) {
+              const date = dayElem.dateObj;
+              if (!date || dayElem.classList.contains("prevMonthDay") || dayElem.classList.contains("nextMonthDay")) return;
+              const today = new Date(); today.setHours(0, 0, 0, 0);
+              if (date < today) return;
+              let tag = "";
+              if (ClinicSchedule.isClosed(date)) tag = "休診";
+              else if (ClinicSchedule.selfPaySessionsOn(date).length && ClinicSchedule.isFull(date, "selfPay")) tag = "額滿";
+              if (tag) {
+                dayElem.classList.add(tag === "額滿" ? "sp-day-full" : "sp-day-closed");
+                dayElem.title = tag;
+                const t = document.createElement("small");
+                t.textContent = tag;
+                dayElem.appendChild(t);
+              }
+            },
+
+
+          /* =====================================
+             使用者選擇日期
+          ===================================== */
+
+          onChange:
+            function (selectedDates) {
+
+              if (!selectedDates.length) {
+                return;
+              }
+
+              const selectedDate = selectedDates[0];
+              const month = selectedDate.getMonth() + 1;
+              const day = selectedDate.getDate();
+
+              const confirmDate =
+                window.confirm(
+                  `您選擇的是 ${month}/${day}，確定要預約這一天嗎？`
+                );
+
+              if (!confirmDate) {
+                input._flatpickr.clear();
+                return;
+              }
+
+              const reason = selfPayDateBlockedReason(selectedDate);
+              if (reason) {
+                addSelfPayAIMessage(reason + "<br><br>請重新選擇其他日期。", false);
+                input._flatpickr.clear();
+                return;
+              }
+
+              selfPaySelectedDate =
+                ClinicSchedule.ymd(selectedDate);
+
+              addSelfPayUserMessage(
+                `${month}/${day}`
+              );
+
+              clearSelfPayOptions();
+
+              selfPayStep =
+                "session";
+
+              showSelfPaySessionOptions(
+                selectedDate,
+                `好的，已選擇 ${month}/${day}。<br><br>`
+              );
+
+            }
+
+        }
+
+      );
+
+      // 讀取最新的預約數量後，重畫日曆（額滿的日子變灰）
+      ClinicSchedule.refreshAvailability().then(() => fp.redraw());
+
+    }
+    /* =========================================
+       套用預算（打字按鈕、語音共用）
+    ========================================= */
+
+    async function applySelfPayBudget(budget) {
+
+      selfPayBudget =
+        budget;
+
+      selfPaySelectedTotal =
+        calculateSelfPayTotal();
+
+      selfPayRemainingBudget =
+        selfPayBudget -
+        selfPaySelectedTotal;
+
+      clearSelfPayOptions();
+
+      addSelfPayAIMessage(
+
+        `好的，您的自費健檢參考預算為 ` +
+
+        `<strong>NT$${budget.toLocaleString(
+          "zh-TW"
+        )}</strong>。<br><br>` +
+
+        `接下來為您顯示可選擇的自費健檢項目。`,
+
+        false
+
+      );
+
+      selfPayChatMode =
+        "category";
+
+      await loadSelfPayCategories();
+    }
+
+
+    /* =========================================
+       把口語金額轉成數字
+       「三千」「三千塊」「兩千五」(=2500)「一萬五」(=15000)
+       「3000元」「3,000」「1萬2」「五百」
+    ========================================= */
+
+    function parseSpokenAmount(text) {
+
+      const DIGIT = {
+        "零": 0, "〇": 0, "一": 1, "二": 2, "兩": 2, "三": 3, "四": 4,
+        "五": 5, "六": 6, "七": 7, "八": 8, "九": 9
+      };
+      const UNIT = { "十": 10, "百": 100, "千": 1000, "仟": 1000, "佰": 100 };
+
+      function convert(run) {
+        let total = 0, section = 0, num = 0, lastUnit = 1;
+        let afterZero = false, prevWasDigit = false, digitsAfterUnit = 0;
+
+        for (const ch of run) {
+          if (/[0-9]/.test(ch) || ch in DIGIT) {
+            const d = /[0-9]/.test(ch) ? Number(ch) : DIGIT[ch];
+            if (ch === "零" || ch === "〇") afterZero = true;
+            num = prevWasDigit ? num * 10 + d : d;
+            prevWasDigit = true;
+            digitsAfterUnit += 1;
+          } else if (ch in UNIT) {
+            section += (num || 1) * UNIT[ch];
+            num = 0; lastUnit = UNIT[ch]; prevWasDigit = false;
+            afterZero = false; digitsAfterUnit = 0;
+          } else if (ch === "萬") {
+            section += num;
+            total += (section || 1) * 10000;
+            section = 0; num = 0; lastUnit = 10000; prevWasDigit = false;
+            afterZero = false; digitsAfterUnit = 0;
+          }
+        }
+
+        // 口語省略：「兩千五」= 2500、「一萬五」= 15000
+        if (num && lastUnit >= 100 && !afterZero && digitsAfterUnit === 1) {
+          num = num * (lastUnit / 10);
+        }
+        return total + section + num;
+      }
+
+      const clean = String(text || "")
+        .normalize("NFKC")
+        .replace(/[,，\s]/g, "");
+
+      const runs = clean.match(/[0-9零〇一二兩三四五六七八九十百千萬仟佰億]+/g) || [];
+      let best = 0;
+      runs.forEach(run => {
+        const v = convert(run);
+        if (v > best) best = v;
+      });
+      return best;
+    }
+
+
+        /* =========================================
+       預算輸入
+    ========================================= */
+
+    function showSelfPayBudgetInput() {
+
+      clearSelfPayOptions();
+
+      // 預算可以用打字，也可以按下方 🎤 用說的（例如「三千元」），所以不隱藏下方輸入列
+
+      const optionsContainer =
+        document.getElementById(
+          "selfpay-chat-options"
+        );
+
+
+      if (!optionsContainer) {
+
+        console.error(
+          "找不到 selfpay-chat-options"
+        );
+
+        return;
+
+      }
+
+
+      const wrapper =
+        document.createElement(
+          "div"
+        );
+
+
+      wrapper.style.width =
+        "100%";
+
+      wrapper.style.display =
+        "flex";
+
+      wrapper.style.gap =
+        "8px";
+
+      wrapper.style.padding =
+        "10px";
+
+
+      const input =
+        document.createElement(
+          "input"
+        );
+
+
+      input.type =
+        "number";
+
+      input.id =
+        "selfpay-budget-input";
+
+      input.min =
+        "0";
+
+      input.step =
+        "100";
+
+      input.placeholder =
+        "例如 3000";
+if (
+  selfPayBudget > 0
+) {
+
+  input.value =
+    selfPayBudget;
+
+}
+
+      input.style.flex =
+        "1";
+
+      input.style.minWidth = 
+        "0";
+
+      input.style.padding =
+        "12px";
+
+      input.style.fontSize =
+        "18px";
+
+      input.style.border =
+        "2px solid #4356c7";
+
+      input.style.borderRadius =
+        "12px";
+
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.textContent =
+  selfPayBudget > 0
+    ? "更新預算"
+    : "確認預算";
+
+
+      button.style.padding =
+        "12px 18px";
+
+      button.style.border =
+        "none";
+
+      button.style.borderRadius =
+        "12px";
+
+      button.style.background =
+        "#4356c7";
+
+      button.style.color =
+        "#fff";
+
+      button.style.fontSize = 
+        "18px";
+
+      button.style.cursor = 
+        "pointer";
+
+      button.style.whiteSpace = 
+         "nowrap";
+      
+      button.style.flex = 
+         "0 0 auto";
+
+      button.style.minWidth = 
+         "110px";
+
+
+      button.addEventListener(
+        "click",
+        async function () {
+
+          const budget =
+            Number(
+              input.value
+            );
+
+
+          if (
+            !budget ||
+            budget <= 0
+          ) {
+
+            addSelfPayAIMessage(
+              "請輸入大於 0 的預算金額。",
+              false
+            );
+
+            return;
+
+          }
+
+
+          addSelfPayUserMessage(
+
+            `預算 NT$${budget.toLocaleString(
+              "zh-TW"
+            )}`
+
+          );
+
+
+          await applySelfPayBudget(
+            budget
+          );
+
+        }
+      );
+
+      input.addEventListener(
+        "keydown",
+        function (event) {
+          if (event.key === "Enter") button.click();
+        }
+      );
+
+
+      wrapper.appendChild(
+        input
+      );
+
+
+      wrapper.appendChild(
+        button
+      );
+
+
+      optionsContainer.appendChild(
+        wrapper
+      );
+
+
+
+      input.focus();
+
+    }
+
+
+    /* =========================================
+       主對話控制器
+    ========================================= */
+
+    async function handleSelfPayAnswer(
+      value,
+      displayText
+    ) {
+
+      const rawValue =
+        String(
+          value ??
+          ""
+        );
+
+
+      const text =
+        rawValue
+          .trim()
+          .toLowerCase();
+
+
+      const shownText =
+        String(
+          displayText ??
+          rawValue
+        );
+
+              if (
+        rawValue ===
+        "start-direct-selfpay"
+      ) {
+
+        clearSelfPayOptions();
+
+        addSelfPayUserMessage(
+          "開始自費健檢預約"
+        );
+
+        selfPayChatMode =
+          "budget";
+
+        const introText =
+          `您好，${appointmentData.name}。` +
+          `您的基本資料已經確認完成。` +
+          `接下來請設定您的自費健檢參考預算，` +
+          `我會依照您的需求協助選擇檢查項目。` +
+          `請直接說出或輸入預算金額，例如三千元。`;
+
+        addSelfPayAIMessage(
+          `您好，${escapeHtml(
+            appointmentData.name
+          )}。<br><br>` +
+          `您的基本資料已經確認完成。<br><br>` +
+          `接下來請設定您的自費健檢參考預算，` +
+          `我會依照您的需求協助選擇檢查項目。<br><br>` +
+          `💰 請輸入或直接說出預算金額，例如：3000 或「三千元」`,
+          false
+        );
+
+        if (
+          "speechSynthesis"
+          in window
+        ) {
+
+          const introSpeech =
+            new SpeechSynthesisUtterance(
+              introText
+            );
+
+          introSpeech.lang =
+            "zh-TW";
+
+          introSpeech.rate =
+            1;
+
+          introSpeech.pitch =
+            1;
+
+          window
+            .speechSynthesis
+            .speak(
+              introSpeech
+            );
+
+        }
+
+        showSelfPayBudgetInput();
+
+        return;
+      }
+
+    /* =====================================
+      已選自費項目：確認刪除
+    ===================================== */
+
+    if (
+      rawValue ===
+      "confirm-delete-selected"
+    ) {
+
+      clearSelfPayOptions();
+
+      const index =
+        pendingDeleteSelfPayIndex;
+
+      const item =
+        Number.isInteger(index)
+          ? selfPaySelectedItems[index]
+          : null;
+
+      if (!item) {
+
+        pendingDeleteSelfPayIndex =
+          null;
+
+        addSelfPayAIMessage(
+          "找不到要刪除的項目，請重新查看已選項目。",
+          false
+        );
+
+        showAfterAddOptions();
+
+        return;
+      }
+
+      const removedItem =
+        selfPaySelectedItems.splice(
+          index,
+          1
+        )[0];
+
+      pendingDeleteSelfPayIndex =
+        null;
+
+      selfPaySelectedTotal =
+        calculateSelfPayTotal();
+
+      selfPayRemainingBudget =
+        selfPayBudget -
+        selfPaySelectedTotal;
+
+      syncSelfPayDataToAppointment();
+
+      addSelfPayUserMessage(
+        "確定刪除"
+      );
+
+      addSelfPayAIMessage(
+        `✅ 已刪除「${escapeHtml(
+          removedItem.name
+        )}」。`,
+        false
+      );
+
+      showSelectedSelfPayItems();
+
+      showAfterAddOptions();
+
+      return;
+    }
+
+
+    /* =====================================
+      已選自費項目：取消刪除
+    ===================================== */
+
+    if (
+      rawValue ===
+      "cancel-delete-selected"
+    ) {
+
+      clearSelfPayOptions();
+
+      pendingDeleteSelfPayIndex =
+        null;
+
+      addSelfPayUserMessage(
+        "取消"
+      );
+
+      addSelfPayAIMessage(
+        "好的，已取消刪除。",
+        false
+      );
+
+      showSelectedSelfPayItems();
+
+      showAfterAddOptions();
+
+      return;
+    }
+
+/* =====================================
+   修改預算
+===================================== */
+
+if (
+  rawValue ===
+  "change-budget"
+) {
+
+  clearSelfPayOptions();
+
+  selfPayChatMode =
+    "budget";
+
+  addSelfPayUserMessage(
+    "修改預算"
+  );
+
+  addSelfPayAIMessage(
+
+    `目前的自費健檢參考預算為 ` +
+    `<strong>NT$${selfPayBudget.toLocaleString(
+      "zh-TW"
+    )}</strong>。<br><br>` +
+
+    `請重新輸入您希望調整的預算金額。`,
+
+    false
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+
+}
+
+
+      /* =====================================
+         預算：用說的或打字（例如「三千元」）
+      ===================================== */
+
+      if (
+        selfPayChatMode === "budget" &&
+        !/^(start|skip|finish|view-selected|back-|change-|confirm-|cancel-|category:|item:|add$)/.test(rawValue)
+      ) {
+
+        const amount =
+          parseSpokenAmount(rawValue);
+
+        addSelfPayUserMessage(
+          shownText
+        );
+
+        if (amount >= 100) {
+
+          await applySelfPayBudget(
+            amount
+          );
+
+        } else {
+
+          addSelfPayAIMessage(
+            `目前無法確認您的預算金額，尚未設定預算。<br><br>` +
+            `👉 您可以直接輸入「50000」，或說「五萬」（不必加上元或塊）。` +
+            `若語音只辨識成「1.」等不完整數字，請重說或使用數字輸入框。`,
+            true
+          );
+
+        }
+
+        return;
+
+      }
+
+      /* =====================================
+         預約最終確認
+      ===================================== */
+
+      if (
+        selfPayStep ===
+        "finalConfirm"
+      ) {
+
+        /* -------------------------------------
+           重新選擇時間
+        ------------------------------------- */
+
+      if (
+        rawValue ===
+        "change-session"
+      ) {
+
+        selfPayStep =
+          "date";
+
+        selfPaySelectedDate =
+          "";
+
+        selfPaySelectedSession =
+          "";
+
+        appointmentData.selfPayDate =
+          "";
+
+        appointmentData.selfPayTime =
+          "";
+
+        if (currentPlan === "SELF_PAY") {
+
+          appointmentData.date =
+            "";
+
+          appointmentData.time =
+            "";
+
+        }
+
+        clearSelfPayOptions();
+
+        addSelfPayAIMessage(
+          "好的，請重新選擇預約日期。",
+          true
+        );
+
+        showSelfPayCalendar();
+
+        return;
+      }
+
+
+        /* -------------------------------------
+           確認預約
+        ------------------------------------- */
+
+        if (
+
+          rawValue ===
+            "confirm-final" ||
+
+          text.includes(
+            "確認預約"
+          ) ||
+
+          text.includes(
+            "確認送出"
+          ) ||
+
+          text ===
+            "確認" ||
+
+          text ===
+            "好"
+
+        ) {
+
+          clearSelfPayOptions();
+
+
+          addSelfPayUserMessage(
+            "確認預約"
+          );
+
+
+          const isDirectSelfPayFlow =
+  currentPlan === "SELF_PAY" &&
+  new URLSearchParams(
+    window.location.search
+  ).get("directSelfPay") === "1";
+
+
+if (isDirectSelfPayFlow) {
+
+  appointmentData.date =
+    selfPaySelectedDate;
+
+  appointmentData.time =
+    selfPaySelectedSession;
+
+}
+
+
+await submitFinalBooking();
+
+
+          return;
+
+        }
+
+
+        addSelfPayAIMessage(
+          "請確認目前的預約日期與時段是否正確。",
+          true
+        );
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "確認預約",
+
+            value:
+              "confirm-final"
+          },
+
+          {
+            label:
+              "重新選擇時間",
+
+            value:
+              "change-session"
+          }
+
+        ]);
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         日期文字輸入
+      ===================================== */
+
+      if (
+        selfPayStep ===
+        "date"
+      ) {
+
+        if (
+          /明天|後天|今天|下週|下星期|下禮拜|星期|禮拜/.test(
+            text
+          )
+        ) {
+
+          addSelfPayAIMessage(
+
+            `為了避免預約日期產生誤差，` +
+
+            `請直接從下方日曆選擇日期，` +
+
+            `或輸入幾月幾號。`,
+
+            true
+
+          );
+
+
+          showSelfPayCalendar();
+
+
+          return;
+
+        }
+
+
+        const match =
+          text.match(
+
+            /(?:^|\D)(\d{1,2})\s*(?:\/|月)\s*(\d{1,2})\s*(?:日)?(?:$|\D)/
+
+          );
+
+
+        if (!match) {
+
+          addSelfPayAIMessage(
+
+            `我沒有辨識到日期。<br><br>` +
+
+            `請從下方日曆選擇，` +
+
+            `或輸入例如：5月20日、5/20。`,
+
+            true
+
+          );
+
+
+          showSelfPayCalendar();
+
+
+          return;
+
+        }
+
+
+        const month =
+          Number(
+            match[1]
+          );
+
+
+        const day =
+          Number(
+            match[2]
+          );
+
+
+        const now =
+          new Date();
+
+
+        const year =
+          now.getFullYear();
+
+
+        const candidate =
+          new Date(
+            year,
+            month - 1,
+            day
+          );
+
+
+        if (
+
+          month < 1 ||
+
+          month > 12 ||
+
+          day < 1 ||
+
+          day > 31 ||
+
+          candidate.getMonth() !==
+            month - 1 ||
+
+          candidate.getDate() !==
+            day
+
+        ) {
+
+          addSelfPayAIMessage(
+            "這個日期看起來不正確，請重新選擇日期。",
+            true
+          );
+
+
+          showSelfPayCalendar();
+
+
+          return;
+
+        }
+
+
+        const monthText =
+  String(month).padStart(2, "0");
+
+const dayText =
+  String(day).padStart(2, "0");
+
+selfPaySelectedDate =
+  `${year}-${monthText}-${dayText}`;
+
+
+        selfPayStep =
+          "session";
+
+
+        clearSelfPayOptions();
+
+
+        addSelfPayUserMessage(
+          selfPaySelectedDate
+        );
+
+
+        const weekDay =
+          candidate.getDay();
+
+
+        const isToday =
+
+          candidate.getFullYear() ===
+            now.getFullYear() &&
+
+          candidate.getMonth() ===
+            now.getMonth() &&
+
+          candidate.getDate() ===
+            now.getDate();
+
+
+        /* 不能預約的日子（不開診、休診、額滿、今天已過受理時間） */
+        const blockedReason =
+          selfPayDateBlockedReason(candidate);
+
+        if (blockedReason) {
+          addSelfPayAIMessage(
+            blockedReason + "<br><br>請重新選擇其他日期。",
+            true
+          );
+          selfPayStep = "date";
+          selfPaySelectedDate = "";
+          showSelfPayCalendar();
+          return;
+        }
+
+        void weekDay; void isToday;
+        showSelfPaySessionOptions(
+          candidate,
+          `好的，已選擇 ${selfPaySelectedDate}。<br><br>`
+        );
+        return;
+      }
+
+
+      /* =====================================
+         選擇上午 / 下午
+      ===================================== */
+
+      if (
+        selfPayStep ===
+        "session"
+      ) {
+
+      if (
+        rawValue ===
+        "change-date"
+      ) {
+
+        selfPayStep =
+          "date";
+
+        selfPaySelectedDate =
+          "";
+
+        selfPaySelectedSession =
+          "";
+
+        appointmentData.selfPayDate =
+          "";
+
+        appointmentData.selfPayTime =
+          "";
+
+        if (currentPlan === "SELF_PAY") {
+
+          appointmentData.date =
+            "";
+
+          appointmentData.time =
+            "";
+
+        }
+
+        clearSelfPayOptions();
+
+        addSelfPayAIMessage(
+          "好的，請重新選擇預約日期。",
+          true
+        );
+
+        showSelfPayCalendar();
+
+        return;
+      }
+
+        if (
+
+          rawValue ===
+            "morning" ||
+
+          text.includes(
+            "上午"
+          )
+
+        ) {
+
+          selfPaySelectedSession =
+            ClinicSchedule.sessionLabel("morning");
+
+        }
+
+        else if (
+
+          rawValue ===
+            "afternoon" ||
+
+          text.includes(
+            "下午"
+          )
+
+        ) {
+
+          selfPaySelectedSession =
+            ClinicSchedule.sessionLabel("afternoon");
+
+        }
+
+        else {
+
+          addSelfPayAIMessage(
+            "請選擇上午診或下午診。",
+            true
+          );
+
+
+          return;
+
+        }
+
+
+        clearSelfPayOptions();
+
+
+        addSelfPayUserMessage(
+          selfPaySelectedSession
+        );
+
+
+        appointmentData.selfPayDate =
+  selfPaySelectedDate;
+
+appointmentData.selfPayTime =
+  selfPaySelectedSession;
+
+
+/* 純自費時，主預約時間就是自費時間 */
+
+if (currentPlan === "SELF_PAY") {
+
+  appointmentData.date =
+    selfPaySelectedDate;
+
+  appointmentData.time =
+    selfPaySelectedSession;
+
+}
+
+
+        const bookingSummary =
+  currentPlan === "SELF_PAY"
+
+    ? (
+        `自費健檢預約：<br>` +
+        `<strong>${selfPaySelectedDate} ` +
+        `${selfPaySelectedSession}</strong>`
+      )
+
+    : (
+        `老人健檢預約：<br>` +
+        `<strong>${appointmentData.date || ""} ` +
+        `${appointmentData.time || ""}</strong><br><br>` +
+
+        `自費健檢預約：<br>` +
+        `<strong>${appointmentData.selfPayDate || ""} ` +
+        `${appointmentData.selfPayTime || ""}</strong>`
+      );
+
+
+addSelfPayAIMessage(
+
+  `好的，預約時間已完成選擇。<br><br>` +
+
+  bookingSummary +
+
+  `<br><br>` +
+
+  `<strong>請確認以上預約資訊是否正確？</strong><br><br>` +
+
+  `<div class="booking-reminder">` +
+
+    `<strong>📌 預約提醒</strong><br>` +
+
+    `老人健檢與自費健檢為不同的預約時段。` +
+    `實際報到與檢查時間仍會依診所當日人力與預約狀況安排。<br><br>` +
+
+    `如時間需要調整，診所將主動致電與您聯繫。` +
+    `若您希望進一步確認或變更預約，也可直接撥打診所電話：<br>` +
+
+    `<a href="tel:${String(CLINIC.phone).replace(/[^\d+]/g, "")}" class="booking-reminder-tel">` +
+
+      `📞 ${CLINIC.phone}` +
+
+    `</a>` +
+
+  `</div>`,
+
+  true
+
+);
+
+
+        selfPayStep =
+          "finalConfirm";
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "確認預約",
+
+            value:
+              "confirm-final"
+          },
+
+          {
+            label:
+              "重新選擇時間",
+
+            value:
+              "change-session"
+          }
+
+        ]);
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         超過參考預算後的二次確認
+
+         重要：
+         這個狀態必須在一般 wantsAdd
+         之前處理。
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "confirmOverBudget"
+      ) {
+
+        /* -------------------------------------
+           仍要加購
+        ------------------------------------- */
+
+        if (
+          rawValue ===
+          "confirm-over-budget"
+        ) {
+
+          addSelfPayUserMessage(
+            shownText ||
+            "仍要加購"
+          );
+
+
+          if (
+            !pendingOverBudgetSelection
+          ) {
+
+            addSelfPayAIMessage(
+
+              `目前找不到待加入的項目，` +
+
+              `請重新選擇一次。`,
+
+              false
+
+            );
+
+
+            selfPayChatMode =
+              "afterAdd";
+
+
+            showAfterAddOptions();
+
+
+            return;
+
+          }
+
+
+          if (
+            !isSelfPayItemSelected(
+              pendingOverBudgetSelection
+            )
+          ) {
+
+            selfPaySelectedItems.push(
+              pendingOverBudgetSelection
+            );
+
+          }
+
+
+          const addedPrice =
+            Number(
+              pendingOverBudgetSelection.price ||
+              0
+            );
+
+
+          selfPaySelectedTotal =
+            calculateSelfPayTotal();
+
+
+          selfPayRemainingBudget =
+            selfPayBudget -
+            selfPaySelectedTotal;
+
+
+          const overAmount =
+            Math.max(
+              0,
+              selfPaySelectedTotal -
+              selfPayBudget
+            );
+
+
+          addSelfPayAIMessage(
+
+            `✅ 已加入此項目。<br><br>` +
+
+            `本項價格：` +
+
+            `<strong>NT$${addedPrice.toLocaleString(
+              "zh-TW"
+            )}</strong><br>` +
+
+            `目前合計：` +
+
+            `<strong>NT$${selfPaySelectedTotal.toLocaleString(
+              "zh-TW"
+            )}</strong><br>` +
+
+            `目前超出參考預算：` +
+`<strong class="text-over-budget">NT$${overAmount.toLocaleString(
+  "zh-TW"
+)}</strong>`,
+
+            false
+
+          );
+
+
+          pendingOverBudgetSelection =
+            null;
+
+
+          selfPayChatMode =
+            "afterAdd";
+
+
+          showAfterAddOptions();
+
+
+          return;
+
+        }
+
+
+        /* -------------------------------------
+           先不要
+        ------------------------------------- */
+
+        if (
+          rawValue ===
+          "cancel-over-budget"
+        ) {
+
+          addSelfPayUserMessage(
+            shownText ||
+            "先不要"
+          );
+
+
+          pendingOverBudgetSelection =
+            null;
+
+
+          addSelfPayAIMessage(
+
+            `好的，這個項目沒有加入。<br><br>` +
+
+            `您可以繼續選擇其他自費健檢項目。`,
+
+            false
+
+          );
+
+
+          selfPayChatMode =
+            "afterAdd";
+
+
+          showAfterAddOptions();
+
+
+          return;
+
+        }
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "仍要加購",
+
+            value:
+              "confirm-over-budget"
+          },
+
+          {
+            label:
+              "先不要",
+
+            value:
+              "cancel-over-budget"
+          }
+
+        ]);
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         一般回覆先顯示使用者訊息
+      ===================================== */
+
+      addSelfPayUserMessage(
+        shownText
+      );
+
+
+      clearSelfPayOptions();
+
+
+      /* =====================================
+         已完成
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "completed"
+      ) {
+
+        addSelfPayAIMessage(
+          "本次預約已完成。"
+        );
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         STEP 1
+         是否需要自費
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "ask"
+      ) {
+
+        const decisionText =
+  `${rawValue} ${shownText}`
+    .trim()
+    .toLowerCase();
+
+
+const wantsSkip =
+
+  rawValue ===
+    "skip" ||
+
+  decisionText.includes(
+    "不需要"
+  ) ||
+
+  decisionText.includes(
+    "不用"
+  ) ||
+
+  decisionText.includes(
+    "不要"
+  ) ||
+
+  decisionText.includes(
+    "直接完成"
+  ) ||
+
+  decisionText.includes(
+    "直接安排預約"
+  );
+
+
+const wantsStart =
+
+  !wantsSkip && (
+
+    rawValue ===
+      "start" ||
+
+    decisionText.includes(
+      "想看看"
+    ) ||
+
+    decisionText.includes(
+      "想看"
+    ) ||
+
+    decisionText.includes(
+      "了解自費"
+    ) ||
+
+    decisionText.includes(
+      "查看自費"
+    ) ||
+
+    decisionText.includes(
+      "加購"
+    )
+
+  );
+
+
+ 
+
+
+        /* 不需要自費 */
+
+if (wantsSkip) {
+
+  selfPaySelectedItems = [];
+
+  syncSelfPayDataToAppointment();
+
+
+  addSelfPayAIMessage(
+
+    `好的，本次不加購自費健康檢查。<br><br>` +
+
+    `將直接使用您前面已選擇的健檢日期與時段完成預約。`,
+
+    true
+
+  );
+
+
+  await submitFinalBooking();
+
+
+  return;
+
+}
+/* 要看自費項目 */
+
+if (wantsStart) {
+
+  selfPayChatMode =
+    "budget";
+
+  addSelfPayAIMessage(
+
+    `好的，請先設定您的自費健檢參考預算。<br><br>` +
+
+    `💰 請輸入或直接說出預算金額，例如：3000 或「三千元」`,
+
+    false
+
+  );
+
+  showSelfPayBudgetInput();
+
+  return;
+
+}
+
+        addSelfPayAIMessage(
+
+          `不好意思，我想再確認一次。<br><br>` +
+
+          `請問您需要了解自費健康檢查嗎？`
+
+        );
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "需要，我想看看",
+
+            value:
+              "start"
+          },
+
+          {
+            label:
+              "不需要，直接安排預約",
+
+            value:
+              "skip"
+          }
+
+        ]);
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         共用：查看已選項目
+      ===================================== */
+
+      if (
+
+        rawValue ===
+          "view-selected" ||
+
+        text.includes(
+          "查看已選"
+        ) ||
+
+        text.includes(
+          "查看清單"
+        ) ||
+
+        text.includes(
+          "目前清單"
+        )
+
+      ) {
+
+        showSelectedSelfPayItems();
+
+
+        if (
+          selfPayChatMode ===
+          "afterAdd"
+        ) {
+
+          showAfterAddOptions();
+
+        }
+
+        else if (
+          selfPayChatMode ===
+          "item"
+        ) {
+
+          showSelfPayItemButtons();
+
+        }
+
+        else {
+
+          showSelfPayCategoryButtons();
+
+        }
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         共用：完成自費選擇
+      ===================================== */
+
+      if (
+        rawValue ===
+        "finish"
+      ) {
+
+        confirmSelfPaySelection();
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         共用：回分類
+      ===================================== */
+
+      if (
+
+        rawValue ===
+          "back-category" ||
+
+        text.includes(
+          "回到五大分類"
+        ) ||
+
+        text.includes(
+          "回分類"
+        )
+
+      ) {
+
+        selfPayChatMode =
+          "category";
+
+
+        addSelfPayAIMessage(
+          "好的，請重新選擇您想了解的自費檢查分類。"
+        );
+
+
+        showSelfPayCategoryButtons();
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         STEP 2
+         選分類
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "category"
+      ) {
+
+        let categoryId =
+          null;
+
+
+        if (
+          rawValue.startsWith(
+            "category:"
+          )
+        ) {
+
+          categoryId =
+            rawValue.substring(
+              9
+            );
+
+        }
+
+        else {
+
+          categoryId =
+            findCategoryIdByText(
+              rawValue
+            );
+
+        }
+
+
+        if (!categoryId) {
+
+          addSelfPayAIMessage(
+
+            `我還沒有辨識到您想看的分類。<br><br>` +
+
+            `您可以直接點選下方分類。`
+
+          );
+
+
+          showSelfPayCategoryButtons();
+
+
+          return;
+
+        }
+
+
+        await loadSelfPayCategoryItems(
+          categoryId
+        );
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         STEP 3
+         選檢查項目
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "item"
+      ) {
+
+        if (
+          rawValue ===
+          "back-items"
+        ) {
+
+          showSelfPayItemButtons();
+
+
+          return;
+
+        }
+
+
+        let itemId =
+          null;
+
+
+        if (
+          rawValue.startsWith(
+            "item:"
+          )
+        ) {
+
+          itemId =
+            rawValue.substring(
+              5
+            );
+
+        }
+
+        else {
+
+          itemId =
+            findItemIdByText(
+              rawValue
+            );
+
+        }
+
+
+        if (!itemId) {
+
+          addSelfPayAIMessage(
+
+            `我還沒有找到您說的檢查項目。<br><br>` +
+
+            `請直接點選下面的項目，` +
+
+            `或完整說出檢查名稱。`
+
+          );
+
+
+          showSelfPayItemButtons();
+
+
+          return;
+
+        }
+
+
+        await loadSelfPayItemDetail(
+          itemId
+        );
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         STEP 4
+         是否加入目前項目
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "confirmItem"
+      ) {
+
+        /* 回目前分類的項目列表 */
+
+        if (
+          rawValue ===
+          "back-items"
+        ) {
+
+          selfPayChatMode =
+            "item";
+
+
+          addSelfPayAIMessage(
+            "好的，請繼續選擇其他檢查項目。"
+          );
+
+
+          showSelfPayItemButtons();
+
+
+          return;
+
+        }
+
+
+        /* 先不要 */
+
+        const wantsCancel =
+
+          rawValue ===
+            "cancel-item" ||
+
+          text.includes(
+            "先不要"
+          ) ||
+
+          text.includes(
+            "不用"
+          ) ||
+
+          text.includes(
+            "不要"
+          );
+
+
+        if (wantsCancel) {
+
+          selfPayChatMode =
+            "item";
+
+
+          addSelfPayAIMessage(
+            "好的，這個項目先不加入。"
+          );
+
+
+          showSelfPayItemButtons();
+
+
+          return;
+
+        }
+
+
+        /* 加入 */
+
+        const wantsAdd =
+
+          rawValue ===
+            "add" ||
+
+          rawValue ===
+            "confirm-add" ||
+
+          text.includes(
+            "加入這個項目"
+          ) ||
+
+          text.includes(
+            "加入"
+          ) ||
+
+          text.includes(
+            "加購"
+          );
+
+
+        if (wantsAdd) {
+
+          const result =
+            addCurrentSelfPayItem();
+
+
+          /* -------------------------------
+             已經加入過
+          -------------------------------- */
+
+          if (
+            result.reason ===
+            "duplicate"
+          ) {
+
+            addSelfPayAIMessage(
+
+              `這個項目或所屬套餐已經加入過了，` +
+
+              `不會重複計價。`
+
+            );
+
+
+            showAfterAddOptions();
+
+
+            return;
+
+          }
+
+
+          /* -------------------------------
+             超過參考預算
+          -------------------------------- */
+
+          if (
+            result.reason ===
+            "budget_confirmation_required"
+          ) {
+
+            pendingOverBudgetSelection =
+              result.selection;
+
+
+            addSelfPayAIMessage(
+
+              `⚠️ 加入這個項目後會超過您原先設定的參考預算。<br><br>` +
+
+              `原定預算：` +
+
+              `<strong>NT$${selfPayBudget.toLocaleString(
+                "zh-TW"
+              )}</strong><br>` +
+
+              `加入後合計：` +
+
+              `<strong>NT$${result.newTotal.toLocaleString(
+                "zh-TW"
+              )}</strong><br>` +
+
+              `將超出：` +
+
+`<strong class="text-over-budget">NT$${result.overAmount.toLocaleString(
+  "zh-TW"
+)}</strong><br><br>` +
+
+              `預算僅供規劃參考，` +
+
+              `您仍可以繼續加購。<br><br>` +
+
+              `請問確定要加入這個項目嗎？`,
+
+              false
+
+            );
+
+
+            selfPayChatMode =
+              "confirmOverBudget";
+
+
+            showSelfPayOptions([
+
+              {
+                label:
+                  "仍要加購",
+
+                value:
+                  "confirm-over-budget"
+              },
+
+              {
+                label:
+                  "先不要",
+
+                value:
+                  "cancel-over-budget"
+              }
+
+            ]);
+
+
+            return;
+
+          }
+
+
+          /* -------------------------------
+             其他加入失敗
+          -------------------------------- */
+
+          if (
+            !result.success
+          ) {
+
+            addSelfPayAIMessage(
+              "目前無法加入這個項目，請重新選擇。"
+            );
+
+
+            selfPayChatMode =
+              "item";
+
+
+            showSelfPayItemButtons();
+
+
+            return;
+
+          }
+
+
+          /* -------------------------------
+             正常加入成功
+          -------------------------------- */
+
+          selfPaySelectedTotal =
+            calculateSelfPayTotal();
+
+
+          selfPayRemainingBudget =
+            selfPayBudget -
+            selfPaySelectedTotal;
+
+
+          const price =
+            Number(
+              result.item.price
+            );
+
+
+          const priceText =
+            Number.isFinite(
+              price
+            )
+
+              ? `NT$${price.toLocaleString(
+                  "zh-TW"
+                )}`
+
+              : "價格需確認";
+
+
+          let budgetStatusText =
+            "";
+
+
+          if (
+            selfPayBudget > 0
+          ) {
+
+            if (
+              selfPayRemainingBudget >=
+              0
+            ) {
+
+              budgetStatusText =
+
+                `<br>` +
+
+                `預算尚餘：` +
+
+                `<strong>NT$${selfPayRemainingBudget.toLocaleString(
+                  "zh-TW"
+                )}</strong>`;
+
+            }
+
+            else {
+
+              budgetStatusText =
+
+                `<br>` +
+
+                `目前超出參考預算：` +
+
+`<strong class="text-over-budget">NT$${Math.abs(
+  selfPayRemainingBudget
+).toLocaleString(
+  "zh-TW"
+)}</strong>`;
+
+            }
+
+          }
+
+
+          addSelfPayAIMessage(
+
+            `✅ 已加入「${escapeHtml(
+              result.item.name
+            )}」。<br><br>` +
+
+            `本項價格：<strong>${escapeHtml(
+              priceText
+            )}</strong><br>` +
+
+            `目前共選擇 ` +
+
+            `<strong>${selfPaySelectedItems.length}</strong>` +
+
+            ` 項。<br>` +
+
+            `原定預算：` +
+
+            `<strong>NT$${selfPayBudget.toLocaleString(
+              "zh-TW"
+            )}</strong><br>` +
+
+            `目前合計：` +
+
+            `<strong>NT$${selfPaySelectedTotal.toLocaleString(
+              "zh-TW"
+            )}</strong>` +
+
+            `${budgetStatusText}`,
+
+            true
+
+          );
+
+
+          showAfterAddOptions();
+
+
+          return;
+
+        }
+
+
+        /* 無法辨識 */
+
+        addSelfPayAIMessage(
+          "請問要將這個自費檢查加入清單嗎？"
+        );
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "加入這個項目",
+
+            value:
+              "add"
+          },
+
+          {
+            label:
+              "先不要",
+
+            value:
+              "cancel-item"
+          },
+
+          {
+            label:
+              "回到這個分類",
+
+            value:
+              "back-items"
+          }
+
+        ]);
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         STEP 5
+         加入後
+      ===================================== */
+
+      if (
+        selfPayChatMode ===
+        "afterAdd"
+      ) {
+
+        /* 繼續選 */
+
+        if (
+
+          rawValue ===
+            "continue" ||
+
+          text.includes(
+            "繼續選"
+          ) ||
+
+          text.includes(
+            "其他項目"
+          ) ||
+
+          text.includes(
+            "再選"
+          )
+
+        ) {
+
+          selfPayChatMode =
+            "category";
+
+
+          addSelfPayAIMessage(
+            "好的，請選擇下一個想了解的自費檢查分類。"
+          );
+
+
+          showSelfPayCategoryButtons();
+
+
+          return;
+
+        }
+
+
+        /* 完成 */
+
+        if (
+
+          rawValue ===
+            "finish" ||
+
+          text.includes(
+            "完成"
+          ) ||
+
+          text.includes(
+            "選好了"
+          )
+
+        ) {
+
+          confirmSelfPaySelection();
+
+
+          return;
+
+        }
+
+
+        showAfterAddOptions();
+
+
+        return;
+
+      }
+
+
+      /* =====================================
+         無法辨識
+      ===================================== */
+
+      addSelfPayAIMessage(
+
+        `我沒有辨識到這個操作，` +
+
+        `請使用下方按鈕繼續。`
+
+      );
+
+
+      if (
+        selfPayChatMode ===
+        "category"
+      ) {
+
+        showSelfPayCategoryButtons();
+
+      }
+
+      else if (
+        selfPayChatMode ===
+        "item"
+      ) {
+
+        showSelfPayItemButtons();
+
+      }
+
+      else if (
+        selfPayChatMode ===
+        "afterAdd"
+      ) {
+
+        showAfterAddOptions();
+
+      }
+
+    }
+        
+        /* =========================================
+       文字輸入
+    ========================================= */
+
+    async function sendSelfPayText() {
+
+      const input =
+        document.getElementById(
+          "selfpay-chat-input"
+        );
+
+
+      if (!input) {
+        return;
+      }
+
+
+      const text =
+        input.value.trim();
+
+
+      if (!text) {
+        return;
+      }
+
+
+      input.value =
+        "";
+
+
+      await handleSelfPayAnswer(
+        text,
+        text
+      );
+
+    }
+
+
+    /* =========================================
+       自費健檢：中文語音辨識 (STT)
+
+       1. 先使用瀏覽器 SpeechRecognition / webkitSpeechRecognition
+          不依賴 GROQ_API_KEY。
+       2. 遇到瀏覽器服務錯誤，可由使用者自行點擊
+          「改用備援錄音辨識」（8000 的 Groq Whisper）。
+       3. 若 Groq 金鑰尚未設定，清楚說明，而非顯示模糊錯誤。
+    ========================================= */
+
+    function setSelfPayMicActive(active) {
+      selfPayRecording = Boolean(active);
+      const button = document.getElementById("selfpay-mic-btn");
+      if (!button) return;
+      button.classList.toggle("recording", selfPayRecording);
+      button.setAttribute("aria-pressed", selfPayRecording ? "true" : "false");
+      button.setAttribute("aria-label", selfPayRecording
+        ? "停止錄音並辨識語音" : "語音輸入：開始說話");
+      button.title = selfPayRecording
+        ? "再按一次結束錄音" : "按一下開始說話，再按一下結束";
+      button.textContent = selfPayRecording ? "⏹" : "🎤";
+    }
+
+    function clearSelfPaySTTTimer() {
+      if (selfPaySTTTimer !== null) {
+        clearTimeout(selfPaySTTTimer);
+        selfPaySTTTimer = null;
+      }
+    }
+
+    function showSelfPaySTTError(code, extra = "") {
+      setSelfPayStatus(false);
+      const messages = {
+        "not-allowed": "麥克風或語音辨識權限被拒絕。請到瀏覽器網站設定允許麥克風，並確認 Mac『隱私權與安全性 → 麥克風』已允許此瀏覽器。",
+        "service-not-allowed": "瀏覽器不允許使用語音辨識服務。請檢查瀏覽器的語音辨識權限，或嘗試 Chrome。",
+        "audio-capture": "目前找不到可用的麥克風。請確認麥克風已連接，並檢查 macOS 的麥克風權限。",
+        "no-speech": "剛剛沒有聽到清楚的聲音。請靠近麥克風，再按一次 🎤 試試看。",
+        "network": "瀏覽器語音辨識服務無法連線。請確認網路連線，或嘗試 Chrome。",
+        "language-not-supported": "這個瀏覽器的語音服務目前不支援臺灣中文辨識。",
+        "aborted": "這次語音輸入已取消。您可以重新按 🎤 開始。",
+        "unsupported": "此瀏覽器沒有提供語音辨識服務，可以使用下方的備援錄音辨識。",
+        "server-unconfigured": "8000 預約後端尚未設定 GROQ_API_KEY，因此備援 Whisper 辨識無法使用。請先使用支援語音辨識的 Chrome，或由管理員設定後端金鑰。",
+        "server-unreachable": "無法連接 8000 預約後端。請確認 website/main.py 已啟動於 127.0.0.1:8000。"
+      };
+      const message = messages[code] || (extra || "語音辨識未成功，請重試或先使用文字輸入。");
+      console.warn("自費健檢 STT：", code, extra);
+      const canFallback = ["unsupported", "network", "service-not-allowed", "language-not-supported"].includes(code);
+      const wrapper = addSelfPayAIMessage(
+        `⚠️ ${escapeHtml(message)}<br><br>您也可以先使用下方文字輸入。` +
+        (canFallback ? `<br><br><button type="button" class="selfpay-option-btn selfpay-stt-server-retry" style="font-size:20px;min-height:52px">🎙️ 改用備援錄音辨識</button>` : ""),
+        false
+      );
+      const fallbackButton = wrapper && wrapper.querySelector(".selfpay-stt-server-retry");
+      if (fallbackButton) {
+        fallbackButton.addEventListener("click", function () {
+          startSelfPayServerRecording();
+        });
+      }
+    }
+
+    async function processSelfPayRecognizedSpeech(transcript) {
+      const content = String(transcript || "").trim();
+      if (!content) {
+        showSelfPaySTTError("no-speech");
+        return;
+      }
+      selfPaySTTBusy = true;
+      setSelfPayStatus(true, `✅ 已聽到：${content}，正在處理...`);
+      try {
+        await handleSelfPayAnswer(content, content);
+      } catch (error) {
+        console.error("語音內容處理失敗：", error);
+        addSelfPayAIMessage("抱歉，剛剛聽懂了您的話，但處理時發生錯誤。請再試一次或使用文字輸入。", false);
+      } finally {
+        selfPaySTTBusy = false;
+        setSelfPayStatus(false);
+      }
+    }
+
+    function startSelfPayVoice() {
+      if (selfPayRecording || selfPaySTTBusy) return;
+      // 避免 AI 自己的朗讀聲被辨識成使用者的回答。
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition) {
+        showSelfPaySTTError("unsupported");
+        return;
+      }
+
+      let recognition;
+      try {
+        recognition = new Recognition();
+        recognition.lang = "zh-TW";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+      } catch (error) {
+        console.error("無法建立語音辨識器：", error);
+        showSelfPaySTTError("unsupported");
+        return;
+      }
+
+      selfPayNativeRecognition = recognition;
+      selfPaySTTMode = "browser";
+      let received = false;
+      let failure = "";
+      recognition.onstart = function () {
+        setSelfPayMicActive(true);
+        setSelfPayStatus(true, "🎤 請說話，例如『五萬』或『我想檢查心臟』；說完可再按一次麥克風。");
+      };
+      recognition.onresult = async function (event) {
+        if (received) return;
+        received = true;
+        clearSelfPaySTTTimer();
+        setSelfPayMicActive(false);
+        selfPayNativeRecognition = null;
+        let transcript = "";
+        if (event.results) {
+          for (let i = event.resultIndex || 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result && result[0] && result[0].transcript) {
+              transcript += " " + result[0].transcript;
+            }
+          }
+        }
+        await processSelfPayRecognizedSpeech(transcript);
+      };
+      recognition.onerror = function (event) {
+        failure = String((event && event.error) || "unknown");
+        clearSelfPaySTTTimer();
+        setSelfPayMicActive(false);
+        selfPayNativeRecognition = null;
+        if (!received) showSelfPaySTTError(failure);
+      };
+      recognition.onend = function () {
+        clearSelfPaySTTTimer();
+        setSelfPayMicActive(false);
+        if (selfPayNativeRecognition === recognition) selfPayNativeRecognition = null;
+        if (!received && !failure) showSelfPaySTTError("no-speech");
+      };
+
+      // 重要：在使用者點擊事件中同步呼叫 start()，以符合 Safari 權限限制。
+      try {
+        recognition.start();
+        setSelfPayMicActive(true);
+        setSelfPayStatus(true, "🎤 正在啟動中文語音辨識，請直接說話...");
+        clearSelfPaySTTTimer();
+        selfPaySTTTimer = setTimeout(function () {
+          if (selfPayNativeRecognition === recognition) {
+            try { recognition.stop(); } catch (_) { /* 已經結束 */ }
+          }
+        }, 20000);
+      } catch (error) {
+        clearSelfPaySTTTimer();
+        selfPayNativeRecognition = null;
+        setSelfPayMicActive(false);
+        console.error("啟動瀏覽器語音辨識失敗：", error);
+        showSelfPaySTTError(error.name === "NotAllowedError" ? "not-allowed" : "unsupported");
+      }
+    }
+
+    function stopSelfPayVoice() {
+      if (!selfPayRecording) return;
+      setSelfPayMicActive(false);
+      setSelfPayStatus(true, "正在整理剛剛說的話...");
+      clearSelfPaySTTTimer();
+      if (selfPaySTTMode === "browser" && selfPayNativeRecognition) {
+        try { selfPayNativeRecognition.stop(); }
+        catch (error) { console.warn("結束語音辨識失敗：", error); }
+        return;
+      }
+      if (selfPaySTTMode === "server" && selfPayMediaRecorder &&
+          selfPayMediaRecorder.state !== "inactive") {
+        selfPayMediaRecorder.stop();
+      }
+    }
+
+    // 瀏覽器不支援或無法使用時，由使用者明確點擊啟動備援服務。
+    // 後端既有端點 POST /api/whisper_booking，需設定 GROQ_API_KEY。
+    async function startSelfPayServerRecording() {
+      if (selfPayRecording || selfPaySTTBusy) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia ||
+          !window.MediaRecorder) {
+        showSelfPaySTTError("audio-capture");
+        return;
+      }
+      selfPaySTTBusy = true;
+      setSelfPayStatus(true, "正在確認備援語音服務...");
+      try {
+        const healthResponse = await fetch(`${API_BASE}/api/booking/health`, {
+          cache: "no-store"
+        });
+        if (!healthResponse.ok) throw new Error("health-failed");
+        const health = await healthResponse.json();
+        if (!health.groq_loaded) {
+          selfPaySTTBusy = false;
+          showSelfPaySTTError("server-unconfigured");
+          return;
+        }
+      } catch (error) {
+        console.error("檢查 8000 後端語音服務失敗：", error);
+        selfPaySTTBusy = false;
+        showSelfPaySTTError("server-unreachable");
+        return;
+      }
+
+      try {
+        selfPayStream = await navigator.mediaDevices.getUserMedia({audio: true});
+        selfPayAudioChunks = [];
+        const candidates = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg"];
+        const supported = candidates.find(type => MediaRecorder.isTypeSupported(type));
+        selfPayMediaRecorder = new MediaRecorder(selfPayStream, supported ? {mimeType: supported} : {});
+        selfPayMediaRecorder.ondataavailable = function (event) {
+          if (event.data && event.data.size > 0) selfPayAudioChunks.push(event.data);
+        };
+        selfPayMediaRecorder.onerror = function (event) {
+          console.error("錄音錯誤：", event);
+          setSelfPayStatus(false);
+        };
+        selfPayMediaRecorder.onstop = async function () {
+          const contentType = selfPayMediaRecorder.mimeType || selfPayAudioChunks[0]?.type || "audio/webm";
+          const blob = new Blob(selfPayAudioChunks, {type: contentType});
+          if (selfPayStream) selfPayStream.getTracks().forEach(track => track.stop());
+          selfPayStream = null;
+          clearSelfPaySTTTimer();
+          await sendSelfPayVoiceToWhisper(blob);
+        };
+        selfPayMediaRecorder.start(250);
+        selfPaySTTMode = "server";
+        selfPaySTTBusy = false;
+        setSelfPayMicActive(true);
+        setSelfPayStatus(true, "🎙️ 備援錄音中；請說話，再按一次麥克風送出。");
+        clearSelfPaySTTTimer();
+        selfPaySTTTimer = setTimeout(stopSelfPayVoice, 25000);
+      } catch (error) {
+        if (selfPayStream) selfPayStream.getTracks().forEach(track => track.stop());
+        selfPayStream = null;
+        selfPaySTTBusy = false;
+        setSelfPayMicActive(false);
+        setSelfPayStatus(false);
+        console.error("啟動備援錄音失敗：", error);
+        showSelfPaySTTError(error.name === "NotAllowedError" ? "not-allowed" : "audio-capture");
+      }
+    }
+
+    async function sendSelfPayVoiceToWhisper(blob) {
+      if (!blob || blob.size === 0) {
+        selfPaySTTBusy = false;
+        showSelfPaySTTError("no-speech");
+        return;
+      }
+      selfPaySTTBusy = true;
+      setSelfPayStatus(true, "正在辨識您的語音，請稍候...");
+      try {
+        const mime = blob.type.toLowerCase();
+        const ext = mime.includes("mp4") ? "m4a"
+          : mime.includes("ogg") ? "ogg"
+          : mime.includes("wav") ? "wav" : "webm";
+        const fd = new FormData();
+        fd.append("file", blob, `selfpay.${ext}`);
+        fd.append("current_name", appointmentData.name || "");
+        const response = await fetch(`${API_BASE}/api/whisper_booking`, {
+          method: "POST", body: fd
+        });
+        const result = await response.json();
+        if (!response.ok || result.status === "error") {
+          throw new Error(result.message || result.detail || `HTTP ${response.status}`);
+        }
+        const recognizedText = String(result.raw_text || result?.result?.translated_text ||
+          result.translated_text || "").trim();
+        selfPaySTTBusy = false;
+        if (!recognizedText) {
+          showSelfPaySTTError("no-speech");
+          return;
+        }
+        await processSelfPayRecognizedSpeech(recognizedText);
+      } catch (error) {
+        selfPaySTTBusy = false;
+        setSelfPayStatus(false);
+        console.error("備援 Whisper 語音辨識失敗：", error);
+        showSelfPaySTTError("server-error", `伺服器辨識失敗：${error.message || "未知錯誤"}`);
+      }
+    }
+
+    /* =========================================
+       最終送出預約
+       POST /api/booking/confirm
+    ========================================= */
+
+    async function submitFinalBooking() {
+
+      syncSelfPayDataToAppointment();
+
+
+      if (currentPlan === "SELF_PAY") {
+
+  appointmentData.date =
+    selfPaySelectedDate ||
+    appointmentData.date ||
+    "";
+
+  appointmentData.time =
+    selfPaySelectedSession ||
+    appointmentData.time ||
+    "";
+}
+
+      const finalBookingData = {
+
+        plan:
+          appointmentData.plan ||
+          "SELF_PAY",
+
+        planName:
+          appointmentData.planName ||
+          "自費健康檢查",
+
+        name:
+          appointmentData.name ||
+          "",
+
+        birthday:
+          appointmentData.birthday ||
+          "",
+
+        pid:
+          appointmentData.pid ||
+          "",
+
+        phone:
+          appointmentData.phone ||
+          "",
+
+        date:
+          appointmentData.date ||
+          "",
+
+        time:
+          appointmentData.time ||
+          "",
+
+          selfPayDate:
+  appointmentData.selfPayDate ||
+  selfPaySelectedDate ||
+  "",
+
+selfPayTime:
+  appointmentData.selfPayTime ||
+  selfPaySelectedSession ||
+  "",
+
+        breakfast:
+          appointmentData.breakfast ||
+          "",
+
+        captcha:
+          appointmentData.captcha ||
+          "",
+
+        selfPayItems:
+          Array.isArray(
+            appointmentData.selfPayItems
+          )
+            ? appointmentData.selfPayItems
+            : [],
+
+        selfPayTotal:
+          Number(
+            appointmentData.selfPayTotal ||
+            0
+          ),
+
+        /* 診所後台自訂問診題目的回答（BMI、過敏史…），由首頁 AI 對話存入 */
+        extraAnswers:
+          (() => {
+            try {
+              const v = JSON.parse(
+                sessionStorage.getItem("customAnswers") || "[]"
+              );
+              return Array.isArray(v) ? v : [];
+            } catch (e) {
+              return [];
+            }
+          })()
+
+      };
+
+
+      console.log(
+        "準備送出的最終預約資料：",
+        finalBookingData
+      );
+
+
+      setSelfPayStatus(
+        true,
+        "正在送出預約資料..."
+      );
+
+
+      clearSelfPayOptions();
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/booking/confirm`,
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify(
+                  finalBookingData
+                )
+
+            }
+          );
+
+
+        let result =
+          null;
+
+
+        try {
+
+          result =
+            await response.json();
+
+        } catch (jsonError) {
+
+          throw new Error(
+
+            `伺服器回傳格式錯誤，HTTP ${response.status}`
+
+          );
+
+        }
+
+
+        if (!response.ok) {
+
+          throw new Error(
+
+            result.detail ||
+            result.message ||
+            `HTTP ${response.status}`
+
+          );
+
+        }
+
+
+        if (
+          result.status &&
+          result.status !==
+            "success"
+        ) {
+
+          throw new Error(
+
+            result.message ||
+            "預約送出失敗"
+
+          );
+
+        }
+
+
+        setSelfPayStatus(
+          false
+        );
+
+
+        selfPayChatMode =
+          "completed";
+
+
+        const successBookingData = {
+
+          plan:
+            finalBookingData.plan,
+
+          planName:
+            finalBookingData.planName,
+
+          name:
+            finalBookingData.name,
+
+          pid:
+            finalBookingData.pid,
+
+          phone:
+            finalBookingData.phone,
+
+          birthday:
+            finalBookingData.birthday,
+
+          date:
+            finalBookingData.date,
+
+          time:
+            finalBookingData.time,
+
+            selfPayDate:
+  finalBookingData.selfPayDate,
+
+selfPayTime:
+  finalBookingData.selfPayTime,
+
+          breakfast:
+            finalBookingData.breakfast,
+
+          selfPayItems:
+            finalBookingData.selfPayItems,
+
+          extraAnswers:
+            finalBookingData.extraAnswers,
+
+          selfPayTotal:
+            Number(
+              result.selfPayTotal ??
+              finalBookingData.selfPayTotal ??
+              0
+            )
+
+        };
+
+
+        sessionStorage.setItem(
+
+          "lastBooking",
+
+          JSON.stringify(
+            successBookingData
+          )
+
+        );
+
+
+        sessionStorage.removeItem(
+          "pendingSelfPayBooking"
+        );
+
+        sessionStorage.removeItem(
+          "customAnswers"
+        );
+
+
+        addSelfPayAIMessage(
+
+          `✅ <strong>預約已完成。</strong><br><br>` +
+
+          `姓名：${escapeHtml(
+            finalBookingData.name
+          )}<br>` +
+
+          `預約日期：${escapeHtml(
+            finalBookingData.date
+          )}<br>` +
+
+          `預約時間：${escapeHtml(
+            finalBookingData.time
+          )}<br><br>` +
+
+          `自費項目：` +
+
+          `${finalBookingData.selfPayItems.length} 項<br>` +
+
+          `自費合計：` +
+
+          `<strong>NT$${successBookingData.selfPayTotal.toLocaleString(
+            "zh-TW"
+          )}</strong><br><br>` +
+
+          `正在前往預約完成頁面。`,
+
+          true
+
+        );
+
+
+        setTimeout(
+          function () {
+
+            window.location.href =
+              "booking_success.html";
+
+          },
+          1000
+        );
+
+      } catch (error) {
+
+        setSelfPayStatus(
+          false
+        );
+
+
+        console.error(
+          "送出預約失敗：",
+          error
+        );
+
+
+        addSelfPayAIMessage(
+
+          `⚠️ 預約資料送出失敗。<br><br>` +
+
+          `${escapeHtml(
+            error.message ||
+            "未知錯誤"
+          )}<br><br>` +
+
+          `請確認系統服務正常後再試一次。`
+
+        );
+
+
+        selfPayStep =
+          "finalConfirm";
+
+
+        showSelfPayOptions([
+
+          {
+            label:
+              "重新送出",
+
+            value:
+              "confirm-final"
+          },
+
+          {
+            label:
+              "重新選擇時間",
+
+            value:
+              "change-session"
+          }
+
+        ]);
+
+      }
+
+    }
+
+
+    /* =========================================================
+       驗證碼
+    ========================================================= */
+
+    let currentCaptcha =
+      "";
+
+
+    let captchaVoices =
+      [];
+
+
+    /* ---------------------------------------------------------
+       產生驗證碼
+    --------------------------------------------------------- */
+
+    function generateCaptcha() {
+
+      const chars =
+        "0123456789";
+
+
+      currentCaptcha =
+        "";
+
+
+      for (
+        let i = 0;
+        i < 5;
+        i++
+      ) {
+
+        const index =
+          Math.floor(
+
+            Math.random() *
+            chars.length
+
+          );
+
+
+        currentCaptcha +=
+          chars[index];
+
+      }
+
+
+      const canvas =
+        document.getElementById(
+          "captchaCanvas"
+        );
+
+
+      if (!canvas) {
+        return;
+      }
+
+
+      const ctx =
+        canvas.getContext(
+          "2d"
+        );
+
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      ctx.fillStyle =
+        "#f5f7fa";
+
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /* 干擾線 */
+
+      for (
+        let i = 0;
+        i < 5;
+        i++
+      ) {
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+
+          Math.random() *
+          canvas.width,
+
+          Math.random() *
+          canvas.height
+
+        );
+
+
+        ctx.lineTo(
+
+          Math.random() *
+          canvas.width,
+
+          Math.random() *
+          canvas.height
+
+        );
+
+
+        ctx.strokeStyle =
+          "rgba(100,100,100,0.25)";
+
+
+        ctx.lineWidth =
+          1;
+
+
+        ctx.stroke();
+
+      }
+
+
+      /* 驗證碼文字 */
+
+      ctx.font =
+        "bold 34px Arial";
+
+
+      ctx.textBaseline =
+        "middle";
+
+
+      for (
+        let i = 0;
+        i < currentCaptcha.length;
+        i++
+      ) {
+
+        const char =
+          currentCaptcha[i];
+
+
+        const x =
+          18 +
+          i * 31;
+
+
+        const y =
+
+          canvas.height /
+          2 +
+
+          (
+            Math.random() *
+            8 -
+            4
+          );
+
+
+        const angle =
+
+          Math.random() *
+          0.35 -
+          0.175;
+
+
+        ctx.save();
+
+
+        ctx.translate(
+          x,
+          y
+        );
+
+
+        ctx.rotate(
+          angle
+        );
+
+
+        ctx.fillStyle =
+          "#2f4fb3";
+
+
+        ctx.fillText(
+          char,
+          0,
+          0
+        );
+
+
+        ctx.restore();
+
+      }
+
+    }
+
+
+    /* ---------------------------------------------------------
+       驗證碼檢查
+    --------------------------------------------------------- */
+
+    function validateCaptcha() {
+
+      const captchaInput =
+        document.getElementById(
+          "captchaInput"
+        );
+
+
+      const captchaError =
+        document.getElementById(
+          "captchaError"
+        );
+
+
+      if (!captchaInput) {
+
+        alert(
+          "找不到驗證碼輸入欄位。"
+        );
+
+        return false;
+
+      }
+
+
+      const userInput =
+        captchaInput
+          .value
+          .trim()
+          .toUpperCase();
+
+
+      const correctCaptcha =
+        String(
+          currentCaptcha ||
+          ""
+        )
+          .trim()
+          .toUpperCase();
+
+
+      if (!userInput) {
+
+        if (captchaError) {
+
+          captchaError.style.display =
+            "block";
+
+          captchaError.textContent =
+            "請輸入驗證碼。";
+
+        }
+
+
+        captchaInput.focus();
+
+
+        return false;
+
+      }
+
+
+      if (
+        userInput !==
+        correctCaptcha
+      ) {
+
+        if (captchaError) {
+
+          captchaError.style.display =
+            "block";
+
+          captchaError.textContent =
+            "驗證碼錯誤，請重新輸入。";
+
+        }
+
+
+        generateCaptcha();
+
+
+        captchaInput.value =
+          "";
+
+
+        captchaInput.focus();
+
+
+        return false;
+
+      }
+
+
+      if (captchaError) {
+
+        captchaError.style.display =
+          "none";
+
+      }
+
+
+      return true;
+
+    }
+
+
+    /* ---------------------------------------------------------
+       載入驗證碼語音
+    --------------------------------------------------------- */
+
+    function loadCaptchaVoices() {
+
+      if (
+        !(
+          "speechSynthesis"
+          in window
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      captchaVoices =
+        window
+          .speechSynthesis
+          .getVoices();
+
+    }
+
+
+    if (
+      "speechSynthesis"
+      in window
+    ) {
+
+      loadCaptchaVoices();
+
+
+      window
+        .speechSynthesis
+        .addEventListener(
+
+          "voiceschanged",
+
+          loadCaptchaVoices
+
+        );
+
+    }
+
+
+    /* ---------------------------------------------------------
+       驗證碼語音播放
+    --------------------------------------------------------- */
+
+    function speakCaptcha() {
+
+      if (!currentCaptcha) {
+
+        alert(
+          "目前沒有可播放的驗證碼。"
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !(
+          "speechSynthesis"
+          in window
+        )
+      ) {
+
+        alert(
+          "此瀏覽器不支援語音播放。"
+        );
+
+        return;
+
+      }
+
+
+      window
+        .speechSynthesis
+        .cancel();
+
+
+      const spokenText =
+
+        "驗證碼是，" +
+
+        currentCaptcha
+          .split("")
+          .join("，");
+
+
+      const utterance =
+        new SpeechSynthesisUtterance(
+          spokenText
+        );
+
+
+      utterance.lang =
+        "zh-TW";
+
+
+      if (
+        captchaVoices.length ===
+        0
+      ) {
+
+        captchaVoices =
+
+          window
+            .speechSynthesis
+            .getVoices();
+
+      }
+
+
+      const bestVoice =
+
+        captchaVoices.find(
+
+          function (voice) {
+
+            return (
+
+              voice.name.includes(
+                "Google"
+              ) &&
+
+              voice.lang ===
+                "zh-TW"
+
+            );
+
+          }
+
+        ) ||
+
+        captchaVoices.find(
+
+          function (voice) {
+
+            return (
+
+              voice.name.includes(
+                "Google"
+              ) &&
+
+              voice.lang.includes(
+                "zh"
+              )
+
+            );
+
+          }
+
+        ) ||
+
+        captchaVoices.find(
+
+          function (voice) {
+
+            return voice.name.includes(
+              "Microsoft Yating"
+            );
+
+          }
+
+        ) ||
+
+        captchaVoices.find(
+
+          function (voice) {
+
+            return voice.name.includes(
+              "Microsoft HsiaoChen"
+            );
+
+          }
+
+        ) ||
+
+        captchaVoices.find(
+
+          function (voice) {
+
+            return (
+              voice.lang ===
+              "zh-TW"
+            );
+
+          }
+
+        );
+
+
+      if (bestVoice) {
+
+        utterance.voice =
+          bestVoice;
+
+      }
+
+
+      utterance.rate =
+        0.8;
+
+
+      utterance.pitch =
+        1;
+
+
+      utterance.volume =
+        1;
+
+
+      window
+        .speechSynthesis
+        .speak(
+          utterance
+        );
+
+    }
+
+
+    /* =========================================================
+       驗證碼 + Direct Self Pay 初始化
+    ========================================================= */
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function () {
+
+        /* -----------------------------------------
+           產生驗證碼
+        ----------------------------------------- */
+
+        generateCaptcha();
+
+
+        /* -----------------------------------------
+           重新產生驗證碼
+        ----------------------------------------- */
+
+        const refreshCaptchaBtn =
+          document.getElementById(
+            "refreshCaptchaBtn"
+          );
+
+
+        if (refreshCaptchaBtn) {
+
+          refreshCaptchaBtn.addEventListener(
+            "click",
+            function () {
+
+              generateCaptcha();
+
+
+              const captchaInput =
+                document.getElementById(
+                  "captchaInput"
+                );
+
+
+              if (captchaInput) {
+
+                captchaInput.value =
+                  "";
+
+                captchaInput.focus();
+
+              }
+
+            }
+          );
+
+        }
+
+
+        /* -----------------------------------------
+           驗證碼語音
+        ----------------------------------------- */
+
+        const speakCaptchaBtn =
+          document.getElementById(
+            "speakCaptchaBtn"
+          );
+
+
+        if (speakCaptchaBtn) {
+
+          speakCaptchaBtn.addEventListener(
+            "click",
+            function () {
+
+              speakCaptcha();
+
+            }
+          );
+
+        }
+
+
+        /* -----------------------------------------
+           驗證碼 Enter = 送出表單
+        ----------------------------------------- */
+
+        const captchaInput =
+          document.getElementById(
+            "captchaInput"
+          );
+
+
+        const form =
+          document.getElementById(
+            "bookingForm"
+          );
+
+
+        if (
+          captchaInput &&
+          form
+        ) {
+
+          captchaInput.addEventListener(
+            "keydown",
+            function (event) {
+
+              if (
+                event.key ===
+                "Enter"
+              ) {
+
+                event.preventDefault();
+
+
+                form.requestSubmit();
+
+              }
+
+            }
+          );
+
+        }
+
+
+        /* -----------------------------------------
+           Direct Self Pay
+
+           index.html 若已將基本資料放進：
+           sessionStorage.directSelfPayBasicData
+
+           並跳轉：
+           appointment2.html?directSelfPay=1
+        ----------------------------------------- */
+
+        const directParams =
+          new URLSearchParams(
+            window.location.search
+          );
+
+
+        const isDirectSelfPay =
+          directParams.get(
+            "directSelfPay"
+          ) ===
+          "1";
+
+
+        if (isDirectSelfPay) {
+
+          let savedBasicData =
+            {};
+
+
+          try {
+
+            savedBasicData =
+              JSON.parse(
+
+                sessionStorage.getItem(
+                  "directSelfPayBasicData"
+                ) ||
+                "{}"
+
+              );
+
+          } catch (error) {
+
+            console.error(
+              "directSelfPayBasicData 解析失敗：",
+              error
+            );
+
+          }
+
+
+          appointmentData = {
+
+            plan:
+              "SELF_PAY",
+
+            planName:
+              "自費健康檢查",
+
+            name:
+              savedBasicData.name ||
+              directParams.get("name") ||
+              "",
+
+            pid:
+              savedBasicData.pid ||
+              directParams.get("pid") ||
+              "",
+
+            phone:
+              savedBasicData.phone ||
+              directParams.get("phone") ||
+              "",
+
+            birthday:
+              savedBasicData.birthday ||
+              directParams.get("birthday") ||
+              "",
+
+            date:
+              "",
+
+            time:
+              "",
+
+            breakfast:
+              "",
+
+            captcha:
+              "",
+
+            selfPayItems:
+              [],
+
+            selfPayTotal:
+              0
+
+          };
+
+
+          setTimeout(
+            function () {
+
+              openSelfPayChat();
+
+            },
+            300
+          );
+
+        }
+
+      }
+    );
+
+  </script>
+
+  <!-- 自費項目選單面板 -->
+  <script src="selfpay_panel.js"></script>
+
+</body>
+
+</html>

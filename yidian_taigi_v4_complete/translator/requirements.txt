@@ -1,0 +1,6 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pydantic>=2,<3
+taibun>=1.1.8,<2
+mlx-lm>=0.20,<2
+huggingface-hub>=0.30,<2
