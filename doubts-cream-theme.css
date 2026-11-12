@@ -1,0 +1,355 @@
+/* DOUBTS-MIST-THEME-V7 */
+html:root:root {--c-primary: #8BA8BA !important; --c-primary-active: #7798AD !important; --c-on-primary: #141413 !important; --c-link: #3D5F72 !important; --c-primary-tint: #E3ECF1 !important; --c-ink: #141413 !important; --c-body: #3d3d3a !important; --c-body-strong: #252523 !important; --c-muted: #6c6a64 !important; --c-hairline: #e6dfd8 !important; --c-canvas: #faf9f5 !important; --c-surface-soft: #f5f0e8 !important; --c-surface-card: #efe9de !important; --c-surface-cream-strong: #e8e0d2 !important; --c-dark: #1C3647 !important; --c-dark-elevated: #28495F !important; --c-on-dark: #faf9f5 !important; --c-on-dark-soft: #B9CBD6 !important; --c-error: #c64545 !important; --f-display: "Cormorant Garamond", "Noto Serif TC", "Songti TC", serif !important; --f-body: "Inter", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif !important; --r-md: 8px !important; --r-lg: 12px !important; --r-xl: 16px !important; --focus: 3px solid var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 {background: var(--c-canvas) !important; color: var(--c-body) !important; font-family: var(--f-body) !important;}
+
+html:root body.doubts-home-v8 :is(a, button, summary, input, select):focus-visible {outline: var(--focus) !important; outline-offset: 3px !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav.navbar {background: var(--c-primary) !important; border-bottom: 1px solid rgba(20, 20, 19, .12) !important; box-shadow: none !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav :is(.navbar-brand, .navbar-brand span, .navbar-nav .nav-link, .dm-site-language select) {font-family: var(--f-body) !important; font-weight: 600 !important; letter-spacing: .02em !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size: clamp(25px, 2vw, 29px) !important; background-color: transparent !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {text-decoration: none !important; background: linear-gradient(currentColor, currentColor) left bottom / 0 3px no-repeat !important; background-origin: content-box !important; transition: background-size .3s cubic-bezier(.16, 1, .3, 1) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link:is(:hover, :focus-visible, .active) {background-size: 100% 3px !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-toggler {color: var(--c-ink) !important; border: 1px solid rgba(20, 20, 19, .2) !important;}
+
+@keyframes dh-nav-in { 
+  from {opacity: 0; transform: translateY(-14px);} 
+  to {opacity: 1; transform: none;} 
+}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand {animation: dh-nav-in .7s cubic-bezier(.16, 1, .3, 1) both;}
+
+@media (min-width: 992px) {html:root body.doubts-home-v8 #scrollspyNav :is(.nav-item, .dm-site-language) {animation: dh-nav-in .7s cubic-bezier(.16, 1, .3, 1) both;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(1) {animation-delay: .08s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(2) {animation-delay: .14s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(3) {animation-delay: .20s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(4) {animation-delay: .26s;}html:root body.doubts-home-v8 #scrollspyNav .nav-item:nth-child(5) {animation-delay: .32s;}html:root body.doubts-home-v8 #scrollspyNav .dm-site-language {animation-delay: .38s;}}
+
+@media (max-width: 991.98px) {html:root body.doubts-home-v8 #offcanvasNavbar {background: var(--c-canvas) !important;}}
+
+@media (min-width: 992px) {html:root body.doubts-home-v8 #offcanvasNavbar {background: transparent !important;}}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #scrollspyNav :is(.navbar-brand, .nav-item, .dm-site-language) {animation: none !important;}html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {transition: none !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {background: var(--c-primary) !important; padding-top: 96px !important; padding-bottom: 96px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity,
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-name,
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-tagline {font-family: var(--f-body) !important; font-weight: 500 !important; letter-spacing: .02em !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .doubts-identity-divider {background: var(--c-canvas) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero #home-hero-title,
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 #home-hero-title {font-family: var(--f-display) !important; font-weight: 500 !important; letter-spacing: 0 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-title-row:last-child .dh-title-words::before {background: var(--c-canvas) !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-general, #home-action-senior, #home-action-selfpay).btn {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-canvas) !important; border-radius: var(--r-lg) !important; box-shadow: 0 1px 3px rgba(20, 20, 19, .08) !important; font-family: var(--f-body) !important; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease, background-color .2s ease !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn {background: var(--c-dark) !important; border-color: var(--c-dark) !important; color: var(--c-on-dark) !important;}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:hover {background: var(--c-primary-tint) !important; color: var(--c-ink) !important; transform: translateY(-4px) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .18) !important;}html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:hover {background: var(--c-dark-elevated) !important; color: var(--c-on-dark) !important; transform: translateY(-4px) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .28) !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:focus-visible {background: var(--c-primary-tint) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:focus-visible {background: var(--c-dark-elevated) !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-general, #home-action-senior, #home-action-selfpay).btn:active {transform: translateY(1px) !important; box-shadow: 0 1px 2px rgba(20, 20, 19, .1) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > :is(#home-action-senior, #home-action-selfpay).btn:active {background: var(--c-surface-cream-strong) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > #home-action-general.btn:active {background: var(--c-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn .home-action-label::after {content: " →" / ""; display: inline-block; transition: transform .25s cubic-bezier(.16, 1, .3, 1);}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:hover .home-action-label::after {transform: translateX(6px);}}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay),
+  html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay):is(:hover, :active),
+  html:root body.doubts-home-v8 #scrollspyHero#scrollspyHero.dh-motion-v1 .senior-hero-actions-v14 > .btn:is(#home-action-general,#home-action-senior,#home-action-selfpay) .home-action-label::after {transition: none !important; transform: none !important;}}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 :is(.dh-entry-number, .home-action-label) {font-family: var(--f-display) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 24px !important; font-weight: 400 !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 :is(#home-action-senior, #home-action-selfpay) .dh-entry-number {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment.elderly-booking-v2 {background: var(--c-primary-tint) !important; color: var(--c-body) !important; padding-top: 96px !important; padding-bottom: 96px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2, .elderly-step-content h3, .elderly-plan-card h3) {font-family: var(--f-display) !important; font-weight: 500 !important; letter-spacing: 0 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading p, .elderly-plans-heading p, .elderly-step-content p, .elderly-eligibility-note, .elderly-plan-preview-label) {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-booking-step {background: var(--c-canvas) !important; border: 0 !important; border-left: 6px solid var(--c-primary) !important; border-radius: var(--r-lg) !important; box-shadow: none !important; padding: 32px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-step-number {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-link) !important; background: transparent !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-card {background: var(--c-canvas) !important; border: 0 !important; border-top: 6px solid var(--c-primary) !important; border-radius: var(--r-lg) !important; box-shadow: none !important; padding: 32px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-code {align-self: flex-start; padding: 4px 14px; border-radius: 9999px; background: var(--c-primary-tint) !important; color: var(--c-ink) !important; font-family: var(--f-body) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-plan-preview li, .elderly-plan-full-list li) {color: var(--c-body-strong) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-details summary {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action,
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action:is(:hover, :focus-visible) {background: var(--c-primary) !important; border-color: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important; font-family: var(--f-body) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action:active {background: var(--c-primary-active) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter {background: var(--c-dark) !important; border: 0 !important; padding-top: 64px !important; padding-bottom: 64px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .widget-title {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :is(address, a, p) {color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter a[data-clinic-tel] {text-decoration: underline !important; text-underline-offset: .25em;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .copyright {color: var(--c-on-dark-soft) !important; font-size: 18px;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :focus-visible {outline-color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget {background: var(--c-canvas) !important; color: var(--c-ink) !important; font-family: var(--f-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-header {background: var(--c-primary) !important; border-bottom: 1px solid var(--c-hairline) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-title {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-header .chat-close-btn {color: var(--c-ink) !important; background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: 9999px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 {background: var(--c-canvas) !important; border-bottom: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 .dv-caption {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role],
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role]:hover,
+html:root body.doubts-home-v8 #chat-widget :is(.quick-actions, .voice-actions) .action-btn,
+html:root body.doubts-home-v8 #chat-widget :is(.quick-actions, .voice-actions) .action-btn:hover {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important; box-shadow: none !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-active="true"] {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border-color: var(--c-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #doubts-voice-v5 button[data-dv-role="stop"] {background: var(--c-canvas) !important; color: var(--c-error) !important; border-color: var(--c-error) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > .quick-actions,
+html:root body.doubts-home-v8 #chat-widget > .voice-actions {background: var(--c-canvas) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-body {background: var(--c-primary-tint) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg.ai-msg {background: var(--c-canvas) !important; border: 0 !important; color: var(--c-ink) !important; box-shadow: none !important; border-radius: var(--r-lg) var(--r-lg) var(--r-lg) 4px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg.user-msg {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border-radius: var(--r-lg) var(--r-lg) 4px var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 #chat-widget :is(.plan-letter, .pid-candidate) {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #chat-widget :is(.chat-error, .bq-error) {color: var(--c-error) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-notice {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .bq-tag {background: var(--c-surface-card) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-body :is(.pid-letter-picker, .pid-confirm-picker, .bq-replies) button,
+html:root body.doubts-home-v8 #chat-body :is(.pid-letter-picker, .pid-confirm-picker, .bq-replies) button:is(:hover, :focus-visible),
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-btn {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #chat-body .pid-confirm-picker .pid-accept,
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-btn.doubts-idscan-choice-camera {background: var(--c-primary) !important; border-color: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-body .doubts-idscan-choice-help {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #chat-widget > #chat-footer {background: var(--c-canvas) !important; border-top: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chat-input {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chat-input:focus-visible {border-color: var(--c-primary) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(139, 168, 186, .45) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatSendBtn {background: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatMicBtn {background: var(--c-dark) !important; color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-footer #chatMicBtn.recording {background: var(--c-error) !important; color: #fff !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-calendar .flatpickr-day.chat-day-open {background: var(--c-surface-card) !important; border-color: var(--c-primary) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-calendar .flatpickr-day.chat-day-open:is(:hover, .selected) {background: var(--c-primary) !important; color: var(--c-on-primary) !important;}
+
+html:root body.doubts-home-v8 #chat-widget .chat-cal-legend i.ok {background: var(--c-surface-card) !important; border-color: var(--c-primary) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-panel {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-xl) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header {background: var(--c-primary) !important; border-bottom: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-header h2, .self-pay-header-label, .self-pay-header p, .self-pay-close-btn) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header h2 {font-family: var(--f-display) !important; font-weight: 500 !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header-label {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-close-btn {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-toolbar, .self-pay-footer, .self-pay-content) {background: var(--c-primary-tint) !important; border-color: var(--c-hairline) !important; color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {background: var(--c-canvas) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-lg) !important; box-shadow: 0 1px 3px rgba(20, 20, 19, .06) !important; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease, border-color .2s ease !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-name, .self-pay-items-heading h3, .self-pay-item-name, .self-pay-breadcrumb) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-count, .self-pay-item-code, .self-pay-item-description, .self-pay-items-heading p) {color: var(--c-body) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-action {color: var(--c-link) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-item-price, .self-pay-item-price.price-pending, .self-pay-item-note) {background: var(--c-surface-card) !important; color: var(--c-ink) !important; border: 0 !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close),
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close):is(:hover, :focus-visible) {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayModal, #selfPayCartDialog, .self-pay-detail-dialog) .self-pay-add-btn:not(:disabled),
+html:root body.doubts-home-v8 :is(#selfPayModal, #selfPayCartDialog, .self-pay-detail-dialog) .self-pay-add-btn:not(:disabled):hover {background: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary {background: var(--c-dark) !important; color: var(--c-on-dark) !important; border: 0 !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary-info :is(strong, span) {color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary-button,
+html:root body.doubts-home-v8 .self-pay-summary-button:hover {background: var(--c-primary) !important; color: var(--c-on-primary) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 .self-pay-summary :focus-visible {outline-color: var(--c-on-dark) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) {background: var(--c-canvas) !important; color: var(--c-body) !important; border-radius: var(--r-lg) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) h3 {font-family: var(--f-display) !important; font-weight: 500 !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog :is(.self-pay-cart-bottom) {background: var(--c-canvas) !important; border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .self-pay-cart-total {background: var(--c-surface-card) !important; color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog :is(.cart-item-name, .cart-item-price) {color: var(--c-ink) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .cart-item {border-color: var(--c-hairline) !important;}
+
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) .self-pay-detail-close,
+html:root body.doubts-home-v8 :is(#selfPayCartDialog, .self-pay-detail-dialog) .self-pay-detail-close:hover {background: var(--c-canvas) !important; color: var(--c-ink) !important; border: 1px solid var(--c-hairline) !important; border-radius: var(--r-md) !important;}
+
+html:root body.doubts-home-v8 #selfPayCartDialog .cart-item-remove {color: var(--c-error) !important; border-color: var(--c-error) !important; background: var(--c-canvas) !important;}
+
+@media (hover: hover) and (pointer: fine) {html:root body.doubts-home-v8,
+  html:root body.doubts-home-v8 * {cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 32 32'%3E%3Cpath d='M4 2v24l6-6 4 9 4-2-4-9h8z' fill='%231C3647' stroke='%23FAF9F5' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, auto;}html:root body.doubts-home-v8 :is(a, button, summary, select, label, [role="button"], [onclick], .flatpickr-day:not(.flatpickr-disabled)),
+  html:root body.doubts-home-v8 :is(a, button, summary, select, label, [role="button"], [onclick]) * {cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 32 32'%3E%3Cpath d='M11 3.5a2.5 2.5 0 0 1 5 0V13h1v-1.5a2.5 2.5 0 0 1 5 0V14h0a2.5 2.5 0 0 1 5 0v8c0 5-3 8-8 8h-3c-3 0-5-1.5-6.5-4L5 19a2.4 2.4 0 0 1 4-2.6l2 2.6z' fill='%231C3647' stroke='%23FAF9F5' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 20 2, pointer;}html:root body.doubts-home-v8 :is(input[type="text"], input[type="tel"], input:not([type]), textarea) {cursor: text;}}
+
+html:root body.doubts-home-v8 #main {--home-body-size: clamp(28px, 2.2vw, 32px); --home-note-size: 25px;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand,
+html:root body.doubts-home-v8 #scrollspyNav .navbar-brand span {font-size: clamp(34px, 2.9vw, 42px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .navbar-nav .nav-link {font-size: clamp(25px, 2vw, 29px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size: 22px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero :is(.doubts-identity-name, .doubts-identity-tagline) {font-size: 25px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {font-size: clamp(28px, 2.3vw, 34px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-label {font-size: clamp(34px, 2.8vw, 42px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 26px !important;}
+
+html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-entry-number {font-size: 40px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2) {font-size: clamp(48px, 4vw, 60px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-step-content h3 {font-size: clamp(32px, 2.6vw, 38px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-card h3 {font-size: clamp(36px, 2.9vw, 44px) !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-code {font-size: 26px !important;}
+
+html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action {font-size: 32px !important; min-height: 84px;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .widget-title {font-size: 38px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter :is(address, a[data-clinic-tel], p) {font-size: 28px !important;}
+
+html:root body.doubts-home-v8 #scrollspyFooter .copyright {font-size: 20px !important;}
+
+html:root body.doubts-home-v8 #chat-widget #chat-body .msg {font-size: clamp(24px, 2vw, 30px) !important; line-height: 1.7 !important;}
+
+@media (min-width: 761px) {html:root body.doubts-home-v8 #scrollspyHero.elderly-home-hero-v2 {--home-title-size: clamp(88px, 7vw, 112px);}}
+
+@media (max-width: 760px) {html:root body.doubts-home-v8 #main {--home-body-size: 26px; --home-note-size: 23px;}html:root body.doubts-home-v8 #scrollspyHero .home-hero-intro {font-size: 26px !important;}html:root body.doubts-home-v8 #scrollspyAppointment :is(.elderly-section-heading h2, .elderly-plans-heading h2) {font-size: 42px !important;}html:root body.doubts-home-v8 #scrollspyAppointment .elderly-plan-action {font-size: 28px !important;}html:root body.doubts-home-v8 #scrollspyFooter :is(address, a[data-clinic-tel], p) {font-size: 25px !important;}}
+
+@media (max-width: 600px) {html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-label {font-size: 28px !important;}html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .home-action-hint {font-size: 22px !important;}html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 .dh-entry-number {font-size: 30px !important;}html:root body.doubts-home-v8 #chat-widget #chat-body .msg {font-size: 22px !important;}}
+
+@media (max-width: 430px) {html:root body.doubts-home-v8 #scrollspyNav .navbar-brand,
+  html:root body.doubts-home-v8 #scrollspyNav .navbar-brand span {font-size: 28px !important;}}
+
+@keyframes dh-fade-in { 
+  from {opacity: 0;} 
+  to {opacity: 1;} 
+}
+
+@keyframes dh-panel-in { 
+  from {opacity: 0; transform: translateY(28px) scale(.98);} 
+  to {opacity: 1; transform: none;} 
+}
+
+@keyframes dh-card-in { 
+  from {opacity: 0; transform: translateY(20px);} 
+  to {opacity: 1; transform: none;} 
+}
+
+html:root body.doubts-home-v8 #selfPayModal.is-open .self-pay-backdrop {animation: dh-fade-in .3s ease both;}
+
+html:root body.doubts-home-v8 #selfPayModal.is-open .self-pay-panel {animation: dh-panel-in .45s cubic-bezier(.16, 1, .3, 1) both;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {animation: dh-card-in .5s cubic-bezier(.16, 1, .3, 1) both;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(1) {animation-delay: .12s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(2) {animation-delay: .18s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(3) {animation-delay: .24s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(4) {animation-delay: .30s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(5) {animation-delay: .36s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(6) {animation-delay: .42s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(7) {animation-delay: .48s;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card):nth-child(n+8) {animation-delay: .54s;}
+
+@media (hover: hover) {html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover,
+  html:root body.doubts-home-v8 #selfPayModal .self-pay-item-card:hover {transform: translateY(-4px) !important; border-color: var(--c-primary) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .14) !important;}html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover .self-pay-category-action {transform: translateX(6px);}html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close, .self-pay-close-btn):hover {background: var(--c-primary-tint) !important; border-color: var(--c-primary) !important;}}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-action {display: inline-block; transition: transform .25s cubic-bezier(.16, 1, .3, 1);}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:focus-visible {border-color: var(--c-primary) !important; box-shadow: 0 12px 24px rgba(28, 54, 71, .14) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:active {transform: translateY(1px) !important; box-shadow: 0 1px 2px rgba(20, 20, 19, .1) !important;}
+
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn, .self-pay-detail-btn, .self-pay-footer-close, .self-pay-close-btn) {transition: background-color .2s ease, border-color .2s ease !important;}
+
+@media (prefers-reduced-motion: reduce) {html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-backdrop, .self-pay-panel, .self-pay-category-card, .self-pay-item-card, .self-pay-items-heading) {animation: none !important;}html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card, .self-pay-item-card, .self-pay-category-action) {transition: none !important; transform: none !important;}}
+
+/* Preserve the already approved compact mobile hero. */
+@media(max-width:600px){
+ html:root body.doubts-home-v8 #scrollspyHero.dh-motion-v1 {padding-top:16px!important;padding-bottom:28px!important;}
+}
+/* Match the menu size; supersede the old 22px large-type rule. */
+html:root body.doubts-home-v8 #scrollspyNav .dm-site-language select {font-size:clamp(25px,2vw,29px)!important;}
+@media (hover:hover) and (pointer:fine) {
+ html:root body.doubts-home-v8 :is(input:not([type]),input[type=text],input[type=tel],input[type=email],input[type=password],input[type=search],input[type=url],input[type=number],textarea,[contenteditable=true]) {cursor:text!important;}
+ html:root body.doubts-home-v8 :is(button:disabled,input:disabled,[aria-disabled=true]) {cursor:not-allowed!important;}
+}
+
+/* Reduced motion must also beat hover/active specificity. */
+@media(prefers-reduced-motion:reduce){
+ html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card,.self-pay-item-card,.self-pay-category-action):is(:hover,:active,:focus-visible){transform:none!important;transition:none!important;}
+ html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card:hover .self-pay-category-action{transform:none!important;}
+ html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-back-btn,.self-pay-detail-btn,.self-pay-footer-close,.self-pay-close-btn){transition:none!important;}
+}
+/* The item card contains focusable detail controls. */
+html:root body.doubts-home-v8 #selfPayModal .self-pay-item-card:focus-within{border-color:var(--c-primary)!important;}
+html:root body.doubts-home-v8 #selfPayModal :is(.self-pay-category-card,.self-pay-item-card):focus-within{animation:none!important;}

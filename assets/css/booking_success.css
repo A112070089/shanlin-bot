@@ -1,0 +1,183 @@
+/* =========================================================
+   預約成功頁 booking_success.html
+   （原本寫在 HTML 的 <style> 裡，已搬到這個檔案）
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+  color: #173b5c;
+  background: #ffffff;
+}
+
+/* 頂部 */
+.header {
+  height: 82px;
+  background: #d9effc;
+  display: flex;
+  align-items: center;
+  padding: 0 38px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* 主內容 */
+.main {
+  max-width: 650px;
+  margin: 55px auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.success-icon {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #e8f8ef;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 34px;
+}
+
+h1 {
+  font-size: 25px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #777;
+  margin-bottom: 35px;
+}
+
+/* 方案 */
+.plan {
+  padding: 15px;
+  margin-bottom: 25px;
+  border: 1px solid #efc8c2;
+  background: #fff5f3;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #c64a3b;
+}
+
+/* 預約資料 */
+.booking-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 22px 25px;
+  text-align: left;
+  background: white;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid #eee;
+  gap: 25px;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  font-weight: 600;
+  text-align: right;
+  color: #25394c;
+}
+
+/* 提醒 */
+.notice {
+  margin-top: 25px;
+  padding: 17px;
+  background: #fff9e9;
+  border: 1px solid #eadcae;
+  border-radius: 8px;
+  text-align: left;
+  color: #8b762f;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+/* 按鈕 */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 13px 30px;
+  border-radius: 7px;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-home {
+  background: #174d78;
+  color: white;
+  border: 1px solid #174d78;
+}
+
+.btn-selfpay {
+  background: white;
+  color: #174d78;
+  border: 1px solid #174d78;
+}
+
+@media (max-width: 600px) {
+  .main {
+    margin-top: 35px;
+  }
+
+  .row {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .value {
+    text-align: left;
+  }
+}
+
+/* 自費加購區塊（有加購自費項目時才會顯示） */
+.selfpay-section {
+  display: none;
+  margin-top: 25px;
+}
+
+.selfpay-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 12px;
+  color: #173b5c;
+}
+
+/* 自費項目合計那一列 */
+.row.selfpay-total-row {
+  margin-top: 8px;
+  border-top: 2px solid #ddd;
+  border-bottom: none;
+  padding-top: 16px;
+}
+
+.selfpay-total-row .label,
+.selfpay-total-row .value {
+  font-weight: 700;
+}

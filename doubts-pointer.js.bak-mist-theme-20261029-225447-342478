@@ -1,0 +1,40 @@
+/* DOUBTS-POINTER-V2｜長輩友善的滑鼠互動
+   1. 游標光圈：跟著滑鼠（零延遲），移到可點的東西上會放大，幫視力退化的長輩找到游標。
+   2. 首屏柔光：霧藍底上有一團淡米色光暈跟著滑鼠走。
+   觸控裝置不啟用；「減少動態效果」時只關掉放大動畫，光圈照常顯示。不攔截任何點擊。 */
+(() => {
+  'use strict';
+  if (window.__doubtsPointerV2) return;
+  window.__doubtsPointerV2 = true;
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  const halo = document.createElement('div');
+  halo.className = 'dh-halo is-hidden';
+  halo.setAttribute('aria-hidden', 'true');
+  document.body.append(halo);
+
+  const hero = document.getElementById('scrollspyHero');
+  const clickable = 'a, button, summary, select, input, label, [role="button"], [onclick]';
+  let x = 0, y = 0, frame = 0;
+
+  addEventListener('pointermove', e => {
+    if (e.pointerType && e.pointerType !== 'mouse') return;
+    x = e.clientX; y = e.clientY;
+    halo.classList.remove('is-hidden');
+    halo.classList.toggle('is-link', !!e.target.closest?.(clickable));
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      halo.style.transform = `translate(${x}px, ${y}px)`;
+      if (hero) {
+        const r = hero.getBoundingClientRect();
+        hero.style.setProperty('--mx', `${x - r.left}px`);
+        hero.style.setProperty('--my', `${y - r.top}px`);
+      }
+    });
+  }, { passive: true });
+
+  addEventListener('blur', () => halo.classList.add('is-hidden'));
+  // 滑鼠離開視窗就藏起來，回來再出現
+  document.addEventListener('mouseout', e => { if (!e.relatedTarget) halo.classList.add('is-hidden'); });
+})();

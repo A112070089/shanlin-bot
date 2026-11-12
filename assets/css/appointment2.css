@@ -1,0 +1,1414 @@
+/* =========================================================
+   預約確認頁 appointment2.html
+   （原本寫在 HTML 的 <style> 裡，已搬到這個檔案）
+========================================================= */
+
+/* =========================================
+   基本資料頁
+========================================= */
+
+.form-section {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 15px;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+
+  margin-top: 20px;
+}
+
+.display-plan {
+  color: #dc3545;
+  font-weight: bold;
+
+  border-bottom: 2px solid #e0ebef;
+
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #294958;
+  margin-top: 15px;
+}
+
+.hint-text {
+  color: #647c88;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+input.form-control,
+select.form-control {
+  width: 100%;
+  box-sizing: border-box;
+
+  border: 1px solid #c6dbe5;
+
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.btn-send {
+  border: none;
+  border-radius: 8px;
+
+  padding: 12px 36px;
+
+  background: #456b81;
+  color: #ffffff;
+
+  font-size: 1.05rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.btn-send:hover {
+  background: #34566b;
+}
+
+/* =========================================
+   AI 自費聊天室 Overlay
+========================================= */
+
+.selfpay-chat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(29, 54, 68, 0.56);
+}
+
+.selfpay-chat-overlay.show {
+  display: flex;
+}
+
+/* =========================================
+   AI 自費聊天室
+========================================= */
+
+.selfpay-chat-box {
+  width: min(560px, 96vw);
+
+  height: min(760px, 90vh);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius: 24px;
+  background: #ffffff;
+
+  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.28);
+}
+
+.selfpay-chat-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px 22px;
+
+  color: #ffffff;
+
+  background: linear-gradient(135deg, #456b81, #8ba8ba);
+}
+
+.selfpay-chat-title-small {
+  margin-bottom: 3px;
+  font-size: 13px;
+  opacity: 0.86;
+}
+
+.selfpay-chat-title {
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.selfpay-chat-close {
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.18);
+
+  color: #ffffff;
+
+  font-size: 27px;
+  cursor: pointer;
+}
+
+.selfpay-chat-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* =========================================
+   聊天內容
+========================================= */
+
+.selfpay-chat-body {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: scroll;
+  overflow-x: hidden;
+
+  padding: 20px;
+
+  background: #f4f8fa;
+
+  scroll-behavior: smooth;
+
+  scrollbar-width: auto;
+  scrollbar-color: #8ba8ba #e8f1f5;
+}
+
+.selfpay-chat-body::-webkit-scrollbar {
+  width: 14px;
+}
+
+.selfpay-chat-body::-webkit-scrollbar-track {
+  background: #e8f1f5;
+  border-radius: 10px;
+}
+
+.selfpay-chat-body::-webkit-scrollbar-thumb {
+  background: #8ba8ba;
+  border-radius: 10px;
+
+  border: 3px solid #e8f1f5;
+}
+
+.selfpay-chat-body::-webkit-scrollbar-thumb:hover {
+  background: #456b81;
+}
+
+.selfpay-message {
+  max-width: 86%;
+
+  margin-bottom: 14px;
+
+  padding: 13px 16px;
+
+  border-radius: 18px;
+
+  font-size: 16px;
+  line-height: 1.65;
+
+  word-break: break-word;
+}
+
+.selfpay-message.ai {
+  margin-right: auto;
+
+  border: 1px solid #d1e0e7;
+
+  background: #ffffff;
+  color: #244455;
+}
+
+.selfpay-message.user {
+  margin-left: auto;
+
+  background: #456b81;
+  color: #ffffff;
+}
+
+/* =========================================
+   快速選項
+========================================= */
+
+.selfpay-chat-options {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+
+  align-content: flex-start;
+
+  gap: 9px;
+
+  padding: 16px 17px;
+
+  border-top: 1px solid #d7e5eb;
+
+  background: #ffffff;
+
+  max-height: 430px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: auto;
+  scrollbar-color: #8ba8ba #e8f1f5;
+}
+
+.selfpay-chat-options::-webkit-scrollbar {
+  width: 14px;
+}
+
+.selfpay-chat-options::-webkit-scrollbar-track {
+  background: #e8f1f5;
+  border-radius: 10px;
+}
+
+.selfpay-chat-options::-webkit-scrollbar-thumb {
+  background: #8ba8ba;
+  border-radius: 10px;
+
+  border: 3px solid #e8f1f5;
+}
+
+.selfpay-chat-options::-webkit-scrollbar-thumb:hover {
+  background: #456b81;
+}
+
+.selfpay-option-btn {
+  border: 1px solid #456b81;
+
+  border-radius: 999px;
+
+  padding: 8px 15px;
+
+  background: #ffffff;
+  color: #456b81;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.selfpay-option-btn:hover {
+  background: #456b81;
+  color: #ffffff;
+}
+
+/* =========================================
+   狀態顯示
+========================================= */
+
+.selfpay-status {
+  display: none;
+
+  padding: 8px 18px;
+
+  border-top: 1px solid #d7e5eb;
+
+  background: #ffffff;
+
+  color: #516c7a;
+  font-size: 13px;
+}
+
+/* =========================================
+   輸入區
+========================================= */
+
+.selfpay-chat-input-area {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 14px;
+
+  border-top: 1px solid #d1e0e7;
+
+  background: #ffffff;
+}
+
+#selfpay-chat-input {
+  flex: 1;
+  min-width: 0;
+
+  border: 1px solid #c3d8e2;
+
+  border-radius: 999px;
+
+  padding: 12px 14px;
+
+  outline: none;
+
+  font-size: 15px;
+}
+
+#selfpay-chat-input:focus {
+  border-color: #456b81;
+
+  box-shadow: 0 0 0 3px rgba(139, 168, 186, 0.22);
+}
+
+.selfpay-send-btn,
+.selfpay-mic-btn {
+  border: none;
+  border-radius: 999px;
+
+  background: #456b81;
+  color: #ffffff;
+
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.selfpay-send-btn {
+  height: 44px;
+
+  padding: 0 17px;
+}
+
+.selfpay-mic-btn {
+  width: 44px;
+  height: 44px;
+
+  font-size: 20px;
+}
+
+.selfpay-mic-btn.recording {
+  background: #dc3545;
+}
+
+/* =========================================
+   自費項目卡片
+========================================= */
+
+.selfpay-item-card {
+  margin-top: 8px;
+  padding: 14px;
+
+  border: 1px solid #cbdde6;
+
+  border-radius: 14px;
+
+  background: #f6f9fa;
+}
+
+.selfpay-item-name {
+  margin-bottom: 7px;
+
+  color: #244455;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.selfpay-item-price {
+  margin-bottom: 7px;
+
+  color: #456b81;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.selfpay-item-description {
+  color: #4c6876;
+  line-height: 1.7;
+}
+
+/* =========================================
+   購物車摘要
+========================================= */
+
+.selfpay-summary-card {
+  margin-top: 10px;
+  padding: 14px;
+
+  border-radius: 14px;
+
+  background: #eaf3f6;
+}
+
+.selfpay-summary-total {
+  margin-top: 12px;
+
+  color: #244455;
+
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* =========================================
+  電腦版：自費項目過多時保留底部輸入列
+========================================= */
+
+@media (min-width: 601px) {
+  .selfpay-chat-options {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+
+  .selfpay-chat-input-area {
+    flex-shrink: 0;
+  }
+}
+/* =========================================
+   手機版
+========================================= */
+
+@media (max-width: 600px) {
+  .selfpay-chat-overlay {
+    padding: 0;
+  }
+
+  .selfpay-chat-box {
+    width: 100%;
+    height: 100%;
+
+    border-radius: 0;
+  }
+
+  .selfpay-message {
+    font-size: 18px;
+  }
+
+  .selfpay-option-btn {
+    font-size: 17px;
+  }
+
+  .selfpay-category-btn {
+    width: calc(50% - 5px);
+  }
+}
+
+.selfpay-delete-btn {
+  background: #ffffff;
+  color: #d93025;
+  border: 1.5px solid #d93025;
+  border-radius: 18px;
+  padding: 4px 12px;
+  margin-left: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.selfpay-delete-btn:hover {
+  background: #fff4f4;
+}
+
+/* ==================================================
+   驗證碼
+================================================== */
+
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+#captchaInput {
+  width: 260px;
+  height: 58px;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+#captchaCanvas {
+  border: 1px solid #c6dbe5;
+  border-radius: 8px;
+  background: #f3f8fa;
+}
+
+/* ↻ 重新產生驗證碼 */
+#refreshCaptchaBtn {
+  border: none;
+  background: transparent;
+  color: #506c7a;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* 🔊 語音播放 */
+#speakCaptchaBtn {
+  margin-left: 10px;
+  border: 1px solid #456b81;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #456b81;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+/* 「驗證碼錯誤」紅字（預設隱藏，輸入錯誤時由 JavaScript 顯示） */
+#captchaError {
+  display: none;
+  color: #dc3545;
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+/* ==================================================
+   AI 自費聊天室裡的訊息樣式（由 JavaScript 產生）
+================================================== */
+
+/* 已選項目清單的每一行 */
+.sp-item-line {
+  margin-bottom: 12px;
+}
+
+/* 套組包含的項目 */
+.sp-included {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #cbdde6;
+}
+
+/* 超出預算的金額（紅字） */
+.text-over-budget {
+  color: #dc3545;
+}
+
+/* 📌 預約提醒（黃色框） */
+.booking-reminder {
+  background: #fff8e1;
+  border: 1px solid #f0d98c;
+  border-radius: 12px;
+  padding: 14px 16px;
+  line-height: 1.8;
+  color: #5c4a1f;
+}
+
+/* 📞 診所電話 */
+.booking-reminder-tel {
+  display: inline-block;
+  margin-top: 8px;
+  color: #456b81;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 1.05em;
+}
+
+/* ==================================================
+   自費項目選單面板（selfpay_panel.js）
+   電腦版：聊天框右邊；手機版：從下方滑出、可收起
+================================================== */
+
+.selfpay-panel {
+  display: none;
+}
+
+.selfpay-chat-overlay.with-panel {
+  gap: 18px;
+}
+
+.selfpay-panel.show {
+  display: flex;
+  flex-direction: column;
+  width: min(500px, 42vw);
+  height: min(760px, 90vh);
+  overflow: hidden;
+  border-radius: 24px;
+  background: #f3f8fa;
+  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.28);
+}
+
+.sp-panel-head {
+  flex-shrink: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #d7e5eb;
+}
+
+.sp-panel-handle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 20px;
+  border: none;
+  background: transparent;
+  cursor: default;
+  font-family: inherit;
+}
+
+.sp-panel-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #244455;
+}
+
+.sp-panel-toggle {
+  display: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #456b81;
+}
+
+/* 預算列 */
+.sp-panel-budget {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 1px;
+  background: #d7e5eb;
+  border-bottom: 1px solid #d7e5eb;
+}
+
+.sp-panel-budget:empty {
+  display: none;
+}
+
+.sp-panel-budget > div {
+  background: #ffffff;
+  padding: 10px 14px;
+}
+
+.sp-panel-budget small {
+  display: block;
+  font-size: 14px;
+  color: #577182;
+}
+
+.sp-panel-budget b {
+  font-size: 19px;
+  color: #244455;
+}
+
+.sp-panel-budget .over b,
+.sp-panel-budget .over small {
+  color: #c62828;
+}
+
+.sp-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 18px 28px;
+}
+
+.sp-q {
+  font-size: 22px;
+  font-weight: 800;
+  color: #244455;
+  margin-bottom: 4px;
+}
+
+.sp-q-sub {
+  font-size: 16px;
+  color: #516e7d;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+/* 健康方面卡片 */
+.sp-concern {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 2px solid #cbdde6;
+  border-radius: 18px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.sp-concern:hover {
+  border-color: #456b81;
+  transform: translateY(-2px);
+}
+
+.sp-concern-icon {
+  font-size: 34px;
+  flex-shrink: 0;
+}
+
+.sp-concern-text {
+  flex: 1;
+}
+
+.sp-concern-text b {
+  display: block;
+  font-size: 20px;
+  color: #244455;
+}
+
+.sp-concern-text small {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  color: #516e7d;
+  line-height: 1.5;
+}
+
+.sp-go {
+  font-size: 30px;
+  color: #456b81;
+}
+
+.sp-starter {
+  border-style: dashed;
+  background: #eff5f7;
+}
+
+.sp-back {
+  border: none;
+  background: transparent;
+  color: #456b81;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 0 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* 檢查項目卡片 */
+.sp-card {
+  background: #ffffff;
+  border: 1.5px solid #cbdde6;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.sp-card.chosen {
+  border-color: #2e7d32;
+  background: #f4fbf5;
+}
+
+.sp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sp-card-name b {
+  display: block;
+  font-size: 19px;
+  color: #244455;
+  line-height: 1.4;
+}
+
+.sp-card-name small {
+  display: block;
+  font-size: 13px;
+  color: #627987;
+  margin-top: 2px;
+}
+
+.sp-card-price {
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #456b81;
+  white-space: nowrap;
+}
+
+.sp-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.sp-card-tags:empty {
+  display: none;
+}
+
+.sp-tag {
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: #edf4f7;
+  color: #435f70;
+}
+
+.sp-tag.pkg {
+  background: #e4eff4;
+  color: #456b81;
+}
+
+.sp-tag.rec {
+  background: #fff1d6;
+  color: #9a5b00;
+}
+
+.sp-tag.ok {
+  background: #e3f4e5;
+  color: #2e7d32;
+}
+
+.sp-tag.over {
+  background: #fde8e8;
+  color: #c62828;
+}
+
+.sp-card-plain {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #405e6d;
+}
+
+.sp-card-plain span {
+  font-weight: 700;
+  color: #244455;
+}
+
+.sp-card-members {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #577182;
+}
+
+.sp-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sp-card-actions button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sp-btn-info {
+  border: 1.5px solid #456b81;
+  background: #ffffff;
+  color: #456b81;
+}
+
+.sp-btn-add {
+  border: none;
+  background: #456b81;
+  color: #ffffff;
+}
+
+.sp-btn-add:disabled {
+  background: #d6e3e9;
+  color: #516e7d;
+  cursor: default;
+}
+
+/* 手機 / 平板：面板從下方滑出，可收起 */
+@media (max-width: 999px) {
+  .selfpay-chat-overlay.with-panel .selfpay-chat-box {
+    height: calc(100% - 64px);
+    align-self: flex-start;
+  }
+
+  .selfpay-panel.show {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    width: auto;
+    height: 64vh;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25);
+    transition: height 0.25s ease;
+  }
+
+  .selfpay-panel.show.collapsed {
+    height: 64px;
+  }
+
+  .selfpay-panel.collapsed .sp-panel-budget,
+  .selfpay-panel.collapsed .sp-panel-body {
+    display: none;
+  }
+
+  .sp-panel-handle {
+    cursor: pointer;
+    padding: 18px 18px 16px;
+  }
+
+  .sp-panel-handle::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 7px;
+    width: 44px;
+    height: 5px;
+    margin-left: -22px;
+    border-radius: 3px;
+    background: #cbdde6;
+  }
+
+  .sp-panel-head {
+    position: relative;
+  }
+
+  .sp-panel-toggle {
+    display: inline;
+  }
+}
+
+/* ==================================================
+   自費日曆：休診、額滿標示
+================================================== */
+
+.sp-cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 10px 2px 2px;
+  font-size: 15px;
+  color: #435f70;
+}
+
+.sp-cal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-cal-legend i {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #c4d7e1;
+}
+
+.sp-cal-legend i.ok {
+  background: #ffffff;
+}
+
+.sp-cal-legend i.off {
+  background: #eceff4;
+}
+
+.sp-cal-legend i.full {
+  background: #fde8e8;
+  border-color: #f2b8b8;
+}
+
+/* 有標籤的日子：數字上方、小字標籤在下 */
+.flatpickr-day.sp-day-full,
+.flatpickr-day.sp-day-closed {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.flatpickr-day.sp-day-full small,
+.flatpickr-day.sp-day-closed small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.flatpickr-day.flatpickr-disabled.sp-day-full {
+  background: #fde8e8;
+  color: #c98a8a;
+}
+
+.flatpickr-day.sp-day-full small {
+  color: #c62828;
+}
+
+.flatpickr-day.flatpickr-disabled.sp-day-closed {
+  background: #eceff4;
+}
+
+.flatpickr-day.sp-day-closed small {
+  color: #7a8597;
+}
+
+/* ===========================================================
+   Yidian 2026-10-20：讓聊天內容優先，避免語音與快捷列擠壓訊息區
+   保留既有預算、選單、STT 與手機下滑式選單機制
+   =========================================================== */
+@media (min-width: 1000px) {
+  .selfpay-chat-box,
+  .selfpay-panel.show {
+    height: min(860px, calc(100dvh - 32px));
+  }
+}
+.selfpay-chat-box,
+.selfpay-chat-header,
+.selfpay-chat-input-area {
+  min-width: 0;
+}
+.selfpay-chat-header,
+.selfpay-chat-input-area {
+  flex: 0 0 auto;
+}
+.selfpay-chat-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.selfpay-chat-options {
+  flex: 0 1 auto;
+  max-height: min(24dvh, 205px);
+  min-height: 0;
+  overflow-y: auto;
+}
+.selfpay-chat-options:empty { display: none; }
+@media (max-width: 600px) {
+  .selfpay-chat-box { height: 100dvh; }
+  .selfpay-chat-options { max-height: min(26dvh, 215px); }
+  .selfpay-chat-body { padding: 15px 12px; }
+}
+
+
+/* ========================================================================
+   頤典 DOUBTS | 預約確認及自費健康管理助理主題調整 (2026-10-22)
+   主色：#8BA8BA。僅處理視覺／排版，不修改預約、語音、醫療與計價邏輯。
+   一併調整聊天室、表單、右側自費選單、價格與手機版。
+   ======================================================================== */
+:root {
+  --yd-brand: #8BA8BA;
+  --yd-brand-strong: #456B81;
+  --yd-brand-hover: #34566B;
+  --yd-brand-pale: #EAF3F6;
+  --yd-brand-light: #DDEAF0;
+  --yd-border: #C5D9E3;
+  --yd-ink: #203C4D;
+  --yd-secondary: #526E7D;
+  --yd-surface: #F4F8FA;
+  --yd-white: #FFFFFF;
+  --yd-focus: #2D5268;
+}
+
+/* 基本資料填寫頁：和首頁同色調 */
+#header .navbar {
+  background: var(--yd-brand);
+}
+#header .navbar-brand,
+#header .navbar-brand span {
+  color: var(--yd-ink);
+}
+.form-section {
+  border: 1px solid var(--yd-border);
+  background: var(--yd-white);
+}
+.display-plan {
+  color: var(--yd-ink);
+  border-bottom-color: var(--yd-border);
+}
+.form-label { color: var(--yd-ink); }
+.hint-text { color: var(--yd-secondary); }
+input.form-control:focus,
+select.form-control:focus,
+select.form-select:focus {
+  border-color: var(--yd-brand-strong);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139,168,186,.26);
+}
+.btn-send {
+  min-height: 52px;
+  background: var(--yd-brand-strong);
+  color: var(--yd-white);
+}
+.btn-send:hover { background: var(--yd-brand-hover); }
+.btn-send:focus-visible,
+.selfpay-chat-overlay button:focus-visible,
+#refreshCaptchaBtn:focus-visible {
+  outline: 3px solid var(--yd-focus);
+  outline-offset: 3px;
+}
+
+/* 自費管理聊天室本體 */
+.selfpay-chat-overlay {
+  background: rgba(29, 54, 68, .56);
+}
+.selfpay-chat-box {
+  width: min(620px, calc(100vw - 40px));
+  max-width: 100%;
+  border: 1px solid var(--yd-border);
+  background: var(--yd-white);
+}
+.selfpay-chat-header {
+  background: var(--yd-brand); /* 主色以純色呈現，避免亮藍漸層 */
+  color: var(--yd-ink);
+  border-bottom: 1px solid rgba(32,60,77,.16);
+}
+.selfpay-chat-title-small,
+.selfpay-chat-title { color: var(--yd-ink); }
+.selfpay-chat-close {
+  color: var(--yd-ink);
+  background: rgba(255,255,255,.44);
+}
+.selfpay-chat-close:hover {
+  color: var(--yd-white);
+  background: var(--yd-brand-hover);
+}
+.selfpay-chat-body {
+  background: var(--yd-surface);
+  scrollbar-color: var(--yd-brand) #E8F1F5;
+  overscroll-behavior: contain;
+}
+.selfpay-chat-body::-webkit-scrollbar-thumb,
+.selfpay-chat-options::-webkit-scrollbar-thumb { background: var(--yd-brand); }
+.selfpay-chat-body::-webkit-scrollbar-thumb:hover,
+.selfpay-chat-options::-webkit-scrollbar-thumb:hover { background: var(--yd-brand-hover); }
+.selfpay-message {
+  box-sizing: border-box;
+  max-width: min(90%, 620px);
+  height: auto;
+  min-height: 0;
+  margin-bottom: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+.selfpay-message.ai {
+  color: var(--yd-ink);
+  background: var(--yd-white);
+  border-color: var(--yd-border);
+}
+.selfpay-message.user {
+  color: var(--yd-white);
+  background: var(--yd-brand-strong);
+}
+.selfpay-chat-options {
+  gap: 10px;
+  padding: 16px 18px;
+  border-top-color: var(--yd-border);
+  background: var(--yd-white);
+}
+.selfpay-option-btn {
+  min-height: 45px;
+  border: 1.5px solid var(--yd-brand-strong);
+  background: var(--yd-white);
+  color: var(--yd-ink);
+  padding: 9px 16px;
+}
+.selfpay-option-btn:hover {
+  background: var(--yd-brand-light);
+  color: var(--yd-ink);
+  border-color: var(--yd-brand-hover);
+}
+.selfpay-option-btn:active {
+  background: var(--yd-brand-strong);
+  color: var(--yd-white);
+}
+.selfpay-chat-input-area {
+  border-top-color: var(--yd-border);
+  background: var(--yd-white);
+}
+#selfpay-chat-input {
+  color: var(--yd-ink);
+  border-color: var(--yd-border);
+}
+#selfpay-chat-input:focus {
+  border-color: var(--yd-brand-strong);
+  box-shadow: 0 0 0 3px rgba(139,168,186,.25);
+}
+.selfpay-send-btn,
+.selfpay-mic-btn {
+  background: var(--yd-brand-strong);
+  color: var(--yd-white);
+}
+.selfpay-send-btn:hover,
+.selfpay-mic-btn:not(.recording):hover {
+  background: var(--yd-brand-hover);
+}
+.selfpay-status { color: var(--yd-secondary); }
+.selfpay-item-card,
+.selfpay-summary-card {
+  background: var(--yd-brand-pale);
+  border-color: var(--yd-border);
+}
+.selfpay-item-name,
+.selfpay-item-price,
+.selfpay-summary-total {
+  color: var(--yd-ink);
+}
+/* 此按鈕原本在 HTML 內另有藍色 inline <style>，提高範圍選擇器以覆蓋。 */
+.selfpay-chat-box .selfpay-explanation-replay {
+  border: 2px solid var(--yd-brand-strong);
+  background: var(--yd-brand-pale);
+  color: var(--yd-ink);
+}
+.selfpay-chat-box .selfpay-explanation-replay:hover {
+  background: var(--yd-brand-light);
+}
+.selfpay-chat-box .selfpay-explanation-replay:focus-visible {
+  outline-color: var(--yd-focus);
+}
+
+/* 右側「自費檢查項目選單」：與聊天室採相同的視覺語言 */
+.selfpay-panel.show {
+  background: var(--yd-surface);
+  border: 1px solid var(--yd-border);
+}
+.sp-panel-head {
+  background: var(--yd-white);
+  border-bottom-color: var(--yd-border);
+}
+.sp-panel-title,
+.sp-q,
+.sp-concern-text b,
+.sp-card-name b,
+.sp-panel-budget b {
+  color: var(--yd-ink);
+}
+.sp-panel-toggle,
+.sp-go,
+.sp-back { color: var(--yd-brand-strong); }
+.sp-panel-budget {
+  background: var(--yd-border);
+  border-bottom-color: var(--yd-border);
+}
+.sp-panel-budget > div { min-width: 0; }
+.sp-panel-budget b {
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.sp-panel-budget small,
+.sp-q-sub,
+.sp-concern-text small,
+.sp-card-name small,
+.sp-card-members { color: var(--yd-secondary); }
+.sp-panel-body { background: var(--yd-surface); }
+.sp-concern {
+  border-color: var(--yd-border);
+  background: var(--yd-white);
+}
+.sp-concern:hover {
+  background: var(--yd-brand-pale);
+  border-color: var(--yd-brand-strong);
+}
+.sp-concern:active { transform: translateY(0); }
+.sp-starter { background: var(--yd-brand-pale); }
+.sp-card {
+  min-width: 0;
+  border-color: var(--yd-border);
+  background: var(--yd-white);
+}
+.sp-card.chosen {
+  border-color: #477C62; /* 已加入項目保留明確狀態 */
+  background: #F1F9F3;
+}
+.sp-card-top {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 8px;
+}
+.sp-card-name {
+  min-width: 0;
+  flex: 1 1 160px;
+  overflow-wrap: anywhere;
+}
+.sp-card-name b { overflow-wrap: anywhere; }
+.sp-card-price {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin-left: auto;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--yd-brand);
+  color: var(--yd-ink);
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.sp-tag.pkg { background: var(--yd-brand-pale); color: var(--yd-ink); }
+.sp-card-plain,
+.sp-card-plain span { color: var(--yd-ink); }
+.sp-card-actions { gap: 10px; }
+.sp-card-actions button {
+  min-width: 0;
+  min-height: 48px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.sp-btn-info {
+  border-color: var(--yd-brand-strong);
+  background: var(--yd-white);
+  color: var(--yd-ink);
+}
+.sp-btn-info:hover {
+  border-color: var(--yd-brand-hover);
+  background: var(--yd-brand-pale);
+  color: var(--yd-ink);
+}
+.sp-btn-add {
+  background: var(--yd-brand-strong);
+  color: var(--yd-white);
+}
+.sp-btn-add:hover:not(:disabled) { background: var(--yd-brand-hover); }
+.sp-btn-add:disabled {
+  background: #D6E3E9;
+  color: #516F7F;
+}
+
+/* 小螢幕顯示：保留原先自費選單的收起／展開機制 */
+@media (max-width: 999px) {
+  .selfpay-panel.show { border-bottom: 0; }
+  .selfpay-chat-overlay.with-panel .selfpay-chat-box {
+    max-height: calc(100dvh - 64px);
+  }
+}
+@media (max-width: 600px) {
+  .selfpay-chat-box {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .selfpay-chat-header { padding: 16px; }
+  .selfpay-chat-title { font-size: 21px; }
+  .selfpay-chat-body { padding: 15px 12px; }
+  .selfpay-message {
+    max-width: 94%;
+    padding: 12px 14px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .selfpay-chat-options {
+    padding: 12px;
+    gap: 10px;
+  }
+  .selfpay-option-btn {
+    font-size: 16px;
+    padding: 10px 13px;
+  }
+  .selfpay-chat-input-area { padding: 10px; }
+  .sp-panel-body { padding: 14px 12px 20px; }
+  .sp-concern { padding: 13px; gap: 10px; }
+  .sp-concern-icon { font-size: 29px; }
+  .sp-concern-text b { font-size: 18px; }
+  .sp-concern-text small { font-size: 14px; }
+  .sp-panel-budget > div { padding: 9px; }
+  .sp-panel-budget b { font-size: 16px; }
+  .sp-panel-budget small { font-size: 12px; }
+  .sp-card-top { gap: 8px; }
+  .sp-card-name b { font-size: 18px; }
+  .sp-card-price { font-size: 15px; padding: 6px 9px; }
+  .sp-card-actions button { font-size: 16px; }
+}
