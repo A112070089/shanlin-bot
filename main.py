@@ -20,7 +20,16 @@ import firebase_admin
 from firebase_admin import credentials, db
 from openpyxl import load_workbook
 
-app = FastAPI(title="山林診所 LINE Bot API")
+# 本機測試用：自動讀取 .env（線上 Railway 沒有這個檔案，會直接用環境變數）
+try:
+    from dotenv import load_dotenv
+    _here = os.path.dirname(os.path.abspath(__file__))
+    load_dotenv(os.path.join(_here, ".env"))
+    load_dotenv(os.path.join(_here, "website", ".env"))  # 跟語音預約網站共用同一組 Firebase 金鑰
+except Exception:
+    pass
+
+app = FastAPI(title="頤典 診所預約 LINE Bot API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,9 +41,26 @@ app.add_middleware(
 CHANNEL_SECRET       = os.environ.get("CHANNEL_SECRET", "")
 CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
 FIREBASE_URL         = os.environ.get("FIREBASE_URL", "")
+
+# 資料隔離：本機的頤典示範環境（8001）不可連到山林診所的正式 Firebase。
+# 山林的正式服務部署在 Railway（Railway 會自動帶入 RAILWAY_ 開頭的環境變數），所以在 Railway 上放行；
+# 若要在其他主機執行山林正式服務，請設定環境變數 ALLOW_SHANLIN_FIREBASE=1。
+from urllib.parse import urlparse
+
+SHANLIN_FIREBASE_HOST = "shanlin-clinic-default-rtdb.firebaseio.com"
+firebase_host = (urlparse(FIREBASE_URL).hostname or "").lower()
+IS_SHANLIN = firebase_host == SHANLIN_FIREBASE_HOST
+_ON_RAILWAY = any(k.startswith("RAILWAY_") for k in os.environ)
+
+if IS_SHANLIN and not (_ON_RAILWAY or os.environ.get("ALLOW_SHANLIN_FIREBASE") == "1"):
+    raise RuntimeError(
+        "安全保護：本機的頤典示範環境不可連接山林 Firebase，"
+        "請先設定頤典專屬資料來源"
+    )
 LIFF_VERIFY_URL      = os.environ.get("LIFF_URL", "https://liff.line.me/2010169963-KEjAbfsW")
 LIFF_APPT_URL        = os.environ.get("LIFF_APPT_URL", "https://liff.line.me/2010169963-n8zZXE1V")
-ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "shanlin2025")
+# 管理密碼只從環境變數讀取，程式裡不放預設值（這個 repo 是公開的）
+ADMIN_PASSWORD       = os.environ.get("ADMIN_PASSWORD", "")
 DIFY_API_KEY         = os.environ.get("DIFY_API_KEY", "")
 DIFY_API_URL         = "https://api.dify.ai/v1"
 LINE_API             = "https://api.line.me/v2/bot/message"
@@ -96,8 +122,28 @@ def make_liff_button(label: str, url: str) -> dict:
 
 
 def check_admin(x_admin_password: Optional[str]):
-    if x_admin_password != ADMIN_PASSWORD:
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="管理密碼尚未設定")
+    if not isinstance(x_admin_password, str) or not hmac.compare_digest(
+            x_admin_password.encode("utf-8"), ADMIN_PASSWORD.encode("utf-8")):
         raise HTTPException(status_code=401, detail="密碼錯誤")
+
+
+# 預約「唯讀」授權：只存在記憶體，寫入類 API 一律不接受。
+# 單一行程的 token 儲存；服務重啟後需重新登入。
+_APPOINTMENT_READ_TOKENS = {}
+_APPOINTMENT_READ_LOCK = RLock()
+_APPOINTMENT_READ_TTL = 7200
+
+
+def check_appointment_reader(password, token):
+    if token:
+        with _APPOINTMENT_READ_LOCK:
+            expires = _APPOINTMENT_READ_TOKENS.get(hashlib.sha256(token.encode()).hexdigest(), 0)
+        if expires > time.time():
+            return
+        raise HTTPException(401, "正式預約檢視授權已到期，請重新登入")
+    check_admin(password)
 
 
 # ══════════════════════════════════════
@@ -128,10 +174,10 @@ async def call_dify(user_id: str, message: str) -> str:
                 return data.get("answer", "抱歉，我暫時無法回答這個問題。")
             else:
                 print(f"Dify error: {res.status_code}, {res.text}")
-                return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+                return f"AI 助理暫時無法使用，請撥打 {get_clinic()['phone']} 洽詢。"
     except Exception as e:
         print(f"Dify exception: {e}")
-        return "AI 助理暫時無法使用，請撥打 02-2933-2010 洽詢。"
+        return f"AI 助理暫時無法使用，請撥打 {get_clinic()['phone']} 洽詢。"
 
 
 @app.post("/webhook")
@@ -159,17 +205,16 @@ async def webhook(request: Request):
 
 
 async def handle_follow(user_id: str, reply_token: str):
+    c = get_clinic()
     await reply_message(reply_token, [
         {
             "type": "text",
             "text": (
-                "感謝您成為山林診所好友 💗\n\n"
+                f"感謝您成為{c['name']}好友 💗\n\n"
                 "⭐ 門診時間\n"
-                "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
-                "週六 早上 8:30-12:30\n"
-                "週日公休\n\n"
-                "⭐ 診所位置：台北市文山區羅斯福路六段 407 號 2 樓\n"
-                "⭐ 連絡電話：02-2933-2010\n\n"
+                f"{c['hours']}\n\n"
+                f"⭐ 診所位置：{c['address']}\n"
+                f"⭐ 連絡電話：{c['phone']}\n\n"
                 "請使用下方選單選擇服務 👇"
             )
         }
@@ -209,13 +254,13 @@ async def handle_text(user_id: str, reply_token: str, text: str):
                     f"📅 日期：{appt_data.get('date', '—')}\n"
                     f"⏰ 時段：{appt_data.get('time', '—')}\n"
                     f"🏥 方案：{plan_names.get(appt_data.get('plan', ''), appt_data.get('plan', '—'))}\n\n"
-                    f"如需修改請撥打 02-2933-2010"
+                    f"如需修改請撥打 {get_clinic()['phone']}"
                 )
             }])
         else:
             await reply_message(reply_token, [{
                 "type": "text",
-                "text": "目前查無您的預約紀錄。\n如需預約請說「預約」，或撥打 02-2933-2010 😊"
+                "text": f"目前查無您的預約紀錄。\n如需預約請說「預約」，或撥打 {get_clinic()['phone']} 😊"
             }])
 
     elif any(k in text for k in keywords_booking):
@@ -254,17 +299,18 @@ async def handle_text(user_id: str, reply_token: str, text: str):
             "type": "text",
             "text": (
                 "⭐ 門診時間\n"
-                "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n"
-                "週六 早上 8:30-12:30\n"
-                "週日公休\n"
-                "國定假日門診半天"
+                f"{get_clinic()['hours']}"
             )
         }])
 
     elif any(k in text for k in keywords_address):
         await reply_message(reply_token, [{
             "type": "text",
-            "text": "📍 台北市文山區羅斯福路六段 407 號 2 樓\n（由車前路門口上樓）\n\n📞 02-2933-2010"
+            "text": (
+                f"📍 {get_clinic()['address']}\n"
+                + (f"（{get_clinic()['addressNote']}）\n" if get_clinic()['addressNote'] else "")
+                + f"\n📞 {get_clinic()['phone']}"
+            )
         }])
 
     else:
@@ -429,6 +475,7 @@ async def send_reminders(token: str = ""):
     except Exception:
         return {"status": "error", "message": "Firebase 連線失敗"}
 
+    clinic_name = get_clinic()["name"]
     sent = 0
     skipped = 0
     for key, data in all_appts.items():
@@ -440,7 +487,7 @@ async def send_reminders(token: str = ""):
             continue
 
         name = data.get("name", "您好")
-        lines = [f"⏰ 預約提醒\n\n{name}，明天 {tomorrow} 您在山林診所有預約！\n"]
+        lines = [f"⏰ 預約提醒\n\n{name}，明天 {tomorrow} 您在{clinic_name}有預約！\n"]
         if checkup_tomorrow:
             lines.append(f"🏥 健檢時間：{data.get('time', '')}")
         if selfpay_tomorrow:
@@ -471,9 +518,7 @@ async def send_reminders(token: str = ""):
 # ══════════════════════════════════════
 @app.post("/api/admin/login")
 async def admin_login(payload: dict):
-    password = payload.get("password", "")
-    if password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="密碼錯誤")
+    check_admin(payload.get("password"))
     return {"status": "ok"}
 
 
@@ -505,11 +550,11 @@ async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)
     try:
         all_appts = db.reference("appointments").get() or {}
     except Exception:
-        raise HTTPException(503, "無法讀取山林正式預約，請稍後重試") from None
+        raise HTTPException(503, "無法讀取預約資料，請稍後重試") from None
     try:
         all_selfpay = db.reference("self_pay_booking").get() or {}
     except Exception:
-        raise HTTPException(503, "無法讀取山林正式自費預約，請稍後重試") from None
+        raise HTTPException(503, "無法讀取自費預約資料，請稍後重試") from None
 
     def _norm_phone(p):
         p = str(p or "").strip()
@@ -620,6 +665,7 @@ async def admin_list_appointments(x_admin_password: Optional[str] = Header(None)
                 "selfPayCount": sp.get("selfPayCount"),
                 "selfPayDate":  sp.get("selfPayDate"),
                 "selfPayTime":  sp.get("selfPayTime"),
+                "extraAnswers": sp.get("extraAnswers"),
             }
             result.append(item)
 
@@ -737,6 +783,263 @@ async def admin_delete_appointment(key: str, x_admin_password: Optional[str] = H
 
 
 # ══════════════════════════════════════
+#  診所設定（公版化）：名稱、電話、地址、門診時間、老人健檢可預約日期與時段
+#  資料存放：Firebase  booking_config/clinic
+#  沒設定時一律使用 CLINIC_DEFAULTS（也就是頤典診所原本的資料）
+# ══════════════════════════════════════
+CLINIC_DEFAULTS = {
+    # 連到山林正式資料庫時，預設名稱是山林診所；其餘（本機示範）是頤典診所
+    "name":         "山林診所" if IS_SHANLIN else "頤典診所",
+    "phone":        "02-2933-2010",
+    "address":      "臺北市文山區羅斯福路六段407號2樓",
+    "addressNote":  "由車前路門口上樓",
+    "hours":        "週一至週五 早上 8:30-12:30、下午 13:30-17:30\n週六 早上 8:30-12:30\n週日公休\n國定假日門診半天",
+    "elderlyDates": ["2026-11-02", "2026-11-04", "2026-11-09"],
+    "elderlyTimes": ["08:00", "09:00", "10:00"],
+    # 共用門診：星期 × 上午／下午／晚上，控制老人與自費健檢可預約日期
+    "selfPayWeekly": {
+        "sun": [], "mon": ["morning", "afternoon"], "tue": ["morning", "afternoon"],
+        "wed": ["morning", "afternoon"], "thu": ["morning", "afternoon"],
+        "fri": ["morning", "afternoon"], "sat": ["morning"],
+    },
+    "selfPaySessions": {"morning": "08:30-12:30", "afternoon": "13:30-17:30", "evening": "18:30-21:00"},
+    "closedDates": [],
+    "selfPayDailyLimit": 0,
+    "elderlyDailyLimit": 0,
+}
+
+CLINIC_REQUIRED = {"name", "phone", "elderlyDates", "elderlyTimes"}
+
+_clinic_cache = {"data": None, "at": 0.0}
+
+
+def get_clinic(force: bool = False) -> dict:
+    """讀取診所設定（快取 60 秒）；讀不到就用預設值。"""
+    import time as _time
+    now = _time.time()
+    if not force and _clinic_cache["data"] and now - _clinic_cache["at"] < 60:
+        return _clinic_cache["data"]
+    merged = dict(CLINIC_DEFAULTS)
+    try:
+        saved = db.reference("booking_config/clinic").get() or {}
+        if isinstance(saved, dict):
+            for k, v in saved.items():
+                if k not in CLINIC_DEFAULTS or v is None:
+                    continue
+                # 名稱、電話、日期、時段不可空白（空白就用預設）；地址補充等選填欄位允許留空
+                if k in CLINIC_REQUIRED and v in ("", []):
+                    continue
+                merged[k] = v
+    except Exception as e:
+        print(f"讀取診所設定失敗，使用預設值：{e}")
+    _clinic_cache.update(data=merged, at=now)
+    return merged
+
+
+class ClinicConfig(BaseModel):
+    name:         str
+    phone:        str
+    address:      str = ""
+    addressNote:  str = ""
+    hours:        str = ""
+    elderlyDates: list[str] = []
+    elderlyTimes: list[str] = []
+    selfPayWeekly: dict[str, list[str]] = {}
+    selfPaySessions: dict[str, str] = {}
+    closedDates: list[str] = []
+    selfPayDailyLimit: int = 0
+    elderlyDailyLimit: int = 0
+
+
+@app.get("/api/clinic-config")
+async def public_clinic_config():
+    """公開讀取（後台登入頁、LINE 頁面顯示診所名稱用）"""
+    return {"status": "success", "clinic": get_clinic()}
+
+
+@app.get("/api/admin/clinic-config")
+async def admin_get_clinic_config(x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    # configured = 這家診所是否已經在後台儲存過設定（沒有的話，後台會顯示首次設定引導）
+    try:
+        configured = bool(db.reference("booking_config/clinic").get())
+    except Exception:
+        configured = False
+    return {"clinic": get_clinic(force=True), "defaults": CLINIC_DEFAULTS, "configured": configured}
+
+
+@app.put("/api/admin/clinic-config")
+async def admin_save_clinic_config(cfg: ClinicConfig, x_admin_password: Optional[str] = Header(None)):
+    import re as _re
+    check_admin(x_admin_password)
+    d = cfg.model_dump() if hasattr(cfg, "model_dump") else cfg.dict()
+    for k in ("name", "phone", "address", "addressNote", "hours"):
+        d[k] = (d.get(k) or "").strip()
+    if not d["name"]:
+        raise HTTPException(status_code=400, detail="診所名稱不可空白")
+    if not d["phone"]:
+        raise HTTPException(status_code=400, detail="電話不可空白")
+    dates = sorted({x.strip() for x in d["elderlyDates"] if x and x.strip()})
+    times = sorted({x.strip() for x in d["elderlyTimes"] if x and x.strip()})
+    if any(not _re.fullmatch(r"\d{4}-\d{2}-\d{2}", x) for x in dates):
+        raise HTTPException(status_code=400, detail="日期格式需為 YYYY-MM-DD")
+    if any(not _re.fullmatch(r"\d{2}:\d{2}", x) for x in times):
+        raise HTTPException(status_code=400, detail="時段格式需為 HH:MM")
+    if not dates or not times:
+        raise HTTPException(status_code=400, detail="至少要有一個可預約日期和一個時段")
+    d["elderlyDates"], d["elderlyTimes"] = dates, times
+
+    # 共用門診時段：sun~sat × morning/afternoon/evening
+    weekly = {}
+    for day in ("sun", "mon", "tue", "wed", "thu", "fri", "sat"):
+        sessions = (d.get("selfPayWeekly") or {}).get(day) or []
+        weekly[day] = [x for x in ("morning", "afternoon", "evening") if x in sessions]
+    if not any(weekly.values()):
+        raise HTTPException(status_code=400, detail="自費健檢至少要開放一個門診時段")
+    d["selfPayWeekly"] = weekly
+    sess = d.get("selfPaySessions") or {}
+    d["selfPaySessions"] = {
+        "morning": (sess.get("morning") or CLINIC_DEFAULTS["selfPaySessions"]["morning"]).strip(),
+        "afternoon": (sess.get("afternoon") or CLINIC_DEFAULTS["selfPaySessions"]["afternoon"]).strip(),
+        "evening": (sess.get("evening") or CLINIC_DEFAULTS["selfPaySessions"]["evening"]).strip(),
+    }
+    closed = sorted({x.strip() for x in d.get("closedDates") or [] if x and x.strip()})
+    if any(not _re.fullmatch(r"\d{4}-\d{2}-\d{2}", x) for x in closed):
+        raise HTTPException(status_code=400, detail="休診日格式需為 YYYY-MM-DD")
+    d["closedDates"] = closed
+    # 老人健檢日期必須與共用排班同步，無門診或臨時休診不得預約。
+    from datetime import date as _date
+    weekday_keys = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+    valid_dates = []
+    for value in dates:
+        try:
+            day = _date.fromisoformat(value)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="老人健檢日期不是有效日曆日期")
+        if weekly[weekday_keys[day.weekday()]] and value not in closed:
+            valid_dates.append(value)
+    if not valid_dates:
+        raise HTTPException(status_code=400, detail="老人健檢沒有可預約日期，請先安排門診並選擇開診日")
+    d["elderlyDates"] = valid_dates
+    d["selfPayDailyLimit"] = max(0, int(d.get("selfPayDailyLimit") or 0))
+    d["elderlyDailyLimit"] = max(0, int(d.get("elderlyDailyLimit") or 0))
+    d["updatedAt"] = datetime.now().isoformat(timespec="seconds")
+    try:
+        db.reference("booking_config/clinic").set(d)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"儲存失敗：{e}")
+    get_clinic(force=True)
+    return {"status": "success", "clinic": d}
+
+
+# ══════════════════════════════════════
+#  問診題目設定 API（診所後台可自行新增 / 修改 AI 要問的題目）
+#  資料存放：Firebase  booking_config/questions
+#  語音預約網站（website/main.py）會從同一位置讀取
+# ══════════════════════════════════════
+QUESTION_TYPES = {"text", "number", "choice", "yesno", "bmi"}
+QUESTION_SCOPES = {"all", "elderly", "self_pay"}
+
+
+class BookingQuestion(BaseModel):
+    id:        str
+    label:     str                     # 欄位名稱，例如「BMI」「過敏史」
+    prompt:    str                     # AI 實際說出的問句
+    type:      str = "text"            # text / number / choice / yesno / bmi
+    options:   list[str] = []          # 單選題的選項
+    unit:      str = ""                # 數字題單位，例如「公斤」
+    min:       Optional[float] = None
+    max:       Optional[float] = None
+    followUp:  str = ""                # 是否題：回答「是／有」時追問
+    required:  bool = True
+    appliesTo: str = "all"             # all / elderly / self_pay
+    enabled:   bool = True
+
+
+class QuestionConfig(BaseModel):
+    questions: list[BookingQuestion]
+
+
+def _clean_questions(items: list[BookingQuestion]) -> list[dict]:
+    cleaned, seen = [], set()
+    for q in items:
+        d = q.model_dump() if hasattr(q, "model_dump") else q.dict()
+        d["id"] = (d.get("id") or "").strip()
+        d["label"] = (d.get("label") or "").strip()
+        d["prompt"] = (d.get("prompt") or "").strip()
+        if not d["id"] or not d["label"] or not d["prompt"]:
+            raise HTTPException(status_code=400, detail="每一題都需要填寫「欄位名稱」與「AI 問句」")
+        if d["id"] in seen:
+            raise HTTPException(status_code=400, detail=f"題目代號重複：{d['id']}")
+        seen.add(d["id"])
+        if d["type"] not in QUESTION_TYPES:
+            d["type"] = "text"
+        if d["appliesTo"] not in QUESTION_SCOPES:
+            d["appliesTo"] = "all"
+        d["options"] = [str(o).strip() for o in (d.get("options") or []) if str(o).strip()]
+        if d["type"] == "choice" and len(d["options"]) < 2:
+            raise HTTPException(status_code=400, detail=f"「{d['label']}」是選擇題，至少需要 2 個選項")
+        cleaned.append(d)
+    return cleaned
+
+
+@app.get("/api/admin/questions")
+async def admin_get_questions(x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    try:
+        data = db.reference("booking_config/questions").get() or {}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"讀取題目失敗：{e}")
+    items = data.get("items") if isinstance(data, dict) else data
+    if isinstance(items, dict):  # Firebase 有時會把陣列存成 {0:...,1:...}
+        items = [items[k] for k in sorted(items, key=lambda x: int(x))]
+    return {
+        "questions": [q for q in (items or []) if isinstance(q, dict)],
+        "updatedAt": data.get("updatedAt", "") if isinstance(data, dict) else "",
+    }
+
+
+@app.put("/api/admin/questions")
+async def admin_save_questions(cfg: QuestionConfig, x_admin_password: Optional[str] = Header(None)):
+    check_admin(x_admin_password)
+    cleaned = _clean_questions(cfg.questions)
+    payload = {"items": cleaned, "updatedAt": datetime.now().isoformat(timespec="seconds")}
+    try:
+        db.reference("booking_config/questions").set(payload)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"儲存題目失敗：{e}")
+    return {"status": "success", "count": len(cleaned), "updatedAt": payload["updatedAt"]}
+
+
+# ══════════════════════════════════════
+#  山林正式預約的唯讀檢視授權（給公版平台用）
+#  只在這個服務確實連到山林資料庫、且診所名稱是山林診所時才發放
+# ══════════════════════════════════════
+@app.post("/api/admin/appointments/read-session")
+async def create_appointment_read_session(payload: dict):
+    password = payload.get("password")
+    if not isinstance(password, str) or not password:
+        raise HTTPException(401, "密碼錯誤")
+    check_admin(password)
+    if not IS_SHANLIN:
+        raise HTTPException(503, "山林診所資料來源尚未核對")
+    if get_clinic(force=True).get("name", "").replace(" ", "").strip() != "山林診所":
+        raise HTTPException(503, "正式資料來源並非山林診所")
+    now = time.time()
+    with _APPOINTMENT_READ_LOCK:
+        for digest, expires in list(_APPOINTMENT_READ_TOKENS.items()):
+            if expires <= now:
+                _APPOINTMENT_READ_TOKENS.pop(digest, None)
+        if len(_APPOINTMENT_READ_TOKENS) >= 1024:
+            raise HTTPException(503, "檢視工作階段已滿，請稍後重試")
+        token = secrets.token_urlsafe(36)
+        _APPOINTMENT_READ_TOKENS[hashlib.sha256(token.encode()).hexdigest()] = now + _APPOINTMENT_READ_TTL
+    return JSONResponse({"clinicId": "shanlin", "readToken": token,
+                         "expiresIn": _APPOINTMENT_READ_TTL},
+                        headers={"Cache-Control": "no-store"})
+
+
+# ══════════════════════════════════════
 #  Excel 批次匯入 API
 #  欄位順序對應範本：姓名、手機號碼、身分證字號、出生年月日(民國)、
 #  健檢方案(A/B/C)、葷素(葷/素)、預約日期、預約時段、來源、備註
@@ -841,79 +1144,4 @@ async def admin_import_excel(file: UploadFile = File(...), x_admin_password: Opt
 
 @app.get("/")
 async def root():
-    return {"status": "ok", "service": "山林診所 LINE Bot API"}
-
-
-@app.get("/api/admin/clinic-config")
-async def admin_get_clinic_config(x_admin_password: Optional[str] = Header(None)):
-    """Read clinic metadata only; never read or write appointment records."""
-    check_admin(x_admin_password)
-    from urllib.parse import urlsplit
-
-    if urlsplit(FIREBASE_URL).hostname != "shanlin-clinic-default-rtdb.firebaseio.com":
-        raise HTTPException(status_code=503, detail="山林診所資料來源尚未核對")
-    try:
-        saved = db.reference("booking_config/clinic").get()
-    except Exception:
-        raise HTTPException(status_code=503, detail="無法讀取山林診所設定") from None
-    if saved is None:
-        saved = {}
-    if not isinstance(saved, dict):
-        raise HTTPException(status_code=503, detail="山林診所設定格式不正確")
-
-    # The service and database identify Shanlin; absent optional fields stay empty.
-    clinic = {
-        "name": "山林診所", "phone": "", "address": "", "addressNote": "",
-        "hours": "", "elderlyDates": [], "elderlyTimes": [],
-    }
-    for key, default in clinic.items():
-        if key in saved:
-            value = saved[key]
-            if not isinstance(value, type(default)):
-                raise HTTPException(status_code=503, detail="山林診所設定欄位格式不正確")
-            clinic[key] = value
-    if clinic["name"].replace(" ", "").strip() != "山林診所":
-        raise HTTPException(status_code=503, detail="診所設定與山林身分不符")
-    return {"clinic": clinic, "configured": bool(saved)}
-
-
-# Scoped appointment-read credentials: memory only, never accepted by write APIs.
-# ponytail: single-process token store; re-login after a restart or worker change.
-_APPOINTMENT_READ_TOKENS = {}
-_APPOINTMENT_READ_LOCK = RLock()
-_APPOINTMENT_READ_TTL = 7200
-
-
-def check_appointment_reader(password, token):
-    if token:
-        with _APPOINTMENT_READ_LOCK:
-            expires = _APPOINTMENT_READ_TOKENS.get(hashlib.sha256(token.encode()).hexdigest(), 0)
-        if expires > time.time():
-            return
-        raise HTTPException(401, "正式預約檢視授權已到期，請重新登入")
-    check_admin(password)
-
-
-@app.post("/api/admin/appointments/read-session")
-async def create_appointment_read_session(payload: dict):
-    password = payload.get("password")
-    if not isinstance(password, str) or not password:
-        raise HTTPException(401, "密碼錯誤")
-    check_admin(password)
-    # Existing read-only metadata endpoint verifies the Shanlin Firebase host/name.
-    metadata = await admin_get_clinic_config(x_admin_password=password)
-    clinic = metadata.get("clinic", {})
-    if clinic.get("name", "").replace(" ", "").strip() != "山林診所":
-        raise HTTPException(503, "正式資料來源並非山林診所")
-    now = time.time()
-    with _APPOINTMENT_READ_LOCK:
-        for digest, expires in list(_APPOINTMENT_READ_TOKENS.items()):
-            if expires <= now:
-                _APPOINTMENT_READ_TOKENS.pop(digest, None)
-        if len(_APPOINTMENT_READ_TOKENS) >= 1024:
-            raise HTTPException(503, "檢視工作階段已滿，請稍後重試")
-        token = secrets.token_urlsafe(36)
-        _APPOINTMENT_READ_TOKENS[hashlib.sha256(token.encode()).hexdigest()] = now + _APPOINTMENT_READ_TTL
-    return JSONResponse({"clinicId": "shanlin", "readToken": token,
-                         "expiresIn": _APPOINTMENT_READ_TTL},
-                        headers={"Cache-Control": "no-store"})
+    return {"status": "ok", "service": f"{get_clinic()['name']} LINE Bot API"}

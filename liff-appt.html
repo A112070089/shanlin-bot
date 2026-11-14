@@ -3,143 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>山林診所 健檢預約</title>
+<title>頤典診所 健檢預約</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-<style>
-:root{
-  --blue:#4A90C4;--blue-d:#2E6EA6;--blue-l:#EAF4FB;--blue-ll:#F5FAFD;
-  --red:#C0392B;--green:#27AE60;
-  --text:#2C3E50;--sub:#7F8C8D;--hint:#BDC3C7;
-  --border:#D5E8F0;--bg:#F0F7FC;--white:#fff;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
-
-/* TOPBAR - 山林診所風格 */
-.topbar{background:var(--blue-l);border-bottom:2px solid var(--blue);padding:12px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
-.topbar-logo{display:flex;align-items:center;gap:8px}
-.topbar-logo-ic{width:36px;height:36px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center}
-.topbar-logo-ic i{font-size:18px;color:#fff}
-.topbar-name{font-size:16px;font-weight:700;color:var(--blue-d)}
-.topbar-sub{font-size:11px;color:var(--sub)}
-
-/* SCREENS */
-.screen{display:none;flex:1;padding:20px 18px 50px;flex-direction:column}
-.screen.active{display:flex}
-
-/* PAGE TITLE */
-.page-title{font-size:26px;font-weight:700;color:var(--red);background:#FFFDE7;display:inline-block;padding:2px 8px;margin-bottom:20px;border-left:4px solid var(--red)}
-
-/* STEP BAR */
-.step-bar{display:flex;margin-bottom:22px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
-.step-item{flex:1;padding:10px 4px;text-align:center;font-size:12px;font-weight:500;color:var(--sub);background:#fff;border-right:1px solid var(--border);transition:all .2s}
-.step-item:last-child{border-right:none}
-.step-item.active{background:var(--blue);color:#fff;font-weight:700}
-.step-item.done{background:var(--blue-l);color:var(--blue-d)}
-
-/* INFO BOX */
-.info-box{background:var(--blue-l);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px}
-.info-box-title{font-size:13px;font-weight:700;color:var(--blue-d);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.info-box ul{padding-left:18px}
-.info-box li{font-size:12px;color:var(--text);line-height:1.8}
-
-/* PLAN CARDS */
-.plan-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
-.plan{background:#fff;border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
-.plan:hover{border-color:var(--blue)}
-.plan.sel{border-color:var(--blue);background:var(--blue-l)}
-.plan-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.plan-letter{width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.plan.sel .plan-letter{background:var(--blue-d)}
-.plan-nm{font-size:16px;font-weight:700;color:var(--text)}
-.plan-tg{font-size:11px;color:var(--sub);margin-top:2px}
-.plan-chips{display:flex;flex-wrap:wrap;gap:5px}
-.chip{font-size:11px;background:#f3f4f6;color:var(--sub);padding:3px 9px;border-radius:20px}
-.plan.sel .chip{background:rgba(74,144,196,.15);color:var(--blue-d)}
-
-/* QUALIFY SCREEN */
-.qualify-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
-.qualify-q{font-size:14px;font-weight:500;color:var(--text);margin-bottom:12px}
-.qualify-opts{display:flex;gap:16px}
-.qualify-opt{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--text)}
-.qualify-opt input[type=radio]{width:16px;height:16px;accent-color:var(--blue)}
-
-/* FORM */
-.card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid var(--border);margin-bottom:14px}
-.fl{margin-bottom:16px}
-.fl:last-child{margin-bottom:0}
-.fl-lbl{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
-.req{color:var(--red);margin-left:2px}
-.fi{width:100%;height:48px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--text);background:#fafafa;outline:none;transition:border-color .2s}
-.fi:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(74,144,196,.1)}
-.fi::placeholder{color:var(--hint)}
-.fi.err{border-color:var(--red);background:#fef9f9}
-.fhint{font-size:11px;color:var(--sub);margin-top:4px}
-.ferr{font-size:11px;color:var(--red);margin-top:4px;display:none}
-.ferr.show{display:block}
-.fdiv{border:none;border-top:1px solid var(--border);margin:10px 0}
-select.fi{cursor:pointer}
-
-/* SLOT GRID */
-.slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.slot{height:42px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.slot:hover{border-color:var(--blue)}
-.slot.sel{border-color:var(--blue);background:var(--blue);color:#fff}
-.slot.full{background:#f3f4f6;color:var(--hint);cursor:not-allowed;border-color:transparent;font-size:11px}
-
-/* BUTTONS */
-.btn{width:100%;height:50px;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-bottom:10px}
-.btn:active{transform:scale(.98)}
-.btn-blue{background:var(--blue);color:#fff}
-.btn-blue:hover{background:var(--blue-d)}
-.btn-blue:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
-.btn-outline{background:#fff;color:var(--blue-d);border:2px solid var(--blue)}
-.btn-outline:hover{background:var(--blue-l)}
-.btn-red{background:var(--red);color:#fff}
-.btn-red:hover{opacity:.9}
-
-/* CONFIRM TABLE */
-.cf-table{width:100%;border-collapse:collapse;margin-bottom:16px}
-.cf-table tr{border-bottom:1px solid var(--border)}
-.cf-table td:first-child{font-size:13px;color:var(--sub);padding:10px 8px;width:100px;font-weight:500}
-.cf-table td:last-child{font-size:14px;color:var(--text);padding:10px 8px;font-weight:500}
-
-/* SUCCESS */
-.suc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 18px 40px}
-.suc-ic{width:80px;height:80px;background:#E8F8EF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.suc-ic i{font-size:40px;color:var(--green)}
-
-/* SPINNER */
-.spin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
-.spinner{width:48px;height:48px;border:4px solid var(--blue-l);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* VOICE MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
-.modal-ov.open{display:flex}
-.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 44px;width:100%;max-width:480px}
-.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.mh-t{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.mc-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--sub);width:30px;height:30px;display:flex;align-items:center;justify-content:center}
-.wave-w{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:44px;margin-bottom:10px}
-.wb{width:5px;background:#d1d5db;border-radius:3px;height:10px}
-.wb.on{background:var(--blue);animation:wv .6s ease-in-out infinite alternate}
-.wb.on:nth-child(2){animation-delay:.1s}.wb.on:nth-child(3){animation-delay:.2s}
-.wb.on:nth-child(4){animation-delay:.05s}.wb.on:nth-child(5){animation-delay:.15s}
-@keyframes wv{from{height:8px}to{height:36px}}
-.vst{text-align:center;font-size:13px;color:var(--sub);margin-bottom:12px;min-height:20px}
-.vres{display:none;background:#f9fafb;border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6}
-.vsingle{display:none;background:var(--blue-l);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;font-weight:500;color:var(--blue-d);line-height:1.6}
-.btn-mic{width:100%;height:52px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
-.btn-mic.rec{background:var(--red);animation:pr 1s ease-in-out infinite}
-@keyframes pr{0%,100%{opacity:1}50%{opacity:.8}}
-
-/* WARNING */
-.warn-box{background:#FFF8E1;border:1px solid #FFD54F;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#5D4037;line-height:1.6}
-.warn-box i{color:#F57F17;margin-right:4px}
-</style>
+<link rel="stylesheet" href="css/liff-appt.css"/>
+<!-- 部署設定：後端網址、LIFF ID（開通新診所時改這個檔） -->
+<script src="site-config.js"></script>
+<!-- 診所設定：名稱 -->
+<script src="clinic.js" data-api="admin"></script>
 </head>
 <body>
 
@@ -147,7 +19,7 @@ select.fi{cursor:pointer}
   <div class="topbar-logo">
     <div class="topbar-logo-ic"><i class="ti ti-building-hospital"></i></div>
     <div>
-      <div class="topbar-name">山林診所</div>
+      <div class="topbar-name" data-clinic="name">頤典診所</div>
       <div class="topbar-sub">老人健康檢查預約</div>
     </div>
   </div>
@@ -156,7 +28,7 @@ select.fi{cursor:pointer}
 <!-- SCREEN 0: 資格確認 -->
 <div class="screen active" id="s0">
   <div class="page-title">預約健檢</div>
-  <div style="font-size:14px;color:var(--text);margin-bottom:16px;font-weight:500">請點選以下三事項，若未符合，將無法進行下一步</div>
+  <div class="intro-text">請點選以下三事項，若未符合，將無法進行下一步</div>
 
   <div class="qualify-item">
     <div class="qualify-q">1. 您是設籍台北市的市民嗎？</div>
@@ -202,7 +74,7 @@ select.fi{cursor:pointer}
     </ul>
   </div>
 
-  <button class="btn btn-outline" style="height:42px;font-size:13px;margin-bottom:14px" onclick="openVoice('plan')">
+  <button class="btn btn-outline btn-voice" onclick="openVoice('plan')">
     <i class="ti ti-microphone"></i>語音說症狀，幫我選方案
   </button>
 
@@ -256,15 +128,15 @@ select.fi{cursor:pointer}
     <div class="step-item">確認預約</div>
   </div>
 
-  <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">您已選擇：<span id="selPlanLabel" style="color:var(--red)"></span></div>
-  <div style="font-size:12px;color:var(--sub);margin-bottom:16px">請填寫以下基本資料</div>
+  <div class="plan-chosen">您已選擇：<span id="selPlanLabel"></span></div>
+  <div class="form-sub">請填寫以下基本資料</div>
 
   <div class="warn-box">
     <i class="ti ti-alert-triangle"></i>
     當天來現場除了可以確認老人健檢項目之外，另外可查詢是否符合可做「成人預防保健服務」、「糞便潛血免疫分析」(50-75歲每2年一次)、「B、C型肝炎篩檢」(終身一次)
   </div>
 
-  <button class="btn btn-outline" style="height:42px;font-size:13px;margin-bottom:14px" onclick="openVoice('form')">
+  <button class="btn btn-outline btn-voice" onclick="openVoice('form')">
     <i class="ti ti-microphone"></i>語音輸入資料
   </button>
 
@@ -300,7 +172,7 @@ select.fi{cursor:pointer}
     <hr class="fdiv"/>
     <div class="fl">
       <div class="fl-lbl">預約時段<span class="req">*</span></div>
-      <div class="slot-grid" style="margin-top:8px">
+      <div class="slot-grid field-options">
         <div class="slot" onclick="selSlot(this,'08:30')">08:30</div>
         <div class="slot" onclick="selSlot(this,'09:00')">09:00</div>
         <div class="slot full">09:30<br>額滿</div>
@@ -308,12 +180,12 @@ select.fi{cursor:pointer}
         <div class="slot" onclick="selSlot(this,'10:30')">10:30</div>
         <div class="slot" onclick="selSlot(this,'11:00')">11:00</div>
       </div>
-      <div style="font-size:11px;color:var(--sub);margin-top:6px">灰色時段已額滿</div>
+      <div class="slot-hint">灰色時段已額滿</div>
     </div>
     <hr class="fdiv"/>
     <div class="fl">
       <div class="fl-lbl">早餐葷素選擇<span class="req">*</span></div>
-      <div class="qualify-opts" style="margin-top:8px">
+      <div class="qualify-opts field-options">
         <label class="qualify-opt"><input type="radio" name="veg" value="葷" onchange="chkS2()"> 葷食</label>
         <label class="qualify-opt"><input type="radio" name="veg" value="素" onchange="chkS2()"> 素食</label>
       </div>
@@ -321,7 +193,7 @@ select.fi{cursor:pointer}
   </div>
 
   <button class="btn btn-blue" id="btnS2" onclick="goConfirm()" disabled>下一步：確認預約</button>
-  <button class="btn btn-outline" style="margin-top:0" onclick="goS('s1')"><i class="ti ti-arrow-left"></i>上一步</button>
+  <button class="btn btn-outline btn-back" onclick="goS('s1')"><i class="ti ti-arrow-left"></i>上一步</button>
 </div>
 
 <!-- SCREEN 3: 確認 -->
@@ -332,7 +204,7 @@ select.fi{cursor:pointer}
     <div class="step-item active">確認預約</div>
   </div>
 
-  <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">請確認以下預約資料</div>
+  <div class="confirm-title">請確認以下預約資料</div>
 
   <div class="card">
     <table class="cf-table">
@@ -352,7 +224,7 @@ select.fi{cursor:pointer}
     「受檢資格需至現場經本院確認，若於檢查當天發現資格不符，將無法進行檢查，敬請見諒。」
   </div>
 
-  <div class="info-box" style="margin-bottom:16px">
+  <div class="info-box info-box-spaced">
     <div class="info-box-title"><i class="ti ti-info-circle"></i>健檢注意事項</div>
     <ul>
       <li>健檢前須空腹 8 小時</li>
@@ -363,15 +235,15 @@ select.fi{cursor:pointer}
   </div>
 
   <button class="btn btn-red" id="btnConfirm" onclick="doConfirm()">確認預約</button>
-  <button class="btn btn-outline" style="margin-top:0" onclick="goS('s2')"><i class="ti ti-arrow-left"></i>上一步</button>
+  <button class="btn btn-outline btn-back" onclick="goS('s2')"><i class="ti ti-arrow-left"></i>上一步</button>
 </div>
 
 <!-- SCREEN 4: 預約中 -->
 <div class="screen" id="s4">
   <div class="spin-wrap">
     <div class="spinner"></div>
-    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">預約中...</div>
-    <div style="font-size:13px;color:var(--sub)">請稍候</div>
+    <div class="status-title">預約中...</div>
+    <div class="status-sub">請稍候</div>
   </div>
 </div>
 
@@ -379,11 +251,11 @@ select.fi{cursor:pointer}
 <div class="screen" id="s5">
   <div class="suc-wrap">
     <div class="suc-ic"><i class="ti ti-calendar-check"></i></div>
-    <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">預約成功！</div>
-    <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:24px">
+    <div class="success-title">預約成功！</div>
+    <div class="success-desc">
       我們會在健檢前一天透過 LINE<br>發送禁食提醒給您
     </div>
-    <div class="card" style="width:100%;text-align:left">
+    <div class="card success-card">
       <table class="cf-table">
         <tr><td>健檢方案</td><td id="sucPlan">—</td></tr>
         <tr><td>姓名</td><td id="sucName">—</td></tr>
@@ -391,7 +263,7 @@ select.fi{cursor:pointer}
         <tr><td>預約時段</td><td id="sucSlot">—</td></tr>
       </table>
     </div>
-    <button class="btn btn-blue" style="width:100%" onclick="closeLiff()">
+    <button class="btn btn-blue btn-full" onclick="closeLiff()">
       <i class="ti ti-brand-line"></i>返回 LINE
     </button>
   </div>
@@ -401,27 +273,28 @@ select.fi{cursor:pointer}
 <div class="modal-ov" id="voiceModal">
   <div class="modal-box">
     <div class="mh">
-      <div class="mh-t"><i class="ti ti-microphone" style="color:var(--blue)"></i><span id="vModalTitle">語音輸入</span></div>
+      <div class="mh-t"><i class="ti ti-microphone"></i><span id="vModalTitle">語音輸入</span></div>
       <button class="mc-x" onclick="closeVoice()">✕</button>
     </div>
-    <div class="info-box" style="margin-bottom:12px"><p id="vTip" style="font-size:12px;color:var(--blue-d)">請說出您想輸入的資料</p></div>
+    <div class="info-box voice-tip-box"><p id="vTip">請說出您想輸入的資料</p></div>
     <div class="wave-w" id="waveW">
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
     </div>
     <div class="vst" id="vStat">按下麥克風開始說話</div>
-    <div class="vres" id="vRes"><div style="font-size:10px;color:var(--sub);margin-bottom:5px">辨識結果</div><div id="vResTxt">—</div></div>
+    <div class="vres" id="vRes"><div class="vres-label">辨識結果</div><div id="vResTxt">—</div></div>
     <div class="vsingle" id="vSingle">—</div>
     <button class="btn-mic" id="btnMic" onclick="togRec()">
-      <i class="ti ti-microphone" style="font-size:20px"></i><span id="btnMicTxt">按下開始說話</span>
+      <i class="ti ti-microphone mic-icon"></i><span id="btnMicTxt">按下開始說話</span>
     </button>
-    <button class="btn btn-outline" id="btnVC" style="display:none;margin-top:0" onclick="closeVoice()">關閉</button>
+    <button class="btn btn-outline" id="btnVC" onclick="closeVoice()">關閉</button>
   </div>
 </div>
 
 <script>
-const LIFF_ID  = '2010169963-n8zZXE1V';
-const API_BASE = 'https://shanlin-bot-production.up.railway.app';
+// LIFF ID 與後端網址統一寫在 site-config.js
+const LIFF_ID  = window.SITE.liffApptId;
+const API_BASE = window.SITE.adminApi;
 const pNames   = { A:'A方案 腦肺方案', B:'B方案 腹部方案', C:'C方案 骨密肌力方案' };
 
 let lineUserId = null;

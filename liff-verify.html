@@ -3,89 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>山林診所 LINE 帳號綁定</title>
+<title>頤典診所 LINE 帳號綁定</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-<style>
-:root{
-  --blue:#4A90C4;--blue-d:#2E6EA6;--blue-l:#EAF4FB;--blue-ll:#F5FAFD;
-  --red:#C0392B;--green:#27AE60;
-  --text:#2C3E50;--sub:#7F8C8D;--hint:#BDC3C7;
-  --border:#D5E8F0;--bg:#F0F7FC;--white:#fff;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
-.topbar{background:var(--blue-l);border-bottom:2px solid var(--blue);padding:12px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
-.topbar-logo{display:flex;align-items:center;gap:8px}
-.topbar-logo-ic{width:36px;height:36px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center}
-.topbar-logo-ic i{font-size:18px;color:#fff}
-.topbar-name{font-size:16px;font-weight:700;color:var(--blue-d)}
-.topbar-sub{font-size:11px;color:var(--sub)}
-.screen{display:none;flex:1;padding:20px 18px 50px;flex-direction:column}
-.screen.active{display:flex}
-.page-title{font-size:24px;font-weight:700;color:var(--blue-d);margin-bottom:8px}
-.card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid var(--border);margin-bottom:14px}
-.fl{margin-bottom:16px}
-.fl:last-child{margin-bottom:0}
-.fl-lbl{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
-.req{color:var(--red);margin-left:2px}
-.fi{width:100%;height:48px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-size:15px;font-family:'Noto Sans TC',sans-serif;color:var(--text);background:#fafafa;outline:none;transition:border-color .2s}
-.fi:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(74,144,196,.1)}
-.fi::placeholder{color:var(--hint)}
-.fi.err{border-color:var(--red);background:#fef9f9}
-.fhint{font-size:11px;color:var(--sub);margin-top:4px}
-.ferr{font-size:11px;color:var(--red);margin-top:4px;display:none}
-.ferr.show{display:block}
-.fdiv{border:none;border-top:1px solid var(--border);margin:10px 0}
-.btn{width:100%;height:50px;border:none;border-radius:8px;font-size:16px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-bottom:10px}
-.btn:active{transform:scale(.98)}
-.btn-blue{background:var(--blue);color:#fff}
-.btn-blue:hover{background:var(--blue-d)}
-.btn-blue:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed}
-.btn-outline{background:#fff;color:var(--blue-d);border:2px solid var(--blue)}
-.btn-outline:hover{background:var(--blue-l)}
-.info-box{background:var(--blue-l);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
-.info-box p{font-size:12px;color:var(--blue-d);line-height:1.7}
-.spin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px}
-.spinner{width:48px;height:48px;border:4px solid var(--blue-l);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.suc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 18px 40px}
-.suc-ic{width:80px;height:80px;background:#E8F8EF;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.suc-ic i{font-size:40px;color:var(--green)}
-.err-ic{width:80px;height:80px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.err-ic i{font-size:40px;color:var(--red)}
-.appt-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:18px;width:100%;text-align:left}
-.ac-title{font-size:11px;color:var(--sub);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;font-weight:500}
-.ac-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
-.ac-row:last-child{border-bottom:none;padding-bottom:0}
-.ac-ic{width:30px;height:30px;background:var(--blue-l);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ac-ic i{font-size:14px;color:var(--blue-d)}
-.ac-lbl{font-size:11px;color:var(--sub);margin-bottom:1px}
-.ac-val{font-size:13px;font-weight:500;color:var(--text)}
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
-.modal-ov.open{display:flex}
-.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 44px;width:100%;max-width:480px}
-.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.mh-t{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-.mc-x{background:none;border:none;cursor:pointer;font-size:20px;color:var(--sub);width:30px;height:30px;display:flex;align-items:center;justify-content:center}
-.wave-w{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:44px;margin-bottom:10px}
-.wb{width:5px;background:#d1d5db;border-radius:3px;height:10px}
-.wb.on{background:var(--blue);animation:wv .6s ease-in-out infinite alternate}
-.wb.on:nth-child(2){animation-delay:.1s}.wb.on:nth-child(3){animation-delay:.2s}
-.wb.on:nth-child(4){animation-delay:.05s}.wb.on:nth-child(5){animation-delay:.15s}
-@keyframes wv{from{height:8px}to{height:36px}}
-.vst{text-align:center;font-size:13px;color:var(--sub);margin-bottom:12px;min-height:20px}
-.vres{display:none;background:#f9fafb;border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid var(--border);font-size:13px;color:var(--text);line-height:1.6}
-.vprev{display:none;margin-bottom:12px}
-.vchips{display:flex;gap:8px}
-.vchip{flex:1;background:var(--blue-l);border-radius:9px;padding:9px 11px}
-.vchip-l{font-size:10px;color:var(--blue-d);margin-bottom:2px}
-.vchip-v{font-size:14px;font-weight:700;color:var(--blue-d);letter-spacing:1px}
-.btn-mic{width:100%;height:52px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
-.btn-mic.rec{background:var(--red);animation:pr 1s ease-in-out infinite}
-@keyframes pr{0%,100%{opacity:1}50%{opacity:.8}}
-</style>
+<link rel="stylesheet" href="css/liff-verify.css"/>
+<!-- 部署設定：後端網址、LIFF ID（開通新診所時改這個檔） -->
+<script src="site-config.js"></script>
+<!-- 診所設定：名稱 -->
+<script src="clinic.js" data-api="admin"></script>
 </head>
 <body>
 
@@ -93,7 +19,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
   <div class="topbar-logo">
     <div class="topbar-logo-ic"><i class="ti ti-building-hospital"></i></div>
     <div>
-      <div class="topbar-name">山林診所</div>
+      <div class="topbar-name" data-clinic="name">頤典診所</div>
       <div class="topbar-sub">LINE 帳號綁定</div>
     </div>
   </div>
@@ -130,14 +56,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
   <button class="btn btn-blue" id="btnVerify" onclick="doVerify()" disabled>
     <i class="ti ti-shield-check"></i>驗證並綁定帳號
   </button>
-  <div style="display:flex;align-items:center;gap:10px;margin:4px 0 10px;color:var(--hint);font-size:12px">
-    <div style="flex:1;border-top:1px solid var(--border)"></div>或<div style="flex:1;border-top:1px solid var(--border)"></div>
+  <div class="or-divider">
+    <div class="or-divider-line"></div>或<div class="or-divider-line"></div>
   </div>
   <button class="btn btn-outline" onclick="openVoice()">
     <i class="ti ti-microphone"></i>用語音輸入資料
   </button>
-  <div class="info-box" style="margin-top:4px">
-    <p><i class="ti ti-lock" style="font-size:13px;margin-right:4px"></i>您的個人資料僅用於核對預約紀錄，不會儲存於 LINE 平台，符合個資法相關規定。</p>
+  <div class="info-box privacy-note">
+    <p><i class="ti ti-lock"></i>您的個人資料僅用於核對預約紀錄，不會儲存於 LINE 平台，符合個資法相關規定。</p>
   </div>
 </div>
 
@@ -145,8 +71,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 <div class="screen" id="sLoading">
   <div class="spin-wrap">
     <div class="spinner"></div>
-    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px" id="loadTxt">比對資料中...</div>
-    <div style="font-size:13px;color:var(--sub)">請稍候，正在核對您的預約資料</div>
+    <div class="status-title" id="loadTxt">比對資料中...</div>
+    <div class="status-sub">請稍候，正在核對您的預約資料</div>
   </div>
 </div>
 
@@ -154,8 +80,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 <div class="screen" id="sSuccess">
   <div class="suc-wrap">
     <div class="suc-ic"><i class="ti ti-circle-check"></i></div>
-    <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">綁定成功！</div>
-    <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:22px">
+    <div class="success-title">綁定成功！</div>
+    <div class="success-desc">
       LINE 帳號已成功綁定<br>之後健檢前會主動提醒您禁食注意事項
     </div>
     <div class="appt-card">
@@ -165,7 +91,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
       <div class="ac-row"><div class="ac-ic"><i class="ti ti-clock"></i></div><div><div class="ac-lbl">時段</div><div class="ac-val" id="sucTime">—</div></div></div>
       <div class="ac-row"><div class="ac-ic"><i class="ti ti-clipboard-list"></i></div><div><div class="ac-lbl">健檢方案</div><div class="ac-val" id="sucPlan">—</div></div></div>
     </div>
-    <button class="btn btn-blue" style="width:100%" onclick="closeLiff()">
+    <button class="btn btn-blue btn-full" onclick="closeLiff()">
       <i class="ti ti-brand-line"></i>返回 LINE 使用服務
     </button>
   </div>
@@ -175,11 +101,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 <div class="screen" id="sError">
   <div class="suc-wrap">
     <div class="err-ic"><i class="ti ti-alert-triangle"></i></div>
-    <div style="font-size:21px;font-weight:700;color:var(--text);margin-bottom:8px">查無資料</div>
-    <div style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:28px">
+    <div class="error-title">查無資料</div>
+    <div class="error-desc">
       找不到符合的預約紀錄<br>請確認身分證字號與手機號碼<br>是否與預約時填寫的一致
     </div>
-    <button class="btn btn-blue" style="width:240px" onclick="goS('sLogin')">
+    <button class="btn btn-blue btn-retry" onclick="goS('sLogin')">
       <i class="ti ti-refresh"></i>重新輸入
     </button>
   </div>
@@ -189,10 +115,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 <div class="modal-ov" id="voiceModal">
   <div class="modal-box">
     <div class="mh">
-      <div class="mh-t"><i class="ti ti-microphone" style="color:var(--blue)"></i>語音輸入身分資料</div>
+      <div class="mh-t"><i class="ti ti-microphone"></i>語音輸入身分資料</div>
       <button class="mc-x" onclick="closeVoice()">✕</button>
     </div>
-    <div class="info-box" style="margin-bottom:12px">
+    <div class="info-box voice-tip-box">
       <p>請說：「身分證 A 一二三四五六七八九，手機 零九一二三四五六七八」</p>
     </div>
     <div class="wave-w" id="waveW">
@@ -200,25 +126,26 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
     </div>
     <div class="vst" id="vStat">按下麥克風開始說話</div>
-    <div class="vres" id="vRes"><div style="font-size:10px;color:var(--sub);margin-bottom:5px">辨識結果</div><div id="vResTxt">—</div></div>
+    <div class="vres" id="vRes"><div class="vres-label">辨識結果</div><div id="vResTxt">—</div></div>
     <div class="vprev" id="vPrev">
-      <div style="font-size:10px;color:var(--sub);margin-bottom:6px">即將填入</div>
+      <div class="vprev-label">即將填入</div>
       <div class="vchips">
         <div class="vchip"><div class="vchip-l">身分證字號</div><div class="vchip-v" id="vPID">—</div></div>
         <div class="vchip"><div class="vchip-l">手機號碼</div><div class="vchip-v" id="vPPh">—</div></div>
       </div>
     </div>
     <button class="btn-mic" id="btnMic" onclick="togRec()">
-      <i class="ti ti-microphone" style="font-size:20px"></i><span id="btnMicTxt">按下開始說話</span>
+      <i class="ti ti-microphone mic-icon"></i><span id="btnMicTxt">按下開始說話</span>
     </button>
-    <button class="btn btn-blue" id="btnFill" style="display:none" onclick="fillV()">✓ 填入資料</button>
-    <button class="btn btn-outline" id="btnVC" style="display:none;margin-top:0" onclick="closeVoice()">關閉</button>
+    <button class="btn btn-blue" id="btnFill" onclick="fillV()">✓ 填入資料</button>
+    <button class="btn btn-outline" id="btnVC" onclick="closeVoice()">關閉</button>
   </div>
 </div>
 
 <script>
-const LIFF_ID  = '2010169963-KEjAbfsW';
-const API_BASE = 'https://shanlin-bot-production.up.railway.app';
+// LIFF ID 與後端網址統一寫在 site-config.js
+const LIFF_ID  = window.SITE.liffVerifyId;
+const API_BASE = window.SITE.adminApi;
 
 let lineUserId = null;
 let recognition = null, isRec = false;
