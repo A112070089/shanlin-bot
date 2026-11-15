@@ -4,7 +4,9 @@
    ★ 開通新診所時，只需要改這個檔案的網址 ★
    （詳細步驟見 main 分支的 docs/開通新診所SOP.md）
 
-   - bookingApi：語音預約後端（website/main.py）部署在 Railway 的網址
+   - bookingApi：語音預約後端（website/main.py）的網址
+                 線上是由 railway_app.py 同時提供網頁和後端，所以直接用目前這個網址；
+                 如果網頁和後端放在不同網址，改成後端的網址（例如 "https://xxx.up.railway.app"）
    - adminApi：  後台 / LINE Bot 後端（根目錄 main.py）的網址
    - adminPage： 首頁右上「登入」要連到的後台網址
 
@@ -12,7 +14,7 @@
 ========================================================= */
 
 window.SITE_CONFIG = {
-  bookingApi: "https://booking-api-production-9c34.up.railway.app",
+  bookingApi: location.origin,
   adminApi: "https://shanlin-bot-production.up.railway.app",
   adminPage: "https://a112070089.github.io/shanlin-bot/admin.html",
 

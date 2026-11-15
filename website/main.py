@@ -59,11 +59,27 @@ FIREBASE_URL = os.environ.get("FIREBASE_URL", "")
 FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "")
 
 
+# 資料隔離：本機的頤典示範環境不可連到山林診所的正式 Firebase。
+# 山林的正式預約網站部署在 Railway（Railway 會自動帶入 RAILWAY_ 開頭的環境變數），所以在 Railway 上放行；
+# 若要在其他主機執行山林正式網站，請設定環境變數 ALLOW_SHANLIN_FIREBASE=1。
+SHANLIN_FIREBASE_HOST = "shanlin-clinic-default-rtdb.firebaseio.com"
+
+
+def _firebase_host() -> str:
+    from urllib.parse import urlparse
+    return (urlparse(FIREBASE_URL).hostname or "").lower()
+
+
+# True = 這是山林的正式線上服務（連山林資料庫，而且在 Railway 上或已明確放行）
+SHANLIN_LIVE = _firebase_host() == SHANLIN_FIREBASE_HOST and (
+    any(k.startswith("RAILWAY_") for k in os.environ)
+    or os.environ.get("ALLOW_SHANLIN_FIREBASE") == "1"
+)
+
+
 def init_firebase():
     # Protect the Yidian local preview from Shanlin's Firebase.
-    from urllib.parse import urlparse
-    host = (urlparse(FIREBASE_URL).hostname or "").lower()
-    if host == "shanlin-clinic-default-rtdb.firebaseio.com":
+    if _firebase_host() == SHANLIN_FIREBASE_HOST and not SHANLIN_LIVE:
         print("[SAFETY] Shanlin Firebase blocked in Yidian local preview")
         return False
     if firebase_admin is None:
@@ -1630,7 +1646,8 @@ def get_booking_questions(mode: str = ""):
 # ==========================================================
 
 CLINIC_DEFAULTS = {
-    "name": "頤典診所",
+    # 山林正式線上服務的預設名稱是山林診所；其餘（本機示範）是頤典診所
+    "name": "山林診所" if SHANLIN_LIVE else "頤典診所",
     "phone": "02-2933-2010",
     "address": "臺北市文山區羅斯福路六段407號2樓",
     "addressNote": "由車前路門口上樓",
