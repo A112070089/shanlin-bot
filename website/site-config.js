@@ -18,6 +18,10 @@ window.SITE_CONFIG = {
   adminApi: "https://shanlin-bot-production.up.railway.app",
   adminPage: "https://a112070089.github.io/shanlin-bot/admin.html",
 
+  // 線上網站是否開放「拍身分證快速填寫」。辨識在使用者自己的瀏覽器裡進行，照片不會上傳。
+  // 設成 false 就只留打字和語音輸入。（本機測試不受這個設定影響，一律可用）
+  idScanEnabled: true,
+
   // 本機測試用（本機測試_全部啟動.command）
   local: {
     bookingApi: "http://127.0.0.1:8000",

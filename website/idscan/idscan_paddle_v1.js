@@ -4,7 +4,9 @@
  const Core=window.DoubtsIdScanCore,script=document.currentScript;
  if(!Core||!script?.src||window.DoubtsIdScan?.version==='PP-OCRv5-FRIENDLY-V4')return;
  const host=location.hostname;
- if(!(/^(localhost|127\.0\.0\.1)$/.test(host)||/^192\.168\.\d+\.\d+$/.test(host)||/^10\.\d+\.\d+\.\d+$/.test(host)||/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host)))return;
+ // 本機與區域網路一律可用；線上網站要在 site-config.js 設定 idScanEnabled: true，而且必須是 https（相機需要）。
+ const onlineEnabled=location.protocol==='https:'&&!!window.SITE&&window.SITE.idScanEnabled===true;
+ if(!(onlineEnabled||/^(localhost|127\.0\.0\.1)$/.test(host)||/^192\.168\.\d+\.\d+$/.test(host)||/^10\.\d+\.\d+\.\d+$/.test(host)||/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host)))return;
  const base=new URL('.',script.src),engineURL=new URL('paddle/engine_v2.mjs',base).href;
  const $=id=>document.getElementById('dls2-'+id);
  // A Taiwanese ID card displays 2- or 3-digit ROC years: YYMMDD / YYYMMDD.
