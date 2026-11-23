@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from hmac import compare_digest
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -12,8 +13,10 @@ import pilot_backend as backend
 from platform_shanlin_unified_ui import unified_index, unified_script, unified_css, unified_frame
 
 NO_CACHE = {'Cache-Control': 'no-store, private', 'Pragma': 'no-cache',
-            'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin'}
+            'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin',
+            'X-DOUBTS-Admin-Version': 'proxy-origin-v2'}
 API = '/api/pilot'
+DEFAULT_PUBLIC_ORIGIN = 'https://shanlin-website-production.up.railway.app'
 # Exclude platform provisioning, Yidian and demo-booking routes entirely.
 ALLOWED = {
     API+'/admin/login', API+'/admin/legacy-shanlin-login', API+'/admin/session',
@@ -24,6 +27,31 @@ ALLOWED = {
 }
 STORED_MUTATIONS = {API+'/admin/staff', API+'/admin/import-excel',
                     API+'/admin/catalog/draft', API+'/admin/catalog/publish'}
+
+
+def _public_origin():
+    # Railway terminates HTTPS before forwarding to Uvicorn over HTTP.
+    # Compare against configured public origin, not the internal request URL
+    # or attacker-controlled Host/X-Forwarded-* headers.
+    value = os.getenv('SHANLIN_PUBLIC_ORIGIN', DEFAULT_PUBLIC_ORIGIN).rstrip('/')
+    parsed = urlsplit(value)
+    if (parsed.scheme != 'https' or not parsed.hostname or parsed.username
+            or parsed.password or parsed.path or parsed.query or parsed.fragment):
+        raise RuntimeError('SHANLIN_PUBLIC_ORIGIN must be an HTTPS origin without a path')
+    return value
+
+
+def _origin_allowed(request):
+    origin = request.headers.get('origin')
+    return origin is None or origin == _public_origin()
+
+
+def _online_mutation(request: Request, session=Depends(backend.authorized)):
+    if not compare_digest(request.headers.get(backend.CSRF_HEADER, ''), session['csrf']):
+        raise HTTPException(403, '安全驗證失敗，請重新登入')
+    if not _origin_allowed(request):
+        raise HTTPException(403, '跨站寫入已拒絕')
+    return session
 
 
 def _persistent_storage_ready():
@@ -99,6 +127,8 @@ def install(app):
     if getattr(app.state, 'shanlin_online_admin_installed', False):
         return
     app.state.shanlin_online_admin_installed = True
+    _public_origin()  # Validate deployment configuration before serving requests.
+    app.dependency_overrides[backend.require_mutation] = _online_mutation
     # Fixed upstream identity. No caller-supplied hosts or database URLs.
     os.environ.setdefault('PILOT_SHANLIN_LEGACY_AUTH', '1')
     os.environ.setdefault('PILOT_SHANLIN_LEGACY_URL',
@@ -172,7 +202,7 @@ class _OnlineBoundary:
                    or (scope.get('path', '').startswith('/api/pilot/') and
                        scope.get('method') in ('POST','PUT','PATCH','DELETE') and
                        request.headers.get('origin') and
-                       request.headers['origin'].rstrip('/') != str(request.base_url).rstrip('/')))
+                       not _origin_allowed(request)))
         if blocked:
             return await JSONResponse({'detail':'此入口未開放'}, status_code=404,
                                       headers=NO_CACHE)(scope, receive, send)
