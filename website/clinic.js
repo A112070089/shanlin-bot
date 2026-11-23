@@ -341,7 +341,45 @@
 
     if (c.name !== CLINIC_DEFAULTS.name && document.title.includes(CLINIC_DEFAULTS.name)) {
       document.title = document.title.replace(CLINIC_DEFAULTS.name, c.name);
+    } else if (c.name !== CLINIC_DEFAULTS.name && document.title.trim() === "診所智慧預約助理 頤典") {
+      // 首頁分頁標題，和本機山林版一致：「山林診所｜健康檢查與預約」
+      document.title = c.name + "｜健康檢查與預約";
     }
+
+    applyIdentity(c);
+  }
+
+  // 首頁大標上方的「頤典 DOUBTS — 科技，讓醫療更有溫度」：
+  // 頤典診所自己的網站照原樣顯示；其他診所改成該診所名稱，排法和本機山林版一致，
+  // 例如「山林 診所 — 科技，讓醫療更有溫度」（「診所」兩字用小字）。
+  function applyIdentity(c) {
+    document.querySelectorAll(".doubts-identity").forEach(box => {
+      const nameEl = box.querySelector(".doubts-identity-name");
+      const tagEl = box.querySelector(".doubts-identity-tagline");
+      if (!nameEl || !tagEl) return;
+      if (box.dataset.identityOrig === undefined) {
+        box.dataset.identityOrig = JSON.stringify({
+          name: nameEl.innerHTML, tag: tagEl.textContent, label: box.getAttribute("aria-label") || ""
+        });
+      }
+      const orig = JSON.parse(box.dataset.identityOrig);
+      if (c.name === CLINIC_DEFAULTS.name) {
+        nameEl.innerHTML = orig.name;
+        tagEl.textContent = orig.tag;
+        box.setAttribute("aria-label", orig.label);
+      } else {
+        const name = String(c.name).trim();
+        const m = name.match(/^(.+?)\s*(診所|醫院|醫療中心)$/);
+        nameEl.textContent = m ? m[1] + " " : name;
+        if (m) {
+          const small = document.createElement("small");
+          small.textContent = m[2];
+          nameEl.appendChild(small);
+        }
+        tagEl.textContent = orig.tag;
+        box.setAttribute("aria-label", name + "，科技讓醫療更有溫度");
+      }
+    });
   }
 
   /* ---------------- 啟動 ---------------- */
