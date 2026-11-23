@@ -29,7 +29,7 @@ class SiteFiles(StaticFiles):
     async def get_response(self, path: str, scope):
         parts = [p for p in path.replace("\\", "/").split("/") if p and p != "."]
         if parts:
-            hidden = any(p.startswith(".") for p in parts)
+            hidden = any(p.startswith(".") or ".backup" in p or p in ("backups", "pilot_static", "platform_static") for p in parts)
             allowed = os.path.splitext(parts[-1])[1].lower() in SITE_FILE_TYPES
             if hidden or not allowed:
                 raise HTTPException(status_code=404)
@@ -41,6 +41,10 @@ app.router.routes[:] = [
     r for r in app.router.routes
     if getattr(r, "path", "") != "/api/firebase/test-write"
 ]
+
+# 線上山林後台：必須先註冊路由，再掛載網頁。
+from shanlin_online_admin import install as install_shanlin_admin
+install_shanlin_admin(app)
 
 # 一定要放在所有 API 路由之後：網址沒有對到任何 API 時，才當成網頁檔案處理。
 # 打開網站根目錄（/）會顯示 index.html。
