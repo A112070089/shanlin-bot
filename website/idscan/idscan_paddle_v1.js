@@ -7,7 +7,7 @@
  // 本機與區域網路一律可用；線上網站要在 site-config.js 設定 idScanEnabled: true，而且必須是 https（相機需要）。
  const onlineEnabled=location.protocol==='https:'&&!!window.SITE&&window.SITE.idScanEnabled===true;
  if(!(onlineEnabled||/^(localhost|127\.0\.0\.1)$/.test(host)||/^192\.168\.\d+\.\d+$/.test(host)||/^10\.\d+\.\d+\.\d+$/.test(host)||/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host)))return;
- const base=new URL('.',script.src),engineURL=new URL('paddle/engine_v2.mjs',base).href;
+ const base=new URL('.',script.src),engineURL=new URL('paddle/engine_v2.mjs?v=surname1',base).href;
  const $=id=>document.getElementById('dls2-'+id);
  // A Taiwanese ID card displays 2- or 3-digit ROC years: YYMMDD / YYYMMDD.
  // Do not interpret an incomplete five-digit OCR result as a one-digit year.
@@ -160,12 +160,12 @@
    $('title').textContent='請核對資料';$('hint').hidden=true;$('fields').hidden=false;$('replay').hidden=true;
    for(const key of ['name','pid','birthday'])$(key).readOnly=false;
    showFields(result?.fields||{});$('diagnostics').textContent=result?diagnostics(result):'';
-   status(result?.count===3?'':result?.count?'請補填空白欄位，再核對資料。':'沒有讀到資料，請重新掃描或改用輸入。');
+   status(result?.fields?.name?.length===2?'辨識到兩字姓名，請特別核對姓氏是否完整；如有缺字，可直接修改或重新掃描。':result?.count===3?'':result?.count?'請補填空白欄位，再核對資料。':'沒有讀到資料，請重新掃描或改用輸入。');
    if(!result&&message)status(message);
    validate();
  }
  async function scanLoop(id){
-   let best=null,attempt=0;const started=Date.now();
+   let best=null,attempt=0,previousComplete="";const started=Date.now();
    while(active&&token===id&&attempt<MAX_ATTEMPTS&&Date.now()-started<MAX_MS){
      if($('video').readyState<2){await new Promise(resolve=>setTimeout(resolve,350));continue;}
      const snapshot=capture($('video'));if(!snapshot){await new Promise(resolve=>setTimeout(resolve,350));continue;}
@@ -174,7 +174,11 @@
        const result=await predict(snapshot,id);if(!result||token!==id||!active)return;
        if(!best||result.count>=best.count)best=result;
        showFields(result.fields);$('diagnostics').textContent=diagnostics(result);
-       if(result.count===3&&!result.ambiguous.length){finish(result,'三項資料已辨識，請逐字核對後勾選確認，再帶入預約。');return;}
+       if(result.count===3&&!result.ambiguous.length){
+         const signature=JSON.stringify(result.fields);
+         if(signature===previousComplete){finish(result,'三項資料已辨識，請逐字核對後勾選確認，再帶入預約。');return;}
+         previousComplete=signature;
+       }else previousComplete='';
        status('');
      }catch(e){if(token===id)finish(best,'辨識暫時無法完成。您可核對、補填，或選擇照片重試。');return;}
      finally{snapshot.width=1;snapshot.height=1;}
