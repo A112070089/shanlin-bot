@@ -1709,6 +1709,9 @@ def get_clinic_config():
                     clinic[k] = v
     except Exception as e:
         print("讀取診所設定失敗，使用預設值：", repr(e))
+    # Exhibition dates come from the isolated test timetable (read only).
+    from shanlin_exhibition_schedule import apply_exhibition_schedule
+    clinic = apply_exhibition_schedule(clinic)
     return {"status": "success", "clinic": clinic}
 
 
