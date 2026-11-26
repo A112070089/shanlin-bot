@@ -49,11 +49,17 @@
    removeLocalDisplayNotice();
    window.addEventListener('load',removeLocalDisplayNotice,{once:true});
    const params=new URLSearchParams(location.search);
-   const clinic=['shanlin','yidian'].includes(params.get('clinic'))?params.get('clinic'):'yidian';
+   // Preserve explicit clinic links; this deployed website serves Shanlin.
+   let savedClinic='';
+   try { savedClinic=sessionStorage.getItem('integrated_home_clinic')||''; } catch (_) {}
+   const requestedClinic=params.get('clinic');
+   const clinic=['shanlin','yidian'].includes(requestedClinic)?requestedClinic:
+     location.hostname==='shanlin-website-production.up.railway.app'?'shanlin':
+     ['shanlin','yidian'].includes(savedClinic)?savedClinic:'shanlin';
    const brand=document.querySelector('#scrollspyNav .navbar-brand');
-   if(brand){const home=new URL('index.html',location.href);home.searchParams.set('clinic',clinic);brand.href=home;}
+   if(brand){const home=new URL('./',location.href);home.searchParams.set('clinic',clinic);brand.href=home;}
    for(const button of main.querySelectorAll('.buttons a')){
-     const url=new URL('index.html',location.href);url.searchParams.set('clinic',clinic);
+     const url=new URL('./',location.href);url.searchParams.set('clinic',clinic);
      if(button.classList.contains('btn-selfpay'))url.searchParams.set('nav','selfpay');
      button.href=url;
    }
