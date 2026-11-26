@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
+<html lang="zh-Hant"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>預約成功 - 頤典診所</title>
 
-  <link rel="stylesheet" href="./assets/css/booking_success.css"/>
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="same-origin">
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <link rel="stylesheet" href="./assets/css/index.css?v=home-nav-color-v1">
+  <link rel="stylesheet" href="./assets/css/booking-success-theme.css?v=1">
   <!-- 部署設定：後端網址（開通新診所時改這個檔） -->
   <script src="site-config.js"></script>
   <!-- 診所設定：名稱 -->
@@ -36,68 +39,74 @@
   })();
 </script>
 </head>
+<body class="doubts-home-v8 success-view">
+  <header id="header" class="sticky-top bsb-tpl-header-sticky">
+    <nav id="scrollspyNav"
+      class="navbar navbar-expand-lg bsb-tpl-bg-blue bsb-navbar bsb-navbar-hover bsb-navbar-caret bsb-tpl-navbar-sticky"
+      data-bsb-sticky-target="#header">
+      <div class="container"><a class="navbar-brand" href="index.html">
+          <span data-clinic="name">頤典診所</span>
+        </a></div>
+    </nav>
+  </header>
+  <main id="booking-success-main" class="success-page" aria-labelledby="success-title">
 
-<body>
+<ol class="steps" aria-label="預約步驟"><li><span class="dot">✓</span><span data-success-text="填寫資料">填寫資料</span></li><li class="divider" aria-hidden="true"></li><li><span class="dot">✓</span><span data-success-text="資格確認">資格確認</span></li><li class="divider" aria-hidden="true"></li><li class="active" aria-current="step"><span class="dot">✓</span><span data-success-text="預約完成">預約完成</span></li></ol><section class="success-heading"><div class="success-check" aria-hidden="true">✓</div>
 
-  <div class="header">
-    <span data-clinic="name">頤典診所</span>
-  </div>
-
-  <main class="main">
-
-    <div class="success-icon">✅</div>
-
-    <h1>預約成功，感謝您的預約！</h1>
+    <h1 id="success-title" data-success-text="預約成功，感謝您的預約！">預約成功，感謝您的預約！</h1>
 
     <div class="subtitle">
-      以下是您的預約資料，建議截圖保留
+      <span data-success-text="以下是您的預約資料，建議截圖保留">以下是您的預約資料，建議截圖保留</span>
     </div>
 
-    <div class="plan" id="plan">
+    </section><section class="summary-card" aria-labelledby="plan"><div class="summary-top"><span data-success-text="老人健康檢查">老人健康檢查</span>
+    <h2 class="plan" id="plan">
       健檢方案
-    </div>
+    </h2></div>
 
     <div class="booking-card">
+      <div class="row appointment-slot">
+        <span class="label"><span data-success-text="預約時段">預約時段</span></span>
+        <span class="value" id="datetime">—</span>
+      </div>
 
       <div class="row">
-        <span class="label">姓名</span>
+        <span class="label"><span data-success-text="姓名">姓名</span></span>
         <span class="value" id="name">—</span>
       </div>
 
       <div class="row">
-        <span class="label">身分證字號</span>
+        <span class="label"><span data-success-text="身分證字號">身分證字號</span></span>
         <span class="value" id="pid">—</span>
       </div>
 
       <div class="row">
-        <span class="label">手機號碼</span>
+        <span class="label"><span data-success-text="手機號碼">手機號碼</span></span>
         <span class="value" id="phone">—</span>
       </div>
 
       <div class="row">
-        <span class="label">出生年月日</span>
+        <span class="label"><span data-success-text="出生年月日">出生年月日</span></span>
         <span class="value" id="birthday">—</span>
       </div>
 
-      <div class="row">
-        <span class="label">預約時段</span>
-        <span class="value" id="datetime">—</span>
-      </div>
+
 
       <!-- 診所自訂問診題目的回答 -->
       <div id="extraAnswers"></div>
 
     </div>
+</section>
 <div id="selfPaySection" class="selfpay-section">
 
   <div class="selfpay-section-title">
-    自費加購項目
+    <span data-success-text="自費加購項目">自費加購項目</span>
   </div>
 
   <div class="booking-card">
 <div class="row">
     <span class="label">
-        自費健檢預約時段
+        <span data-success-text="自費健檢預約時段">自費健檢預約時段</span>
     </span>
 
     <span
@@ -111,7 +120,7 @@
 
     <div class="row selfpay-total-row">
       <span class="label">
-        自費項目合計
+        <span data-success-text="自費項目合計">自費項目合計</span>
       </span>
 
       <span class="value" id="selfPayTotal">
@@ -122,24 +131,21 @@
   </div>
 
 </div>
-    <div class="notice">
+    <aside class="notice" aria-labelledby="notice-title"><h2 id="notice-title" data-success-text="健檢前提醒">健檢前提醒</h2><p data-success-text="notice">
       請於健檢當天攜帶健保卡、身分證，並保持空腹 8 小時。
-      若需要異動或取消預約，請於健檢前一日致電本診所櫃檯。
-    </div>
+      若需要異動或取消預約，請於健檢前一日致電本診所櫃檯。</p>
+    </aside>
 
     <div class="buttons">
 
       <a href="index.html" class="btn btn-home">
-        回首頁
-      </a>
-
-      <a href="index.html?mode=self_pay" class="btn btn-selfpay">
-        順便看看自費健康管理項目
+        <span data-success-text="回首頁">回首頁</span>
       </a>
 
     </div>
 
   </main>
+<footer class="success-footer">頤典 DOUBTS · 高齡友善健檢預約服務</footer>
 
   <script>
     const booking =
@@ -316,5 +322,9 @@ if (selfPayItems.length > 0) {
   else showDemoBanner();
 })();
 </script>
-</body>
-</html>
+
+<script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script defer src="./booking-success-interface.js?v=1"></script>
+</body></html>

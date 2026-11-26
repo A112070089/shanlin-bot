@@ -256,6 +256,10 @@ def scoped_booking_preview(filename: str, clinic: str) -> HTMLResponse:
     # rejects /api/booking/confirm before any original handler is called.
     notice = '''<aside style="background:#fff7e6;color:#6b4200;padding:10px 18px;text-align:center;
       border-bottom:1px solid #ead89d;" role="note">本機展示，尚未接受正式預約。請勿輸入真實病患個資。</aside>'''
+    # These three reviewed patient pages use the shared blue header without the
+    # local-only presentation strip. All booking isolation and write guards remain.
+    if filename in ('appointment.html', 'appointment2.html', 'booking_success.html'):
+        notice = ''
     # Insert after the body opening tag so the HTML remains structurally valid.
     html, count = re.subn(r'(<body\b[^>]*>)', lambda match: match.group(1) + notice,
                           html, count=1, flags=re.I)
