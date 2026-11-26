@@ -1,0 +1,53 @@
+/* Eligibility page only. The navigation is styled by the existing index.css. */
+html:root:root {color-scheme:only light;}
+html body.eligibility-view {background:#e3edf1!important;color:#3d3d3a!important;min-height:100vh;margin:0;}
+html body.eligibility-view .eligibility-page {max-width:1000px;margin:0 auto;padding:36px 32px 60px;background:#e3edf1;font:18px/1.65 var(--f-body,"Inter","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif);}
+.eligibility-page *{box-sizing:border-box}
+.eligibility-page .steps{display:flex;gap:12px;align-items:center;margin:0 0 28px;padding:0;list-style:none;font-size:17px;flex-wrap:wrap}
+.eligibility-page .steps li{display:flex;align-items:center;gap:8px}
+.eligibility-page .steps .dot{border:1px solid #8b877f;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.eligibility-page .steps .active{font-weight:750;color:#1c3647}
+.eligibility-page .active .dot{background:#1c3647;border-color:#1c3647;color:white}
+.eligibility-page .steps .divider{width:28px;height:1px;background:#ada79e}
+html body.eligibility-view #eligibility-title{font:750 38px/1.35 var(--f-body,"Noto Sans TC",sans-serif);color:#141413;margin:0 0 12px;letter-spacing:normal}
+.eligibility-page .intro{font-size:21px;margin:0 0 30px}
+.eligibility-page .cards{display:grid;gap:18px}
+.eligibility-page fieldset{margin:0;border:1px solid #e6dfd8;border-radius:18px;padding:24px 28px;background:#fffdfa;min-width:0}
+.eligibility-page .qhead{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px}
+.eligibility-page .qno{color:#3d5f72;font-size:27px;line-height:1.45;font-weight:750;flex-shrink:0}
+.eligibility-page .question{font-size:23px;line-height:1.6;margin:0;font-weight:650;color:#141413}
+.eligibility-page .choices{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-left:48px}
+.eligibility-page .choice{display:flex;align-items:center;justify-content:center;gap:12px;min-height:62px;border:2px solid #928b80;border-radius:12px;padding:12px 16px;font-size:22px;line-height:1.6;font-weight:650;cursor:pointer;background:#faf9f5;color:#141413;overflow-wrap:anywhere}
+.eligibility-page input[type=radio]{appearance:none;flex-shrink:0;width:24px;height:24px;margin:0;border:2px solid #6c6a64;border-radius:50%;background:#fff}
+.eligibility-page .choice:has(input:checked){background:#8ba8ba;border-color:#3d5f72;color:#141413}
+.eligibility-page input:checked{border-color:#1c3647;background:radial-gradient(#1c3647 0 5px,#fff 6px)}
+.eligibility-page .choice:has(input:focus-visible){outline:3px solid #1c3647;outline-offset:4px}
+.eligibility-page .actions{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:28px}
+.eligibility-page .next{background:#8ba8ba;border:2px solid #3d5f72;border-radius:12px;min-height:64px;padding:13px 32px;line-height:1.6;font-family:inherit;font-size:23px;font-weight:750;min-width:300px;box-shadow:0 3px 0 #3d5f72;color:#141413;cursor:pointer}
+.eligibility-page .next:hover{background:#1c3647;color:white}
+.eligibility-page .helper{font-size:18px;margin:0;color:#575650}
+html body.eligibility-view .eligibility-footer{background:#e3edf1;border-top:1px solid #b9cbd6;padding:24px 28px;text-align:center;font-size:16px;color:#575650}
+@media(max-width:850px){
+ html body.eligibility-view .eligibility-page{padding:26px 20px 40px}
+ .eligibility-page .steps{gap:8px;font-size:15px;margin-bottom:24px}.eligibility-page .steps .divider{width:12px}.eligibility-page .steps .dot{width:26px;height:26px}
+ html body.eligibility-view #eligibility-title{font-size:31px}
+ .eligibility-page .intro{font-size:20px;margin-bottom:24px}.eligibility-page fieldset{padding:22px 18px}.eligibility-page .qhead{gap:12px;margin-bottom:16px}.eligibility-page .qno{font-size:25px}.eligibility-page .question{font-size:21px}
+ .eligibility-page .choices{margin-left:0;gap:12px}.eligibility-page .choice{font-size:21px;min-height:60px;padding:12px 8px}
+ .eligibility-page .actions{flex-direction:column;align-items:stretch;gap:16px}.eligibility-page .next{min-width:0;width:100%}.eligibility-page .helper{text-align:center;font-size:18px}
+}
+@media(max-width:360px){.eligibility-page .steps{column-gap:6px}.eligibility-page .steps .divider{display:none}.eligibility-page .steps li{gap:5px}html body.eligibility-view .eligibility-page{padding-inline:16px}.eligibility-page .question{font-size:20px}}
+@media(forced-colors:active){.eligibility-page input[type=radio]{appearance:auto}.eligibility-page .choice:has(input:checked){border-color:Highlight}}
+
+/* ELIGIBILITY-LANGUAGE-LABEL-FIX-V1 */
+html body.eligibility-view #dm-site-language .dm-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
