@@ -21,6 +21,28 @@
 
 (function () {
 
+  // SHANLIN_ONLINE_BRAND_FIRST_PAINT_V1: display-only; no configuration writes.
+  const shanlinOnlineBrand = location.hostname === "shanlin-website-production.up.railway.app";
+  function paintOnlineBrand() {
+    if (!shanlinOnlineBrand) return;
+    document.querySelectorAll('.navbar-brand [data-clinic="name"]').forEach(el => {
+      if (el.textContent !== "山林診所") el.textContent = "山林診所";
+    });
+  }
+  if (shanlinOnlineBrand) {
+    // Parser changes are observed before the browser paints the new header.
+    const brandObserver = new MutationObserver(paintOnlineBrand);
+    brandObserver.observe(document.documentElement, {childList:true, subtree:true});
+    paintOnlineBrand();
+    const finishBrandBootstrap = () => {
+      paintOnlineBrand();
+      brandObserver.disconnect();
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", finishBrandBootstrap, {once:true});
+    } else finishBrandBootstrap();
+  }
+
   const CLINIC_DEFAULTS = {
     name: "頤典診所",
     phone: "02-2933-2010",
@@ -320,7 +342,8 @@
       const k = el.dataset.clinic;
       if (c[k] === undefined) return;
       if (el.dataset.clinicOrig === undefined) el.dataset.clinicOrig = el.textContent;
-      el.textContent = isDefault(k) ? el.dataset.clinicOrig : c[k];
+      el.textContent = (shanlinOnlineBrand && k === "name" && el.closest(".navbar-brand"))
+        ? "山林診所" : (isDefault(k) ? el.dataset.clinicOrig : c[k]);
     });
 
     document.querySelectorAll("[data-clinic-tel]").forEach(el => {
