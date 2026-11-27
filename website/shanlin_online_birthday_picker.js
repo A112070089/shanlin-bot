@@ -73,7 +73,7 @@
       if (label) label.textContent = '出生年月日（民國）＊年滿65歲';
       const hint = parent.querySelector('.hint-text');
       if (hint) hint.textContent = '請選擇民國年、月、日，系統會依完整出生日期確認是否年滿65歲。';
-      const previous = original.value;
+      const previous = original.value || params.get('birthday') || '';
       original.type = 'hidden'; // Keep the original name/FormData and AI flow.
       original.removeAttribute('placeholder');
       const holder = document.createElement('div');
@@ -182,6 +182,7 @@
     const picker=createBirthdayPicker();
     validateBirthday(picker.selects);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  // Deferred scripts run while readyState is interactive, before legacy form prefill.
+  if(document.readyState!=='complete')document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
 })();
