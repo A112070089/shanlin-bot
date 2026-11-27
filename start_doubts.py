@@ -281,7 +281,7 @@ def build_service(port: int):
             'PILOT_SHANLIN_LEGACY_AUTH': '1',
             'PILOT_SHANLIN_LEGACY_URL': LOGIN,
         })
-        return (cwd, py, 'integrated_app_platform_patient_stage:app', base, True), None
+        return (cwd, py, 'shanlin_shared_booking:app', base, True), None
     return None, '未支援的服務埠'
 
 
@@ -404,8 +404,8 @@ def stop_web_for_restart() -> bool:
         line('STOP：8006 並非由此啟動器管理，未停止任何程序。請先關閉原本手動啟動 8006 的 Terminal 服務。')
         return False
     pid, module = entry.get('pid'), entry.get('module')
-    expected = 'integrated_app_platform_patient_stage:app'
-    if type(pid) is not int or module != expected or not verify_pid(pid, module):
+    expected = ('integrated_app_platform_patient_stage:app', 'shanlin_shared_booking:app')
+    if type(pid) is not int or module not in expected or not verify_pid(pid, module):
         if not listening:
             return True
         line('STOP：8006 程序識別不符，未停止任何程序。')
