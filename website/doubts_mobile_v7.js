@@ -500,8 +500,15 @@ html body.dm-v7 .dm-toolbar .dm-controls button{min-height:48px!important;}
      (_all, amount) => amount.replace(/,/g, '') + (lang === 'en' ? ' New Taiwan dollars' : '元'));
  }
 
+ // SHANLIN-SPEECH-EMOJI-V1: keep digits, punctuation and prices in the spoken copy.
+ function withoutSpeechEmoji(value) {
+   return String(value || '')
+     .replace(/([#*0-9])\uFE0F?\u20E3/gu, '$1')
+     .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Emoji_Modifier}\uFE0E\uFE0F\u200D\u{E0020}-\u{E007F}]/gu, '');
+ }
+
  async function speak(content,context=null,brief=false){
-   const text=plain(content);if(!text||isSpeechPlaceholder(text))return false;
+   const text=withoutSpeechEmoji(plain(content));if(!text.trim()||isSpeechPlaceholder(text))return false;
    stopAll();last=text;lastContext=context;const turn=speechTurn,lang=language;pendingSpeech=text;
    status(tr('正在準備朗讀','Preparing speech'));
    try{
@@ -517,6 +524,7 @@ html body.dm-v7 .dm-toolbar .dm-controls button{min-height:48px!important;}
        if(match){translateMessage(match);spoken=match.dmEnglishPromise?await match.dmEnglishPromise:await translate(text,'en');}
        else spoken=await translate(localAmountSpeech(text,lang),'en');
      }
+     spoken=withoutSpeechEmoji(spoken);
      if(turn!==speechTurn||lang!==language)return false;
      let ok=true;
      if(lang!=='en'){spoken=plainChineseSpeech(await translate(spoken,'zh'));if(!spoken.trim()){pendingSpeech='';status('這段沒有需要朗讀的中文內容，請查看畫面文字');return true;}}

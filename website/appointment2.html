@@ -1856,8 +1856,15 @@ html body #header .navbar-brand span {
       selfPayActiveUtterance = null;
     };
 
+ // SHANLIN-SPEECH-EMOJI-V1: keep digits, punctuation and prices in the spoken copy.
+ function withoutSpeechEmoji(value) {
+   return String(value || '')
+     .replace(/([#*0-9])\uFE0F?\u20E3/gu, '$1')
+     .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Emoji_Modifier}\uFE0E\uFE0F\u200D\u{E0020}-\u{E007F}]/gu, '');
+ }
+
     function speakSelfPayText(text, context = null, forceMandarin = false) {
-      const content = String(text || "").replace(/\b(?:NT\s*\$|NTD\b|TWD\b)\s*(\d[\d,]*(?:\.\d+)?)(?:\s*元)?/gi,
+      const content = withoutSpeechEmoji(text).replace(/\b(?:NT\s*\$|NTD\b|TWD\b)\s*(\d[\d,]*(?:\.\d+)?)(?:\s*元)?/gi,
         (_all, amount) => amount.replace(/,/g, "") + "元").trim();
       if (window.YidianSpeech) {
         window.YidianSpeech.remember(content, context);
@@ -7879,7 +7886,7 @@ selfPayTime:
   
   <!-- DOUBTS-LIVESCAN-V2 -->
   <script defer src="./idscan/idscan_paddle_v1.js?v=friendly4"></script>
-<script defer src="./doubts_mobile_v7.js?v=twd-speech-v1"></script>
+<script defer src="./doubts_mobile_v7.js?v=twd-no-emoji-v2"></script>
 <script defer src="./shanlin_online_birthday_picker.js?v=roc-prefill-v2"></script>
 </body>
 
