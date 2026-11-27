@@ -1156,6 +1156,15 @@ html body.doubts-home-v8 #selfPayCartDialog .cart-item-remove {
   background: var(--c-canvas) !important;
 }
 </style>
+
+<style id="first-question-back-visibility-v1">
+html:root body.doubts-home-v8 #chat-widget .quick-actions #chatBackBtn[hidden] {
+  display: none !important;
+}
+html:root body.doubts-home-v8 #chat-widget .quick-actions.doubts-first-question {
+  grid-template-columns: 1fr !important;
+}
+</style>
 </head>
 
 <body class="doubts-home-v8" data-bs-spy="scroll" data-bs-target="#bsb-tpl-navbar" data-bs-smooth-scroll="true" tabindex="0">
@@ -1586,8 +1595,8 @@ html body.doubts-home-v8 #selfPayCartDialog .cart-item-remove {
       <div id="loading" class="loading-status">處理中，請稍候...</div>
     </div>
 
-    <div class="quick-actions">
-      <button class="action-btn" onclick="handleAction('上一步')">🔙 回上一步</button>
+    <div class="quick-actions doubts-first-question">
+      <button id="chatBackBtn" type="button" class="action-btn" onclick="handleAction('上一步')" hidden>🔙 回上一步</button>
       <button class="action-btn" onclick="handleAction('重來')">🔄 重新開始</button>
     </div>
 <div class="voice-actions">
@@ -2232,7 +2241,26 @@ requestAnimationFrame(() => {
 
 }
 
+    // FIRST-QUESTION-BACK-V1: both booking flows use this shared chat.
+    function isFirstBookingQuestion() {
+      return currentStep === "plan" ||
+        (bookingMode === "self_pay" && currentStep === "name");
+    }
+    function updateBookingBackButton() {
+      const button = document.getElementById("chatBackBtn");
+      if (!button) return;
+      const first = isFirstBookingQuestion();
+      button.hidden = first;
+      const actions = button.closest(".quick-actions");
+      if (actions) actions.classList.toggle("doubts-first-question", first);
+    }
+
     function goBack() {
+      // Guard keyboard/voice commands before changing data or removing pickers.
+      if (isFirstBookingQuestion()) {
+        updateBookingBackButton();
+        return;
+      }
       pidPending = null;
       removeChatPickers();
 
@@ -2762,6 +2790,7 @@ requestAnimationFrame(() => {
     }
 
     function addMsg(text, type) {
+      updateBookingBackButton();
       const div = document.createElement('div');
       div.className = `msg ${type}-msg`; div.innerHTML = text.replace(/\n/g, "<br>");
       chatBody.insertBefore(div, loadingStatus); chatBody.scrollTop = chatBody.scrollHeight;
