@@ -494,22 +494,28 @@ html body.dm-v7 .dm-toolbar .dm-controls button{min-height:48px!important;}
    return true;
  }
 
+ // SHANLIN-TWD-SPEECH-V1: normalize only the spoken copy; never change prices.
+ function localAmountSpeech(value, lang='zh') {
+   return String(value || '').replace(/\b(?:NT\s*\$|NTD\b|TWD\b)\s*(\d[\d,]*(?:\.\d+)?)(?:\s*元)?/gi,
+     (_all, amount) => amount.replace(/,/g, '') + (lang === 'en' ? ' New Taiwan dollars' : '元'));
+ }
+
  async function speak(content,context=null,brief=false){
    const text=plain(content);if(!text||isSpeechPlaceholder(text))return false;
    stopAll();last=text;lastContext=context;const turn=speechTurn,lang=language;pendingSpeech=text;
    status(tr('正在準備朗讀','Preparing speech'));
    try{
-     let spoken=preparePlanCodeSpeech(text);
+     let spoken=preparePlanCodeSpeech(localAmountSpeech(text,lang));
      if(lang==='en'){
        const nodes=[...document.querySelectorAll('#chat-body .ai-msg,#selfpay-chat-body .selfpay-message.ai')];
-       const match=nodes.reverse().find(node=>{
+       const match=localAmountSpeech(text,lang)!==text ? null : nodes.reverse().find(node=>{
          const copy=node.cloneNode(true);copy.querySelectorAll('button,input,select,textarea,.doubts-idscan-choice-wrap,.dm-en').forEach(x=>x.remove());
          const raw=plain(copy.textContent).replace(/\s+/g,'');
          const wanted=text.replace(/\s+/g,'');
          return wanted.length>=20&&(raw.includes(wanted.slice(0,40))||wanted.includes(raw.slice(0,40))&&raw.length>=20);
        });
        if(match){translateMessage(match);spoken=match.dmEnglishPromise?await match.dmEnglishPromise:await translate(text,'en');}
-       else spoken=await translate(text,'en');
+       else spoken=await translate(localAmountSpeech(text,lang),'en');
      }
      if(turn!==speechTurn||lang!==language)return false;
      let ok=true;

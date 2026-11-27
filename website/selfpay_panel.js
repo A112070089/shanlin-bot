@@ -191,7 +191,6 @@
       const f = CONCERNS[id] || { icon: c.icon || "🩺", title: c.name, who: c.description || "" };
       return `
         <button type="button" class="sp-concern" data-cat="${esc(id)}" data-title="${esc(f.title)}">
-          <span class="sp-concern-icon">${f.icon}</span>
           <span class="sp-concern-text">
             <b>${esc(f.title)}</b>
             <small>適合：${esc(f.who)}</small>
@@ -205,7 +204,6 @@
       <div class="sp-q-sub">點一個最符合您的，我會列出適合的檢查。</div>
       ${cats}
       <button type="button" class="sp-concern sp-starter">
-        <span class="sp-concern-icon">🤔</span>
         <span class="sp-concern-text">
           <b>不知道選什麼？</b>
           <small>看看預算內的基本套組，不代表熱門排行</small>
@@ -291,7 +289,7 @@
 
     bodyEl.innerHTML = `
       <button type="button" class="sp-back">‹ 換一個方面</button>
-      <div class="sp-q">${f.icon} ${esc(f.title)}</div>
+      <div class="sp-q">${esc(f.title)}</div>
       <div class="sp-q-sub">${groups.length
         ? `目前有 ${groups.length} 種符合剩餘預算的檢查，依價格由低到高排列。`
         : "目前沒有符合剩餘預算的檢查。"}</div>

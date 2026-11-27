@@ -1857,7 +1857,8 @@ html body #header .navbar-brand span {
     };
 
     function speakSelfPayText(text, context = null, forceMandarin = false) {
-      const content = String(text || "").trim();
+      const content = String(text || "").replace(/\b(?:NT\s*\$|NTD\b|TWD\b)\s*(\d[\d,]*(?:\.\d+)?)(?:\s*元)?/gi,
+        (_all, amount) => amount.replace(/,/g, "") + "元").trim();
       if (window.YidianSpeech) {
         window.YidianSpeech.remember(content, context);
         if (!forceMandarin && window.YidianSpeech.getLanguage() === "nan") {
@@ -7870,7 +7871,7 @@ selfPayTime:
   </script>
 
   <!-- 自費項目選單面板 -->
-  <script src="selfpay_panel.js"></script>
+  <script src="selfpay_panel.js?v=text-categories-v1"></script>
 
   <!-- DOUBTS-IDSCAN-V1 -->
   
@@ -7878,7 +7879,7 @@ selfPayTime:
   
   <!-- DOUBTS-LIVESCAN-V2 -->
   <script defer src="./idscan/idscan_paddle_v1.js?v=friendly4"></script>
-<script defer src="./doubts_mobile_v7.js?v=7"></script>
+<script defer src="./doubts_mobile_v7.js?v=twd-speech-v1"></script>
 <script defer src="./shanlin_online_birthday_picker.js?v=roc-prefill-v2"></script>
 </body>
 
