@@ -3297,3 +3297,29 @@ html:root body.doubts-home-v8 #scrollspyNav.navbar{
  background:#7899AD!important;
  border-bottom:1px solid rgba(20,20,19,.18)!important;
 }
+
+/* SELFPAY-CIRCLE-TEXT-CATEGORIES-V1 */
+html:root body.doubts-home-v8 #selfPayModal .self-pay-header .self-pay-close-btn {
+  box-sizing: border-box !important;
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  aspect-ratio: 1 / 1 !important;
+  flex: 0 0 56px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card .self-pay-category-icon {
+  display: none !important;
+}
+html:root body.doubts-home-v8 #selfPayModal .self-pay-category-card .self-pay-category-name {
+  margin-top: 0 !important;
+}
+/* END SELFPAY-CIRCLE-TEXT-CATEGORIES-V1 */
