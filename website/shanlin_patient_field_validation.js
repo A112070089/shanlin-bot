@@ -20,7 +20,7 @@
     const value = String(raw || '').trim();
     const western = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     const roc = /^(\d{2,3})(\d{2})(\d{2})$/.exec(value);
-    if (!western && !roc) return '請選擇正確的西元出生年月日。';
+    if (!western && !roc) return '請選擇正確的民國出生年月日。';
     if (roc && (Number(roc[1]) < 1 || Number(roc[1]) > 200))
       return '出生年份不正確，請重新確認。';
     const year = western ? Number(western[1]) : 1911 + Number(roc[1]);
@@ -64,7 +64,7 @@
         const error = dobError(value);
         if (error) return error;
         return testOnly && !['450101','390101'].includes(value)
-          ? '生日格式正確，但本機合成測試僅允許虛構生日：西元1956年1月1日或1950年1月1日。' : '';
+          ? '生日格式正確，但本機合成測試僅允許虛構生日：民國45年1月1日或39年1月1日。' : '';
       }
       case 'pid': {
         const error = twIdError(value);
@@ -131,17 +131,20 @@
       const prior = field.getAttribute('aria-describedby');
       field.setAttribute('aria-describedby', [prior, node.id].filter(Boolean).join(' '));
     });
-    // Do not require seniors to memorize ROC years. Native iOS selects open
-    // as Apple-style wheels; on desktop the 5-row lists can be scrolled.
+    // ROC labels are display-only; Gregorian option values preserve leap-year
+    // calculations, OCR restoration and the existing hidden birthday format.
     // This is display-only: the existing hidden birthday field still carries
     // the ROC value expected by the verified synthetic booking endpoint.
+    function rocYearLabel(year) {
+      return year >= 1912 ? '民國 ' + (year - 1911) : '民前 ' + (1912 - year);
+    }
     function createBirthdayPicker() {
       const original = input.birthday;
       const parent = original.closest('.mb-3') || original.parentElement;
       const label = parent.querySelector('label');
-      if (label) label.textContent = '出生年月日（西元）＊年滿65歲';
+      if (label) label.textContent = '出生年月日（民國）＊年滿65歲';
       const hint = parent.querySelector('.hint-text');
-      if (hint) hint.textContent = '請選擇西元年、月、日，系統會依完整出生日期確認是否年滿65歲。';
+      if (hint) hint.textContent = '請選擇民國年、月、日，系統會依完整出生日期確認是否年滿65歲。';
       const previous = original.value;
       original.type = 'hidden'; // Keep the original name/FormData and AI flow.
       original.removeAttribute('placeholder');
@@ -152,7 +155,7 @@
       holder.setAttribute('aria-label', '出生年月日三欄下拉選擇');
       const selects = {};
       const wheelSize = 1;
-      for (const [key, text] of [['year','西元年'], ['month','月'], ['day','日']]) {
+      for (const [key, text] of [['year','民國年'], ['month','月'], ['day','日']]) {
         const col = document.createElement('div');
         col.className = 'shanlin-dob-col';
         const fieldLabel = document.createElement('label');
@@ -172,7 +175,7 @@
       detail.className = 'shanlin-dob-detail';
       detail.id = 'shanlin-dob-detail';
       detail.setAttribute('role', 'status');
-      detail.textContent = '請依序選擇西元年、月、日';
+      detail.textContent = '請依序選擇民國年、月、日';
       holder.appendChild(detail);
       original.insertAdjacentElement('afterend', holder);
 
@@ -186,10 +189,10 @@
       const today = new Date();
       const latestYear = today.getFullYear() - 65;
       const years = [];
-      // Oldest selectable ROC year = 1 (1912); no new DOB validator required.
+      // Preserve the existing year range; pre-1912 years use 民前 labels.
       for (let year = latestYear; year >= 1850; year--)
-        years.push([year, String(year)]);
-      fill(selects.year, years, '選擇西元年', '');
+        years.push([year, rocYearLabel(year)]);
+      fill(selects.year, years, '選擇民國年', '');
       fill(selects.month, Array.from({length:12}, (_, i) => [i + 1, `${i + 1}月`]), '選擇月', '');
       fill(selects.day, Array.from({length:31}, (_, i) => [i + 1, `${i + 1}日`]), '選擇日', '');
 
@@ -208,13 +211,13 @@
         const day = Number(selects.day.value);
         if (!selects.year.value || !selects.month.value || !selects.day.value) {
           original.value = '';
-          detail.textContent = '請依序選擇西元年、月、日';
+          detail.textContent = '請依序選擇民國年、月、日';
         } else {
           const mm = String(month).padStart(2, '0'), dd = String(day).padStart(2, '0');
           original.value = year >= 1912
             ? String(year - 1911).padStart(2, '0') + mm + dd
             : `${year}-${mm}-${dd}`;
-          detail.textContent = `已選擇：西元 ${year} 年 ${month} 月 ${day} 日`;
+          detail.textContent = `已選擇：${rocYearLabel(year)} 年 ${month} 月 ${day} 日`;
         }
         touched.add('birthday');
         original.dispatchEvent(new Event('input', {bubbles:true}));
@@ -246,7 +249,7 @@
           original.value = old[0] >= 1912
             ? String(old[0] - 1911).padStart(2,'0') + mm + dd
             : `${old[0]}-${mm}-${dd}`;
-          detail.textContent = `已選擇：西元 ${old[0]} 年 ${old[1]} 月 ${old[2]} 日`;
+          detail.textContent = `已選擇：${rocYearLabel(old[0])} 年 ${old[1]} 月 ${old[2]} 日`;
         } else original.value = '';
       } else original.value = '';
       return {holder, selects};
